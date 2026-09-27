@@ -28,13 +28,13 @@ jobs:
       - run: npx cap sync android
 
       # The ubuntu runner ships the Android SDK (ANDROID_HOME); Gradle fetches any missing platform.
-      - name: Assemble debug APK
+      - name: Assemble release APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Package APK
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk TrenTurnos.apk
+          cp android/app/build/outputs/apk/release/app-release.apk TrenTurnos.apk
           # Some browsers block raw .apk downloads; a zip copy gets through.
           zip -j TrenTurnos-apk.zip TrenTurnos.apk
 

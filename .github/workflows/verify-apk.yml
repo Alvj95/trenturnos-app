@@ -1,13 +1,15 @@
 name: Verify APK on emulator
 
 on:
-  push:
-    paths:
-      - '.github/workflows/verify-apk.yml'
+  # Check every published APK right after it is built.
+  workflow_run:
+    workflows: [Build TrenTurnos APK]
+    types: [completed]
   workflow_dispatch:
 
 jobs:
   verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
