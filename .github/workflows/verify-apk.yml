@@ -1,0 +1,54 @@
+name: Verify APK on emulator
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [29, 34]
+    steps:
+      - name: Download the published APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download --repo "${{ github.repository }}" --pattern 'TrenTurnos.apk'
+
+      - name: Verify signature and manifest
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs TrenTurnos.apk
+          "$BT/aapt2" dump badging TrenTurnos.apk | head -20
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install and launch on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r TrenTurnos.apk
+            adb shell pm list packages | grep trenturnos
+            adb shell monkey -p com.trenturnos.app -c android.intent.category.LAUNCHER 1
+            sleep 20
+            adb shell pidof com.trenturnos.app && echo "APP RUNNING"
+            adb logcat -d | grep -iE "Capacitor|chromium|AndroidRuntime|FATAL" | tail -60
+            adb exec-out screencap -p > screen-${{ matrix.api-level }}.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screen-${{ matrix.api-level }}
+          path: screen-*.png
