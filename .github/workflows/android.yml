@@ -11,6 +11,10 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      # Google Play upload key (repo Settings → Secrets → Actions). Without it only the APK is built.
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -31,6 +35,15 @@ jobs:
       - name: Assemble release APK
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
+
+      # Google Play needs an App Bundle (.aab) signed with the private upload key.
+      - name: Build Google Play bundle (AAB)
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        working-directory: android
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          UPLOAD_KEYSTORE_PATH="$RUNNER_TEMP/upload.keystore" ./gradlew bundleRelease --no-daemon
+          cp app/build/outputs/bundle/release/app-release.aab ../TrenTurnos.aab
 
       - name: Package APK
         run: |
@@ -54,9 +67,12 @@ jobs:
           files: |
             TrenTurnos.apk
             TrenTurnos-apk.zip
+            TrenTurnos.aab
           body: |
             APK de Android de TrenTurnos (rama `${{ github.ref_name }}`).
 
             **Instalar:** descarga `TrenTurnos.apk` desde el teléfono, ábrelo y permite instalar apps de origen desconocido.
 
             Si el navegador bloquea la descarga del .apk, baja `TrenTurnos-apk.zip`, descomprímelo y abre el .apk que trae dentro.
+
+            `TrenTurnos.aab` es para subirlo a Google Play Console (no se instala directamente en el teléfono).
