@@ -117,8 +117,6 @@ body{display:flex;align-items:center;justify-content:center}
 .run .arm{animation:armUp .5s cubic-bezier(.3,1.6,.5,1) 2.9s forwards}
 @keyframes armUp{to{transform:rotate(0)}}
 .mo{opacity:0}
-.run .mo{animation:talk .16s steps(1) 3.0s 8}
-.run .mc{animation:talkc .16s steps(1) 3.0s 8}
 @keyframes talk{0%{opacity:1}50%{opacity:0}}
 @keyframes talkc{0%{opacity:0}50%{opacity:1}}
 .bubble{position:absolute;left:138px;top:-2px;background:#fff;color:#7c1d6f;border-radius:18px;padding:10px 14px;
@@ -171,6 +169,29 @@ body{display:flex;align-items:center;justify-content:center}
 .hat{position:absolute;top:84px;left:12px;width:44px;opacity:0;transform:translateY(-40px) rotate(-30deg)}
 .run .hat{animation:hatIn .5s cubic-bezier(.3,1.6,.5,1) 2.8s forwards}
 @keyframes hatIn{to{opacity:1;transform:rotate(-18deg)}}
+
+/* canto: letras que suben y bajan como una nota larga */
+.sg{display:inline-block;color:#a21caf;-webkit-text-fill-color:#a21caf;text-shadow:0 1px 0 #f5d0fe}
+.bubble .bt{background:none;color:#a21caf;-webkit-text-fill-color:#a21caf}
+.sg.sp{width:6px}
+.run .sg{animation:sing .55s ease-in-out calc(3.05s + var(--n)*.06s) 5 alternate}
+@keyframes sing{from{transform:translateY(0)}to{transform:translateY(-6px) scale(1.12)}}
+.bn{position:absolute;right:-12px;top:-14px;color:#f5c542;font:700 20px system-ui;text-shadow:0 0 8px rgba(245,197,66,.8)}
+.run .bn{animation:tw .4s ease-in-out 3.0s infinite alternate}
+/* boca abierta sostenida con vibrato (en vez de hablar) */
+.mo{transform-box:fill-box;transform-origin:50% 40%}
+.run .mo{animation:singOpen .2s ease-out 3.0s forwards,vib .14s ease-in-out 3.2s 9 alternate}
+.run .mc{animation:hide 0s linear 3.0s forwards}
+@keyframes singOpen{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+@keyframes vib{from{transform:scaleY(1)}to{transform:scaleY(1.25)}}
+/* cabeza hacia atrás, como una diva */
+.dv{transform-origin:50% 75%}
+.run .dv{animation:tilt .5s ease-out 3.0s forwards}
+@keyframes tilt{to{transform:rotate(-5deg)}}
+/* notas que salen de la boca */
+.mn{position:absolute;color:#fde68a;font:700 15px system-ui;opacity:0;text-shadow:0 0 6px rgba(245,158,11,.9)}
+.run .mn{animation:mnote 1.3s ease-out forwards}
+@keyframes mnote{0%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translate(46px,-60px) rotate(18deg) scale(1.15)}}
 .cap{position:absolute;bottom:-40px;left:0;right:0;text-align:center;font:600 11px system-ui;color:rgba(255,255,255,.45)}
 </style></head><body>
 <div id="stage">
@@ -313,7 +334,7 @@ body{display:flex;align-items:center;justify-content:center}
  <g class="arm"><path d="M112 146 Q132 120 128 86" stroke="#26355f" stroke-width="13" stroke-linecap="round" fill="none"/>
   <circle cx="128" cy="80" r="7.5" fill="#f6cba6"/><path d="M124 74 l-2 -8 M128 72 l0 -9 M132 74 l2 -8" stroke="#f6cba6" stroke-width="3.2" stroke-linecap="round"/></g>
 </svg>
-<div class="bubble"><span class="bt">IT'S TIIIME!</span><i></i></div>
+<b class="mn" style="left:80px;top:92px;animation-delay:3.10s">♪</b><b class="mn" style="left:86px;top:88px;animation-delay:3.32s">♫</b><b class="mn" style="left:80px;top:84px;animation-delay:3.54s">♬</b><b class="mn" style="left:86px;top:92px;animation-delay:3.76s">♪</b><b class="mn" style="left:80px;top:88px;animation-delay:3.98s">♫</b><b class="mn" style="left:86px;top:84px;animation-delay:4.20s">♬</b><div class="bubble"><span class="bt"><span class="sg" style="--n:0">I</span><span class="sg" style="--n:1">T</span><span class="sg" style="--n:2">'</span><span class="sg" style="--n:3">S</span><span class="sg sp"> </span><span class="sg" style="--n:4">T</span><span class="sg" style="--n:5">I</span><span class="sg" style="--n:6">I</span><span class="sg" style="--n:7">I</span><span class="sg" style="--n:8">I</span><span class="sg" style="--n:9">I</span><span class="sg" style="--n:10">M</span><span class="sg" style="--n:11">E</span><span class="sg" style="--n:12">!</span></span><b class="bn">♪</b><i></i></div>
 <b class="spark" style="left:6px;top:40px">✦</b><b class="spark" style="left:132px;top:30px;animation-delay:.3s">✦</b><b class="spark" style="left:20px;top:120px;animation-delay:.6s">✧</b>
 </div>
  <div class="spk"><svg viewBox="0 0 34 34"><path d="M4 12h6l8-7v24l-8-7H4z" fill="#fde68a"/><path class="w w1" d="M22 12q3 5 0 10"/><path class="w w2" d="M25.5 8.5q6 8.5 0 17"/><path class="w w3" d="M29 5q9 12 0 24"/></svg></div>
@@ -336,6 +357,21 @@ function ruido(t,dur,vol,fc){var n=AC.sampleRate*dur,b=AC.createBuffer(1,n,AC.sa
 function campana(t,fr,vol){var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=fr;
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+1.2);
   o.connect(g).connect(AC.destination);o.start(t);o.stop(t+1.3);}
+
+function cantar(t){try{
+  var src=AC.createOscillator();src.type='sawtooth';
+  var lfo=AC.createOscillator(),ld=AC.createGain();lfo.frequency.value=5.6;ld.gain.value=0;lfo.connect(ld);ld.connect(src.frequency);
+  var out=AC.createGain();out.gain.value=0;out.connect(AC.destination);
+  [[850,1.0,9],[1220,.6,10],[2810,.35,12]].forEach(function(f){var bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f[0];bp.Q.value=f[2];
+    var g=AC.createGain();g.gain.value=f[1]*3;src.connect(bp).connect(g).connect(out);});
+  var notas=[[0,659],[.18,784],[.42,880],[.62,988],[.80,880],[.95,988],[1.12,1175]];
+  notas.forEach(function(n){src.frequency.setTargetAtTime(n[1],t+n[0],.025);});
+  src.frequency.setValueAtTime(659,t);
+  out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.22,t+.06);out.gain.setValueAtTime(.22,t+.14);
+  out.gain.linearRampToValueAtTime(.06,t+.17);out.gain.linearRampToValueAtTime(.24,t+.22);
+  out.gain.setValueAtTime(.24,t+1.5);out.gain.exponentialRampToValueAtTime(.0001,t+1.9);
+  ld.gain.setValueAtTime(0,t+.5);ld.gain.linearRampToValueAtTime(18,t+1.1);
+  src.start(t);lfo.start(t);src.stop(t+2);lfo.stop(t+2);}catch(e){}}
 function sonar(){if(!sonido||!AC)return;var t=AC.currentTime+.02;
   ruido(t+.8,.12,.5,1800);ruido(t+1.4,.16,.7,1400);ruido(t+2.0,.22,.9,1000);
   ruido(t+2.4,.7,1.0,600);[2093,2637,3136,2349,2794].forEach(function(f,i){campana(t+2.42+i*.05,f,.08);});
@@ -343,7 +379,7 @@ function sonar(){if(!sonido||!AC)return;var t=AC.currentTime+.02;
   ruido(t+3.0,.9,.25,300);
   for(var k=0;k<14;k++){campana(t+2.7+k*.12,2600+(k%3)*350,.05);ruido(t+2.7+k*.12,.05,.12,4000);}
   try{setTimeout(function(){var h=new SpeechSynthesisUtterance('Jo, jo, jo');h.lang='es-ES';h.pitch=.3;h.rate=.7;speechSynthesis.speak(h);},3200);}catch(e){}
-  try{setTimeout(function(){var u=new SpeechSynthesisUtterance("It's tiiime!");u.lang='en-US';u.pitch=1.6;u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u);},3000);}catch(e){}}
+  cantar(t+3.0);}
 document.addEventListener('click',function(){if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}
   sonido=true;var tp=document.getElementById('tap');if(tp)tp.textContent='🔊 Sonido activado';play();sonar();});
 function play(){st.classList.remove('run');void st.offsetWidth;st.classList.add('run');sonar();}
