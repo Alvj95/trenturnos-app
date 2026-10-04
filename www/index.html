@@ -143,6 +143,10 @@ body.modo-interventor{
 }
 *,*::before,*::after{box-sizing:border-box}
 body{background:var(--bg);color:var(--tx);display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh}
+/* FIX — App fija como una app nativa: la página nunca se desplaza ni
+   "rebota"; solo se desplaza el contenido de dentro (.body). Así el
+   menú inferior (.bnav) se queda siempre quieto. */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 
 /* ── RESPONSIVE — Confirmado por el usuario: la app entra tanto desde
    el móvil como desde el PC, y tiene que funcionar bien en las dos.
@@ -1894,7 +1898,10 @@ html[data-estetica="b"] #splash-screen{--neon:#84cc16;--neon2:#d9f99d;background
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',sans-serif;
-    padding:0 0 60px;
+    /* FIX — este "padding:0 0 60px" venía del panel Horario importado y
+       se aplicaba a TODA la página: la hacía 60px más alta que la
+       pantalla, así que al arrastrar se movía todo, menú inferior
+       incluido. La app ya hace scroll dentro de .body, no en <body>. */
   }
   /* FIX — Confirmado por el usuario: "position:sticky" aquí era de
      cuando .board era solo una cabecera pequeña (título + unas pocas

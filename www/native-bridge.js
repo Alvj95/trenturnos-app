@@ -8,6 +8,7 @@
  *   - descargas <a download> (p. ej. XLSX.writeFile) → se guardan y se
  *     abre "Compartir" para mandarlas a Drive, WhatsApp, Archivos…
  *   - window.Notification → notificaciones locales del sistema
+ *   - pantalla fija: la página no se desplaza, el menú inferior no se mueve
  *
  * En el navegador normal (web/PWA) no hace nada.
  */
@@ -16,6 +17,16 @@
   if (!Cap || !Cap.isNativePlatform || !Cap.isNativePlatform()) return;
   var P = Cap.Plugins || {};
   var Share = P.Share, Filesystem = P.Filesystem, LocalNotifications = P.LocalNotifications;
+
+  // ── Pantalla fija, como una app nativa ──────────────────────
+  // La página nunca se desplaza ni rebota: solo el contenido de dentro.
+  // Así el menú inferior no se mueve aunque un HTML nuevo traiga CSS
+  // que haga la página más alta que la pantalla.
+  var fixStyle = document.createElement('style');
+  fixStyle.textContent =
+    'html,body{height:100%!important;overflow:hidden!important;overscroll-behavior:none!important}' +
+    'body{padding-bottom:0!important}';
+  (document.head || document.documentElement).appendChild(fixStyle);
 
   function blobToBase64(blob) {
     return new Promise(function (resolve, reject) {
