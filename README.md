@@ -12,11 +12,21 @@ Cada push compila un APK nuevo con GitHub Actions (`.github/workflows/android.ym
 
 ## Actualizar la app con una versión nueva del HTML
 
-1. Sustituye `www/index.html` por tu nuevo HTML.
-2. Vuelve a poner, justo debajo de `<meta charset="UTF-8">`, la línea:
-   `<script src="native-bridge.js"></script>`
+1. Sustituye `www/index.html` por tu nuevo HTML (la versión **sin** temas de temporada).
+2. Vuelve a poner, justo debajo de `<meta charset="UTF-8">`, las líneas:
+   ```html
+   <script src="native-bridge.js"></script>
+   <script src="tema-halloween.js"></script>
+   ```
+   (la segunda solo mientras haya un tema de temporada; ver abajo).
 3. Si cambias el convenio, sustituye `www/convenio-data.js` (tiene que llamarse exactamente así).
 4. Haz push: GitHub Actions genera el APK nuevo.
+
+## Temas de temporada (Halloween, Navidad…)
+
+Cada tema vive en su propio archivo (`www/tema-halloween.js`) y `index.html` solo lo carga con una línea.
+El tema solo actúa entre sus fechas (`HW_DESDE` / `HW_HASTA` dentro del archivo); fuera de ellas no añade nada.
+Cuando termine la temporada, borra el archivo y su línea `<script>`: el HTML principal no se toca.
 
 ## Archivos
 
@@ -24,6 +34,7 @@ Cada push compila un APK nuevo con GitHub Actions (`.github/workflows/android.ym
 | --- | --- |
 | `www/index.html` | Tu app (sin cambios salvo la línea de `native-bridge.js`) |
 | `www/convenio-data.js` | Texto del Convenio Colectivo |
+| `www/tema-halloween.js` | Tema de Halloween (del 1 de octubre al 5 de noviembre) |
 | `www/native-bridge.js` | Hace que en Android funcionen *Compartir*, las descargas (Excel) y las notificaciones. En la web no hace nada |
 | `capacitor.config.json` | Nombre (`TrenTurnos`) e identificador (`com.trenturnos.app`) de la app |
 | `android/` | Proyecto nativo de Android |
