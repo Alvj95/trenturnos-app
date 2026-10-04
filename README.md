@@ -2,6 +2,11 @@
 
 App Android (Capacitor) hecha a partir de `www/index.html`, el mismo HTML de la web de TrenTurnos.
 
+## Versiones
+
+- **Versión Console**: la app Android de Google Play (carpeta `www/`).
+- **Versión URL**: `index.html` de un solo archivo para la web de los compañeros (carpeta `version-url/`, no entra en la app).
+
 ## Instalar
 
 1. Abre desde el teléfono la página **Releases** del repositorio y abre la más reciente.
