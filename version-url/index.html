@@ -3722,45 +3722,86 @@ html[data-estetica="b"] #splash-screen{--neon:#84cc16;--neon2:#d9f99d;background
   <div class="sp-bloom"></div>
 </div>
 <script>
-// NUEVO — "Ding-dong-ding" de megafonía al entrar (sonido propio, creado
-// con Web Audio, sin archivos). Suena una vez por visita: si el navegador
-// no deja sonar hasta que se toque la pantalla, suena en el primer toque
-// de los primeros 10 segundos. Si algo falla, no pasa nada.
+// NUEVO — "Ding-dong-ding" de megafonía de tren al entrar, mientras se ve
+// la pantalla de inicio (sonido propio, creado con Web Audio, sin
+// archivos). Una vez por visita. Si el navegador no deja sonar hasta que
+// se toque la pantalla, suena al tocar DURANTE la pantalla de inicio;
+// después ya no suena, para que nunca salga a destiempo.
+// Sonido de megafonía de tren (propio): clic de micro, fondo de altavoz,
+// "ding-dong-ding" tipo vibráfono, todo por un "altavoz de techo" con
+// eco de vagón, y clic de apagado. ctx = AudioContext u OfflineAudioContext.
+function megafoniaDingDong(ctx, t){
+  var sr = ctx.sampleRate, out = ctx.destination;
+  function ruido(seg){ var n=Math.floor(sr*seg), b=ctx.createBuffer(1,n,sr), d=b.getChannelData(0), last=0;
+    for(var i=0;i<n;i++){ var w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*3.5; } return b; }
+  // "altavoz de techo": sin graves ni agudos, presencia en medios, algo saturado
+  var hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=320; hp.Q.value=.8;
+  var lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3600; lp.Q.value=.9;
+  var pk=ctx.createBiquadFilter(); pk.type='peaking'; pk.frequency.value=1700; pk.Q.value=1.1; pk.gain.value=5;
+  var sh=ctx.createWaveShaper(), cur=new Float32Array(1024);
+  for(var i=0;i<1024;i++){ var x=i/511.5-1; cur[i]=Math.tanh(1.8*x)/Math.tanh(1.8); } sh.curve=cur;
+  var bus=ctx.createGain(); bus.gain.value=1;
+  bus.connect(hp); hp.connect(lp); lp.connect(pk); pk.connect(sh);
+  // eco de vagón: reverberación corta + rebote
+  var ir=ctx.createBuffer(2,Math.floor(sr*1.3),sr);
+  for(var c=0;c<2;c++){ var d=ir.getChannelData(c); for(var j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*Math.pow(1-j/d.length,3.2); }
+  var rev=ctx.createConvolver(); rev.buffer=ir;
+  var dl=ctx.createDelay(); dl.delayTime.value=.11; var fb=ctx.createGain(); fb.gain.value=.22; dl.connect(fb); fb.connect(dl);
+  var seco=ctx.createGain(); seco.gain.value=.9; var hum=ctx.createGain(); hum.gain.value=.38; var eco=ctx.createGain(); eco.gain.value=.18;
+  sh.connect(seco); sh.connect(rev); rev.connect(hum); sh.connect(dl); dl.connect(eco);
+  var master=ctx.createGain(); master.gain.value=.9;
+  seco.connect(master); hum.connect(master); eco.connect(master); master.connect(out);
+  // clic de micrófono (encendido y apagado) y soplido de fondo con zumbido
+  function clic(at, v){ var s=ctx.createBufferSource(); s.buffer=ruido(.012); var g=ctx.createGain(); g.gain.value=v; s.connect(g); g.connect(bus); s.start(at); }
+  var fin=t+3.0;
+  clic(t-0.32, .9); clic(fin, .7);
+  var fondo=ctx.createBufferSource(); fondo.buffer=ruido(fin-t+0.35); var fg=ctx.createGain();
+  fg.gain.setValueAtTime(0,t-.3); fg.gain.linearRampToValueAtTime(.05,t-.25); fg.gain.setValueAtTime(.05,fin-.05); fg.gain.linearRampToValueAtTime(0,fin+.02);
+  fondo.connect(fg); fg.connect(bus); fondo.start(t-.3);
+  [100,150].forEach(function(f,k){ var o=ctx.createOscillator(); o.frequency.value=f; var g=ctx.createGain();
+    g.gain.setValueAtTime(0,t-.3); g.gain.linearRampToValueAtTime(k?.008:.014,t-.25); g.gain.setValueAtTime(k?.008:.014,fin-.05); g.gain.linearRampToValueAtTime(0,fin+.02);
+    o.connect(g); g.connect(bus); o.start(t-.3); o.stop(fin+.05); });
+  // "ding-dong-ding": tres notas tipo vibráfono (sol-si-re), suaves
+  function nota(at, f){
+    [[1,.42,1.9],[4,.08,.35],[2.76,.04,.6],[10.2,.015,.12]].forEach(function(p){
+      var o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f*p[0];
+      var g=ctx.createGain(); g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(p[1],at+.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,at+p[2]);
+      var tr=ctx.createGain(); tr.gain.value=1; var lfo=ctx.createOscillator(); lfo.frequency.value=5.2; var ld=ctx.createGain(); ld.gain.value=.12;
+      lfo.connect(ld); ld.connect(tr.gain);
+      o.connect(g); g.connect(tr); tr.connect(bus); o.start(at); o.stop(at+p[2]+.05); lfo.start(at); lfo.stop(at+p[2]+.05);
+    });
+  }
+  nota(t,392); nota(t+.5,494); nota(t+1.0,587);
+  return fin+0.6; // fin aproximado
+}
+
 (function(){
   try{
     if(sessionStorage.getItem('dingDongSonado')) return;
     var AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return;
-    var ctx = null, hecho = false, t0 = Date.now();
-    function nota(t, f){
-      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), o3 = ctx.createOscillator();
-      var g = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain();
-      o.frequency.value = f; o2.frequency.value = f*4; o3.frequency.value = f*2;
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t+0.005); g.gain.exponentialRampToValueAtTime(0.0001, t+1.6);
-      g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(0.10, t+0.005); g2.gain.exponentialRampToValueAtTime(0.0001, t+0.25);
-      g3.gain.setValueAtTime(0.0001, t); g3.gain.exponentialRampToValueAtTime(0.05, t+0.005); g3.gain.exponentialRampToValueAtTime(0.0001, t+1.0);
-      o.connect(g).connect(ctx.destination); o2.connect(g2).connect(ctx.destination); o3.connect(g3).connect(ctx.destination);
-      [o,o2,o3].forEach(function(x){ x.start(t); x.stop(t+1.7); });
+    var ctx = new AC(), hecho = false;
+    function enPantallaInicio(){
+      var sp = document.getElementById('splash-screen');
+      return !document.body || !!sp; // antes de pintarse o mientras exista el splash
     }
     function sonar(){
-      if(hecho || !ctx || ctx.state !== 'running') return;
+      if(hecho || ctx.state !== 'running' || !enPantallaInicio()) return;
       hecho = true;
       try{ sessionStorage.setItem('dingDongSonado','1'); }catch(e){}
-      var t = ctx.currentTime + 0.05;
-      nota(t, 784); nota(t+0.45, 988); nota(t+0.9, 1175);
+      megafoniaDingDong(ctx, ctx.currentTime + 0.35);
       quitar();
     }
     function alTocar(){
-      if(hecho || Date.now() - t0 > 10000){ quitar(); return; }
-      if(!ctx) ctx = new AC();
+      if(hecho || !enPantallaInicio()){ quitar(); return; }
       ctx.resume().then(sonar).catch(function(){});
     }
     function quitar(){
       ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.removeEventListener(ev, alTocar, true); });
     }
     ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.addEventListener(ev, alTocar, true); });
-    // Intento al entrar (funciona si el navegador lo permite).
-    ctx = new AC();
+    // Intento al entrar (suena si el navegador lo permite).
     if(ctx.state === 'running') sonar();
     else ctx.resume().then(sonar).catch(function(){});
   }catch(e){}
