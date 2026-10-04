@@ -35,6 +35,7 @@ Cuando termine la temporada, borra el archivo y su línea `<script>`: el HTML pr
 | `www/index.html` | Tu app (sin cambios salvo la línea de `native-bridge.js`) |
 | `www/convenio-data.js` | Texto del Convenio Colectivo |
 | `www/tema-halloween.js` | Tema de Halloween (del 1 de octubre al 5 de noviembre) |
+| `www/tema-navidad.js` | Tema de Navidad (del 1 de diciembre al 6 de enero). **Preparado pero aún no conectado**: para activarlo, añade `<script src="tema-navidad.js"></script>` debajo de la línea del tema de Halloween en `index.html` |
 | `www/native-bridge.js` | Hace que en Android funcionen *Compartir*, las descargas (Excel) y las notificaciones. En la web no hace nada |
 | `capacitor.config.json` | Nombre (`TrenTurnos`) e identificador (`com.trenturnos.app`) de la app |
 | `android/` | Proyecto nativo de Android |
