@@ -3578,6 +3578,51 @@ html[data-estetica="b"] #splash-screen{--neon:#84cc16;--neon2:#d9f99d;background
   <div class="sp-bloom"></div>
 </div>
 <script>
+// NUEVO — "Ding-dong-ding" de megafonía al entrar (sonido propio, creado
+// con Web Audio, sin archivos). Suena una vez por visita: si el navegador
+// no deja sonar hasta que se toque la pantalla, suena en el primer toque
+// de los primeros 10 segundos. Si algo falla, no pasa nada.
+(function(){
+  try{
+    if(sessionStorage.getItem('dingDongSonado')) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    var ctx = null, hecho = false, t0 = Date.now();
+    function nota(t, f){
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), o3 = ctx.createOscillator();
+      var g = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain();
+      o.frequency.value = f; o2.frequency.value = f*4; o3.frequency.value = f*2;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t+0.005); g.gain.exponentialRampToValueAtTime(0.0001, t+1.6);
+      g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(0.10, t+0.005); g2.gain.exponentialRampToValueAtTime(0.0001, t+0.25);
+      g3.gain.setValueAtTime(0.0001, t); g3.gain.exponentialRampToValueAtTime(0.05, t+0.005); g3.gain.exponentialRampToValueAtTime(0.0001, t+1.0);
+      o.connect(g).connect(ctx.destination); o2.connect(g2).connect(ctx.destination); o3.connect(g3).connect(ctx.destination);
+      [o,o2,o3].forEach(function(x){ x.start(t); x.stop(t+1.7); });
+    }
+    function sonar(){
+      if(hecho || !ctx || ctx.state !== 'running') return;
+      hecho = true;
+      try{ sessionStorage.setItem('dingDongSonado','1'); }catch(e){}
+      var t = ctx.currentTime + 0.05;
+      nota(t, 784); nota(t+0.45, 988); nota(t+0.9, 1175);
+      quitar();
+    }
+    function alTocar(){
+      if(hecho || Date.now() - t0 > 10000){ quitar(); return; }
+      if(!ctx) ctx = new AC();
+      ctx.resume().then(sonar).catch(function(){});
+    }
+    function quitar(){
+      ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.removeEventListener(ev, alTocar, true); });
+    }
+    ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.addEventListener(ev, alTocar, true); });
+    // Intento al entrar (funciona si el navegador lo permite).
+    ctx = new AC();
+    if(ctx.state === 'running') sonar();
+    else ctx.resume().then(sonar).catch(function(){});
+  }catch(e){}
+})();
+</script>
+<script>
 // ACTUALIZADO — se elimina la persistencia diaria (localStorage +
 // comparación de fechas). El splash se ejecuta SIEMPRE que la página
 // se cargue o se refresque. No se toca la animación CSS (@keyframes)
