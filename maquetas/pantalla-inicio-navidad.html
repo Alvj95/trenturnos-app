@@ -1,0 +1,352 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Maqueta · Tren congelado</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#000;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:360px;height:640px;overflow:hidden;transform-origin:center;
+  background:radial-gradient(ellipse at 50% 45%,#16365a 0%,#0b1d33 55%,#050c18 100%);font-family:Impact,"Arial Black",system-ui,sans-serif}
+/* fondo que se "calienta" al descongelarse */
+.warm{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#1f4470 0%,#0f2443 50%,#071224 100%);opacity:0}
+.run .warm{animation:fadeIn .6s ease-out 2.4s forwards}
+/* marco de neón */
+.frame{position:absolute;inset:42px 25px;border-radius:44px;border:3px solid #7dd3fc;opacity:.35;box-shadow:0 0 12px rgba(125,211,252,.35)}
+.run .frame{animation:neonOn .5s steps(4) 2.4s forwards}
+@keyframes neonOn{0%{opacity:.35}25%{opacity:1;border-color:#ef4444}50%{opacity:.3}100%{opacity:1;border-color:#ef4444;box-shadow:0 0 18px #ef4444,inset 0 0 18px rgba(239,68,68,.45)}}
+/* título */
+.title{position:absolute;top:110px;left:0;right:0;text-align:center}
+.t1{font-size:44px;letter-spacing:.5px;text-transform:uppercase;color:transparent;
+  background:linear-gradient(#ffffff,#cfeaff 45%,#7cb8e8);-webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 0 6px rgba(186,230,253,.7))}
+.t2{font-size:32px;letter-spacing:9px;color:#bae6fd;text-shadow:0 0 8px #7dd3fc}
+.run .t1{animation:thawTitle .6s ease-out 2.45s forwards}
+.run .t2{animation:thawV5 .6s ease-out 2.45s forwards}
+@keyframes thawTitle{to{filter:drop-shadow(0 0 0 transparent);background-image:linear-gradient(#fff,#e2e8f0 50%,#94a3b8)}}
+@keyframes thawV5{to{color:#fecaca;text-shadow:0 0 10px #ef4444,0 0 2px #000}}
+.ticl{position:absolute;top:157px;left:70px;right:70px;height:14px}
+.ticl b{position:absolute;top:0;width:4px;background:linear-gradient(#e0f2fe,rgba(186,230,253,0));clip-path:polygon(0 0,100% 0,50% 100%)}
+.run .ticl{animation:drop .7s ease-in 2.4s forwards}
+.legend{position:absolute;top:215px;left:0;right:0;text-align:center;font:800 12px system-ui,sans-serif;letter-spacing:2px;color:#bbf7d0;opacity:0}
+.run .legend{animation:fadeIn .5s ease-out 2.9s forwards}
+/* tren + bloque de hielo */
+.scene{position:absolute;top:300px;left:0;right:0;height:120px}
+.trwrap{position:absolute;left:50%;top:22px;width:250px;margin-left:-125px}
+.trsvg{width:100%;display:block;filter:saturate(.1) brightness(1.15) hue-rotate(170deg)}
+.run .trsvg{animation:trainThaw .4s ease-out 2.4s forwards}
+@keyframes trainThaw{to{filter:saturate(1) brightness(1) hue-rotate(0deg) drop-shadow(0 0 10px rgba(239,68,68,.55))}}
+.run .trwrap{animation:shake1 .25s linear .6s 2,shake2 .3s linear 1.3s 2,shake3 .35s linear 1.9s 2}
+@keyframes shake1{25%{transform:translateX(-1px)}75%{transform:translateX(1px)}}
+@keyframes shake2{25%{transform:translate(-2px,1px)}75%{transform:translate(2px,-1px)}}
+@keyframes shake3{20%{transform:translate(-4px,1px) rotate(-.6deg)}60%{transform:translate(4px,-1px) rotate(.6deg)}}
+@keyframes depart{0%{transform:translateX(0)}15%{transform:translateX(-6px)}100%{transform:translateX(420px)}}
+.streak{position:absolute;height:2px;left:-40%;width:45%;background:linear-gradient(90deg,transparent,#fde68a);opacity:0;border-radius:2px}
+.run .streak{animation:streak .5s ease-out 3.3s 3}
+@keyframes streak{0%{opacity:0;transform:translateX(0)}30%{opacity:.9}100%{opacity:0;transform:translateX(-120px)}}
+.ice{position:absolute;left:50%;top:0;width:286px;height:96px;margin-left:-143px;border-radius:12px;overflow:visible}
+.ice .body{position:absolute;inset:0;border-radius:12px;
+  background:linear-gradient(160deg,rgba(224,242,254,.55),rgba(125,211,252,.28) 45%,rgba(186,230,253,.5));
+  border:1.5px solid rgba(255,255,255,.7);box-shadow:inset 0 0 18px rgba(255,255,255,.55),0 0 22px rgba(125,211,252,.35);backdrop-filter:blur(1.2px)}
+.ice .body::before{content:"";position:absolute;left:10px;top:8px;width:60%;height:10px;border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,.7),transparent)}
+.fs{position:absolute;color:rgba(255,255,255,.55)}
+.icl{position:absolute;bottom:-14px;width:6px;background:linear-gradient(#e0f2fe,rgba(186,230,253,.1));clip-path:polygon(0 0,100% 0,50% 100%)}
+.cracks{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cracks path{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;filter:drop-shadow(0 0 2px #7dd3fc);stroke-dasharray:200;stroke-dashoffset:200}
+.run .c1{animation:crack .3s ease-out .8s forwards}
+.run .c2{animation:crack .3s ease-out 1.4s forwards}
+.run .c3{animation:crack .3s ease-out 2.0s forwards}
+@keyframes crack{to{stroke-dashoffset:0}}
+.run .ice .body,.run .ice .cracks,.run .ice .icl{animation:hide 0s linear 2.4s forwards}
+@keyframes hide{to{opacity:0}}
+.shard{position:absolute;inset:0;border-radius:12px;opacity:0;
+  background:linear-gradient(160deg,rgba(224,242,254,.75),rgba(125,211,252,.45) 45%,rgba(186,230,253,.7));
+  box-shadow:inset 0 0 14px rgba(255,255,255,.7)}
+.run .shard{animation:shatter .9s cubic-bezier(.2,.7,.4,1) 2.4s forwards}
+@keyframes shatter{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(calc(var(--dx)*2.2),calc(var(--dy)*2.2 + 60px)) rotate(var(--r)) scale(.7)}}
+.track{position:absolute;top:400px;left:40px;right:40px;height:2px;background:linear-gradient(90deg,transparent,#7dd3fc,transparent);opacity:.6}
+.run .track{animation:trackOn .4s ease-out 2.5s forwards}
+@keyframes trackOn{to{opacity:0}}
+/* destello y escarcha en los bordes */
+.flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 52%,#fff,rgba(255,255,255,0) 60%);opacity:0;pointer-events:none}
+.run .flash{animation:flash .45s ease-out 2.38s}
+@keyframes flash{0%{opacity:0}20%{opacity:.95}100%{opacity:0}}
+.frost{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,transparent 52%,rgba(224,242,254,.28) 78%,rgba(240,249,255,.55) 100%)}
+.run .frost{animation:fadeOut .8s ease-out 2.4s forwards}
+.sn{position:absolute;top:-6px;border-radius:50%;background:#fff;opacity:.75;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(660px)}}
+@keyframes fadeIn{to{opacity:1}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes drop{to{transform:translateY(90px);opacity:0}}
+
+/* "IT'S TIIIME!" */
+.its{position:absolute;top:448px;left:0;right:0;text-align:center;font-size:40px;letter-spacing:1px;white-space:nowrap}
+.its span{display:inline-block;opacity:0;color:#fff;
+  background:linear-gradient(#fff7d6,#fde68a 45%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 6px rgba(245,158,11,.75)) drop-shadow(0 0 14px rgba(192,38,211,.55))}
+.its .sp{width:12px}
+.run .its span{animation:letter .45s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes letter{0%{opacity:0;transform:translateY(24px) scale(.3)}100%{opacity:1;transform:none}}
+.run .its{animation:pulse .5s ease-in-out 3.4s 4 alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.sub{position:absolute;top:500px;left:0;right:0;text-align:center;font:800 11px system-ui;letter-spacing:3px;color:#f5d0fe;opacity:0}
+.run .sub{animation:fadeIn .5s ease-out 3.6s forwards}
+/* icono de sonido con ondas */
+.spk{position:absolute;top:58px;right:44px;width:34px;height:34px;opacity:0}
+.run .spk{animation:pop .35s cubic-bezier(.3,1.6,.5,1) 2.5s forwards}
+.spk svg{width:100%;height:100%;overflow:visible}
+.spk .w{fill:none;stroke:#fde68a;stroke-width:2.2;stroke-linecap:round;opacity:0}
+.run .spk .w1{animation:wave 1s ease-out 2.7s infinite}
+.run .spk .w2{animation:wave 1s ease-out 2.9s infinite}
+.run .spk .w3{animation:wave 1s ease-out 3.1s infinite}
+@keyframes wave{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+@keyframes pop{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:none}}
+/* notas musicales que suben */
+.nt{position:absolute;font:700 22px system-ui;color:#fde68a;opacity:0;text-shadow:0 0 8px rgba(245,158,11,.8)}
+.run .nt{animation:note 1.8s ease-out forwards}
+@keyframes note{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x),-150px) rotate(var(--r)) scale(1.1)}}
+.tap{position:absolute;bottom:4px;left:0;right:0;text-align:center;font:700 11px system-ui;color:rgba(253,230,138,.8)}
+
+.diva{position:absolute;left:22px;top:420px;width:150px;height:210px;opacity:0;transform:translateY(120px)}
+.run .diva{animation:divaIn .6s cubic-bezier(.3,1.5,.5,1) 2.55s forwards}
+@keyframes divaIn{to{opacity:1;transform:none}}
+.dv{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.hairb{transform-origin:75px 60px}
+.run .hairb{animation:sway 1.2s ease-in-out 2.8s infinite alternate}
+@keyframes sway{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}
+.arm{transform-origin:112px 146px;transform:rotate(40deg)}
+.run .arm{animation:armUp .5s cubic-bezier(.3,1.6,.5,1) 2.9s forwards}
+@keyframes armUp{to{transform:rotate(0)}}
+.mo{opacity:0}
+.run .mo{animation:talk .16s steps(1) 3.0s 8}
+.run .mc{animation:talkc .16s steps(1) 3.0s 8}
+@keyframes talk{0%{opacity:1}50%{opacity:0}}
+@keyframes talkc{0%{opacity:0}50%{opacity:1}}
+.bubble{position:absolute;left:138px;top:-2px;background:#fff;color:#7c1d6f;border-radius:18px;padding:10px 14px;
+  font:900 19px Impact,"Arial Black",system-ui,sans-serif;white-space:nowrap;box-shadow:0 0 0 3px #f5c542,0 0 22px rgba(245,197,66,.7);
+  opacity:0;transform:scale(.2);transform-origin:0 100%}
+.bubble i{position:absolute;left:-10px;bottom:10px;width:0;height:0;border:10px solid transparent;border-right:14px solid #fff;border-left:0}
+.run .bubble{animation:pop .35s cubic-bezier(.3,1.6,.5,1) 3.0s forwards,pulse .5s ease-in-out 3.6s 4 alternate}
+.bt{background:linear-gradient(#c026d3,#7c1d6f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.spark{position:absolute;color:#fde68a;font-size:14px;opacity:0;text-shadow:0 0 8px #f5c542}
+.run .spark{animation:tw .8s ease-in-out 3.0s infinite alternate}
+@keyframes tw{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1.2)}}
+
+/* convoy: tren + Papá Noel */
+.convoy{position:absolute;inset:0}
+.run .convoy{animation:fly 1.6s cubic-bezier(.5,0,.8,.45) 3.5s forwards}
+@keyframes fly{0%{transform:translate(0,0)}12%{transform:translate(-8px,2px)}100%{transform:translate(470px,-230px) rotate(-12deg)}}
+.trscale{position:absolute;inset:0;transform-origin:180px 58px}
+.run .trscale{animation:shrink .55s ease-in-out 2.55s forwards}
+@keyframes shrink{to{transform:translateX(-96px) scale(.62)}}
+.sleigh{position:absolute;left:167px;top:22px;width:184px;opacity:0;transform:translate(260px,-260px) rotate(18deg)}
+.run .sleigh{animation:land 1.0s cubic-bezier(.2,.8,.3,1) 2.6s forwards}
+@keyframes land{0%{opacity:1;transform:translate(260px,-260px) rotate(18deg)}70%{transform:translate(-6px,4px) rotate(-3deg)}100%{opacity:1;transform:none}}
+.back{filter:brightness(.72)}
+.slsvg{width:100%;overflow:visible;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.run .bob{animation:bob .35s ease-in-out 2.6s infinite alternate}
+@keyframes bob{to{transform:translateY(-3px)}}
+.lg{transform-box:fill-box;transform-origin:50% 0}
+.run .l1{animation:leg .22s ease-in-out 2.6s infinite alternate}
+.run .l2{animation:leg .22s ease-in-out 2.71s infinite alternate-reverse}
+@keyframes leg{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}
+.nose{filter:drop-shadow(0 0 4px #ef4444)}
+.run .nose{animation:tw .4s ease-in-out 2.6s infinite alternate}
+.wave{transform-box:fill-box;transform-origin:100% 100%}
+.run .wave{animation:hand .3s ease-in-out 3.3s 6 alternate}
+@keyframes hand{to{transform:rotate(-25deg)}}
+.ho{position:absolute;left:-6px;top:-30px;background:#fff;color:#b91c1c;font:900 13px system-ui,sans-serif;border-radius:12px;padding:4px 8px;white-space:nowrap;opacity:0;transform:scale(.2);transform-origin:50% 100%;box-shadow:0 0 0 2px #ef4444}
+.run .ho{animation:pop .3s cubic-bezier(.3,1.6,.5,1) 3.2s forwards,hide 0s linear 4.2s forwards}
+.rope{position:absolute;left:160px;top:52px;width:0;height:2px;background:#f5c542;box-shadow:0 0 6px #f5c542}
+.run .rope{animation:rope .25s ease-out 3.35s forwards}
+@keyframes rope{to{width:16px}}
+/* estela de estrellas al despegar */
+.trail{position:absolute;color:#fde68a;font-size:14px;opacity:0;text-shadow:0 0 8px #f5c542}
+.run .trail{animation:trail 1.4s ease-out forwards}
+@keyframes trail{0%{opacity:0;transform:scale(.4)}20%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(.6) translateY(10px)}}
+/* guirnalda de luces en el marco y gorro en el título */
+.lights{position:absolute;top:34px;left:40px;right:40px;height:20px;opacity:0}
+.run .lights{animation:fadeIn .3s ease-out 2.7s forwards}
+.lights i{position:absolute;top:4px;width:8px;height:11px;border-radius:50% 50% 45% 45%;animation:nvB 1.2s ease-in-out infinite alternate}
+@keyframes nvB{from{opacity:1}to{opacity:.35}}
+.hat{position:absolute;top:84px;left:12px;width:44px;opacity:0;transform:translateY(-40px) rotate(-30deg)}
+.run .hat{animation:hatIn .5s cubic-bezier(.3,1.6,.5,1) 2.8s forwards}
+@keyframes hatIn{to{opacity:1;transform:rotate(-18deg)}}
+.cap{position:absolute;bottom:-40px;left:0;right:0;text-align:center;font:600 11px system-ui;color:rgba(255,255,255,.45)}
+</style></head><body>
+<div id="stage">
+ <div class="warm"></div>
+ <b class="sn" style="left:0%;animation-duration:6s;animation-delay:-0.0s;width:2px;height:2px"></b><b class="sn" style="left:37%;animation-duration:7s;animation-delay:-1.3s;width:3px;height:3px"></b><b class="sn" style="left:74%;animation-duration:8s;animation-delay:-2.6s;width:4px;height:4px"></b><b class="sn" style="left:11%;animation-duration:9s;animation-delay:-3.9s;width:2px;height:2px"></b><b class="sn" style="left:48%;animation-duration:10s;animation-delay:-5.2s;width:3px;height:3px"></b><b class="sn" style="left:85%;animation-duration:11s;animation-delay:-0.5s;width:4px;height:4px"></b><b class="sn" style="left:22%;animation-duration:6s;animation-delay:-1.8s;width:2px;height:2px"></b><b class="sn" style="left:59%;animation-duration:7s;animation-delay:-3.1s;width:3px;height:3px"></b><b class="sn" style="left:96%;animation-duration:8s;animation-delay:-4.4s;width:4px;height:4px"></b><b class="sn" style="left:33%;animation-duration:9s;animation-delay:-5.7s;width:2px;height:2px"></b><b class="sn" style="left:70%;animation-duration:10s;animation-delay:-1.0s;width:3px;height:3px"></b><b class="sn" style="left:7%;animation-duration:11s;animation-delay:-2.3s;width:4px;height:4px"></b><b class="sn" style="left:44%;animation-duration:6s;animation-delay:-3.6s;width:2px;height:2px"></b><b class="sn" style="left:81%;animation-duration:7s;animation-delay:-4.9s;width:3px;height:3px"></b><b class="sn" style="left:18%;animation-duration:8s;animation-delay:-0.2s;width:4px;height:4px"></b><b class="sn" style="left:55%;animation-duration:9s;animation-delay:-1.5s;width:2px;height:2px"></b><b class="sn" style="left:92%;animation-duration:10s;animation-delay:-2.8s;width:3px;height:3px"></b><b class="sn" style="left:29%;animation-duration:11s;animation-delay:-4.1s;width:4px;height:4px"></b><b class="sn" style="left:66%;animation-duration:6s;animation-delay:-5.4s;width:2px;height:2px"></b><b class="sn" style="left:3%;animation-duration:7s;animation-delay:-0.7s;width:3px;height:3px"></b><b class="sn" style="left:40%;animation-duration:8s;animation-delay:-2.0s;width:4px;height:4px"></b><b class="sn" style="left:77%;animation-duration:9s;animation-delay:-3.3s;width:2px;height:2px"></b><b class="sn" style="left:14%;animation-duration:10s;animation-delay:-4.6s;width:3px;height:3px"></b><b class="sn" style="left:51%;animation-duration:11s;animation-delay:-5.9s;width:4px;height:4px"></b><b class="sn" style="left:88%;animation-duration:6s;animation-delay:-1.2s;width:2px;height:2px"></b><b class="sn" style="left:25%;animation-duration:7s;animation-delay:-2.5s;width:3px;height:3px"></b>
+ <div class="frame"></div>
+ <div class="lights"><i style="left:2%;background:#ef4444;box-shadow:0 0 8px 2px #ef4444;animation-delay:0.0s"></i><i style="left:10%;background:#22c55e;box-shadow:0 0 8px 2px #22c55e;animation-delay:0.3s"></i><i style="left:18%;background:#facc15;box-shadow:0 0 8px 2px #facc15;animation-delay:0.6s"></i><i style="left:26%;background:#38bdf8;box-shadow:0 0 8px 2px #38bdf8;animation-delay:0.9s"></i><i style="left:34%;background:#ef4444;box-shadow:0 0 8px 2px #ef4444;animation-delay:0.0s"></i><i style="left:42%;background:#22c55e;box-shadow:0 0 8px 2px #22c55e;animation-delay:0.3s"></i><i style="left:50%;background:#facc15;box-shadow:0 0 8px 2px #facc15;animation-delay:0.6s"></i><i style="left:58%;background:#38bdf8;box-shadow:0 0 8px 2px #38bdf8;animation-delay:0.9s"></i><i style="left:66%;background:#ef4444;box-shadow:0 0 8px 2px #ef4444;animation-delay:0.0s"></i><i style="left:74%;background:#22c55e;box-shadow:0 0 8px 2px #22c55e;animation-delay:0.3s"></i><i style="left:82%;background:#facc15;box-shadow:0 0 8px 2px #facc15;animation-delay:0.6s"></i><i style="left:90%;background:#38bdf8;box-shadow:0 0 8px 2px #38bdf8;animation-delay:0.9s"></i><i style="left:98%;background:#ef4444;box-shadow:0 0 8px 2px #ef4444;animation-delay:0.0s"></i></div>
+ <svg class="hat" viewBox="0 0 44 40"><path d="M4 30 Q14 2 34 6 Q42 8 40 20 Q32 12 22 16 Q12 22 10 30Z" fill="#dc2626"/><circle cx="40" cy="22" r="4.5" fill="#fff"/><rect x="1" y="27" width="28" height="8" rx="4" fill="#fff"/></svg>
+ <div class="title"><div class="t1">TrenTurnos</div><div class="t2">V5</div></div>
+ <div class="ticl"><b style="left:4%;height:10px"></b><b style="left:18%;height:14px"></b><b style="left:33%;height:8px"></b><b style="left:52%;height:13px"></b><b style="left:68%;height:9px"></b><b style="left:85%;height:12px"></b></div>
+ <div class="legend">— TU CALENDARIO DE TURNOS —</div>
+ <div class="scene">
+  <div class="convoy"><div class="trscale"><div class="trwrap"><i class="streak" style="top:30%"></i><i class="streak" style="top:55%;left:-55%"></i><i class="streak" style="top:78%;left:-30%;width:30%"></i>      <svg viewBox="0 0 160 46" class="trsvg" aria-hidden="true">
+        <defs><linearGradient id="spTb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#e9e3f7"/><stop offset="1" stop-color="#b9aedd"/></linearGradient></defs>
+        <ellipse class="sp-glow" cx="80" cy="41" rx="70" ry="3.5"/>
+        <path d="M6 31 L6 14 Q6 8 14 8 L112 8 Q134 8 152 25 Q158 30 153 34 L8 34 Q6 34 6 31 Z" fill="url(#spTb)"/>
+        <path d="M7 25 L150 25" stroke="#dc2626" stroke-width="3.2" stroke-linecap="round"/>
+        <g fill="#1b1030" opacity=".85"><rect x="16" y="12" width="13" height="7" rx="1.5"/><rect x="34" y="12" width="13" height="7" rx="1.5"/><rect x="52" y="12" width="13" height="7" rx="1.5"/><rect x="70" y="12" width="13" height="7" rx="1.5"/><rect x="88" y="12" width="13" height="7" rx="1.5"/><path d="M108 12 H122 Q134 12 143 21 L108 21 Z"/></g>
+        <rect x="14" y="34" width="22" height="3.5" rx="1.5" fill="#2a1747"/><rect x="118" y="34" width="22" height="3.5" rx="1.5" fill="#2a1747"/>
+      </svg>
+</div></div>
+  <div class="rope"></div>
+  <div class="sleigh"><div class="bob">
+   <svg viewBox="0 0 240 74" class="slsvg">
+    <!-- riendas -->
+    <path d="M58 40 L104 32 M58 42 L140 30 M140 30 L174 32 M140 30 L210 30" stroke="#f5c542" stroke-width="1.4" fill="none"/>
+    <!-- 4 renos -->
+    <g transform="translate(64,-5)" class="back"><g class="rd"><path class="lg l1" d="M96 42 L92 56 M100 42 L102 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l2" d="M116 42 L112 56 M120 42 L124 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="108" cy="38" rx="15" ry="8" fill="#8b5a2b"/><path d="M118 34 L124 24" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="127" cy="22" rx="6" ry="4.5" fill="#8b5a2b"/><circle cx="133" cy="23" r="2" fill="#3b2412"/>
+     <path d="M124 18 L120 8 M121 12 L116 10 M127 18 L130 8 M129 12 L134 9" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="126" cy="20.5" r="1" fill="#111"/></g><g class="rd r2"><path class="lg l2" d="M132 40 L128 54 M136 40 L138 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l1" d="M150 40 L146 54 M154 40 L158 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="143" cy="36" rx="14" ry="7.5" fill="#9a6532"/><path d="M152 32 L157 22" stroke="#9a6532" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="160" cy="20" rx="6" ry="4.5" fill="#9a6532"/><circle cx="166" cy="21" r="2.6" fill="#3b2412"/>
+     <path d="M157 16 L153 6 M154 10 L149 8 M160 16 L163 6 M162 10 L167 7" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="159" cy="18.5" r="1" fill="#111"/></g></g><g transform="translate(-6,-5)" class="back"><g class="rd"><path class="lg l1" d="M96 42 L92 56 M100 42 L102 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l2" d="M116 42 L112 56 M120 42 L124 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="108" cy="38" rx="15" ry="8" fill="#8b5a2b"/><path d="M118 34 L124 24" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="127" cy="22" rx="6" ry="4.5" fill="#8b5a2b"/><circle cx="133" cy="23" r="2" fill="#3b2412"/>
+     <path d="M124 18 L120 8 M121 12 L116 10 M127 18 L130 8 M129 12 L134 9" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="126" cy="20.5" r="1" fill="#111"/></g><g class="rd r2"><path class="lg l2" d="M132 40 L128 54 M136 40 L138 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l1" d="M150 40 L146 54 M154 40 L158 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="143" cy="36" rx="14" ry="7.5" fill="#9a6532"/><path d="M152 32 L157 22" stroke="#9a6532" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="160" cy="20" rx="6" ry="4.5" fill="#9a6532"/><circle cx="166" cy="21" r="2.6" fill="#3b2412"/>
+     <path d="M157 16 L153 6 M154 10 L149 8 M160 16 L163 6 M162 10 L167 7" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="159" cy="18.5" r="1" fill="#111"/></g></g><g transform="translate(0,0)"><g class="rd"><path class="lg l1" d="M96 42 L92 56 M100 42 L102 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l2" d="M116 42 L112 56 M120 42 L124 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="108" cy="38" rx="15" ry="8" fill="#8b5a2b"/><path d="M118 34 L124 24" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="127" cy="22" rx="6" ry="4.5" fill="#8b5a2b"/><circle cx="133" cy="23" r="2" fill="#3b2412"/>
+     <path d="M124 18 L120 8 M121 12 L116 10 M127 18 L130 8 M129 12 L134 9" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="126" cy="20.5" r="1" fill="#111"/></g><g class="rd r2"><path class="lg l2" d="M132 40 L128 54 M136 40 L138 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l1" d="M150 40 L146 54 M154 40 L158 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="143" cy="36" rx="14" ry="7.5" fill="#9a6532"/><path d="M152 32 L157 22" stroke="#9a6532" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="160" cy="20" rx="6" ry="4.5" fill="#9a6532"/><circle cx="166" cy="21" r="2.6" fill="#3b2412"/>
+     <path d="M157 16 L153 6 M154 10 L149 8 M160 16 L163 6 M162 10 L167 7" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="159" cy="18.5" r="1" fill="#111"/></g></g><g transform="translate(70,0)"><g class="rd"><path class="lg l1" d="M96 42 L92 56 M100 42 L102 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l2" d="M116 42 L112 56 M120 42 L124 56" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="108" cy="38" rx="15" ry="8" fill="#8b5a2b"/><path d="M118 34 L124 24" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="127" cy="22" rx="6" ry="4.5" fill="#8b5a2b"/><circle cx="133" cy="23" r="2" fill="#3b2412"/>
+     <path d="M124 18 L120 8 M121 12 L116 10 M127 18 L130 8 M129 12 L134 9" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="126" cy="20.5" r="1" fill="#111"/></g><g class="rd r2"><path class="lg l2" d="M132 40 L128 54 M136 40 L138 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <path class="lg l1" d="M150 40 L146 54 M154 40 L158 54" stroke="#5b3716" stroke-width="3" stroke-linecap="round"/>
+     <ellipse cx="143" cy="36" rx="14" ry="7.5" fill="#9a6532"/><path d="M152 32 L157 22" stroke="#9a6532" stroke-width="5" stroke-linecap="round"/>
+     <ellipse cx="160" cy="20" rx="6" ry="4.5" fill="#9a6532"/><circle cx="166" cy="21" r="2.6" fill="#ef4444" class="nose"/>
+     <path d="M157 16 L153 6 M154 10 L149 8 M160 16 L163 6 M162 10 L167 7" stroke="#d6b48a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+     <circle cx="159" cy="18.5" r="1" fill="#111"/></g></g>
+    <!-- trineo -->
+    <path d="M4 60 Q2 68 12 68 L66 68 Q74 68 74 62" stroke="#f5c542" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M14 60 L16 66 M54 60 L52 66" stroke="#f5c542" stroke-width="2"/>
+    <!-- Papá Noel -->
+    <g class="santa">
+     <ellipse cx="34" cy="36" rx="13" ry="12" fill="#dc2626"/>
+     <circle cx="34" cy="22" r="8" fill="#f6cba6"/>
+     <path d="M26 24 Q34 38 42 24 Q38 30 34 30 Q30 30 26 24Z" fill="#fff"/>
+     <path d="M25 20 Q34 6 44 18 L44 20 Q34 16 25 21Z" fill="#dc2626"/><path d="M44 18 Q50 14 49 22" stroke="#dc2626" stroke-width="3" fill="none"/>
+     <circle cx="49" cy="23" r="2.6" fill="#fff"/><rect x="24" y="19" width="20" height="3.4" rx="1.7" fill="#fff"/>
+     <circle cx="31" cy="23" r=".9" fill="#111"/><circle cx="37" cy="23" r=".9" fill="#111"/>
+     <g class="wave"><path d="M22 34 Q12 26 14 16" stroke="#dc2626" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="14" cy="14" r="3" fill="#fff"/></g>
+    </g>
+    <path d="M6 44 Q4 60 16 60 L60 60 Q70 60 72 46 L64 46 Q60 54 52 52 L20 52 Q12 52 12 44Z" fill="#b91c1c"/>
+    <path d="M12 44 Q12 52 20 52 L52 52 Q60 54 64 46" stroke="#f5c542" stroke-width="1.6" fill="none"/>
+    <circle cx="10" cy="44" r="3" fill="#f5c542"/>
+    <!-- saco de regalos -->
+    <path d="M2 44 Q-2 30 8 28 Q14 30 12 44Z" fill="#7c4a1c"/><rect x="3" y="24" width="6" height="5" fill="#22c55e"/>
+   </svg>
+   <div class="ho">¡Jo, jo, jo!</div>
+  </div></div>
+ </div>
+  <div class="ice">
+   <div class="body"><b class="fs" style="left:0%;top:0%;font-size:8px">✳</b><b class="fs" style="left:29%;top:53%;font-size:13px">✳</b><b class="fs" style="left:58%;top:6%;font-size:8px">✳</b><b class="fs" style="left:87%;top:59%;font-size:13px">✳</b><b class="fs" style="left:16%;top:12%;font-size:8px">✳</b><b class="fs" style="left:45%;top:65%;font-size:13px">✳</b><b class="fs" style="left:74%;top:18%;font-size:8px">✳</b><b class="fs" style="left:3%;top:71%;font-size:13px">✳</b><b class="fs" style="left:32%;top:24%;font-size:8px">✳</b><b class="fs" style="left:61%;top:77%;font-size:13px">✳</b></div>
+   <b class="icl" style="left:6%;height:9px"></b><b class="icl" style="left:15%;height:14px"></b><b class="icl" style="left:24%;height:7px"></b><b class="icl" style="left:33%;height:12px"></b><b class="icl" style="left:44%;height:16px"></b><b class="icl" style="left:55%;height:8px"></b><b class="icl" style="left:64%;height:13px"></b><b class="icl" style="left:75%;height:10px"></b><b class="icl" style="left:85%;height:15px"></b><b class="icl" style="left:93%;height:7px"></b>
+   <svg class="cracks" viewBox="0 0 286 96" preserveAspectRatio="none">
+    <path class="c1" d="M149 46 L132 30 L120 34 L104 14 M149 46 L170 38 L182 22"/>
+    <path class="c2" d="M149 46 L160 64 L176 70 L192 92 M149 46 L128 58 L110 56 L90 80 M182 22 L210 12 L236 4"/>
+    <path class="c3" d="M104 14 L80 8 L52 18 L20 6 M192 92 L226 74 L262 82 M90 80 L58 70 L26 88 M149 46 L150 4 M210 12 L250 40 L284 34 M58 70 L40 44 L4 50"/>
+   </svg>
+   <i class="shard" style="clip-path:polygon(0% 0%,38% 0%,52% 48%,0% 30%);--dx:-70px;--dy:-60px;--r:-38deg"></i><i class="shard" style="clip-path:polygon(38% 0%,72% 0%,52% 48%);--dx:-10px;--dy:-90px;--r:22deg"></i><i class="shard" style="clip-path:polygon(72% 0%,100% 0%,100% 26%,52% 48%);--dx:60px;--dy:-70px;--r:40deg"></i><i class="shard" style="clip-path:polygon(100% 26%,100% 70%,52% 48%);--dx:95px;--dy:-10px;--r:-30deg"></i><i class="shard" style="clip-path:polygon(100% 70%,100% 100%,66% 100%,52% 48%);--dx:80px;--dy:70px;--r:35deg"></i><i class="shard" style="clip-path:polygon(66% 100%,30% 100%,52% 48%);--dx:10px;--dy:95px;--r:-25deg"></i><i class="shard" style="clip-path:polygon(30% 100%,0% 100%,0% 64%,52% 48%);--dx:-75px;--dy:75px;--r:30deg"></i><i class="shard" style="clip-path:polygon(0% 64%,0% 30%,52% 48%);--dx:-95px;--dy:5px;--r:-40deg"></i>
+  </div>
+ </div>
+ <div class="track"></div>
+ <b class="trail" style="left:240px;top:350px;animation-delay:3.75s">✦</b><b class="trail" style="left:264px;top:337px;animation-delay:3.84s">✧</b><b class="trail" style="left:288px;top:324px;animation-delay:3.93s">★</b><b class="trail" style="left:312px;top:311px;animation-delay:4.02s">✦</b><b class="trail" style="left:336px;top:298px;animation-delay:4.11s">✧</b><b class="trail" style="left:360px;top:285px;animation-delay:4.20s">★</b><b class="trail" style="left:384px;top:272px;animation-delay:4.29s">✦</b><b class="trail" style="left:408px;top:259px;animation-delay:4.38s">✧</b>
+<div class="diva" aria-hidden="true">
+<svg viewBox="0 0 150 210" class="dv">
+ <defs>
+  <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d27a"/><stop offset="1" stop-color="#c98a2e"/></linearGradient>
+  <linearGradient id="jk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26355f"/><stop offset="1" stop-color="#141d38"/></linearGradient>
+ </defs>
+ <!-- melena (detrás) -->
+ <g class="hairb"><path d="M38 70 Q24 40 46 22 Q70 6 96 20 Q118 36 110 70 Q122 96 112 128 Q100 120 104 98 Q92 112 98 136 Q80 124 84 100 L62 100 Q66 126 48 136 Q54 112 42 98 Q46 120 34 128 Q24 96 38 70Z" fill="url(#hair)"/></g>
+ <!-- cuerpo: chaqueta de revisora -->
+ <path d="M30 210 Q30 150 52 136 L98 136 Q120 150 120 210Z" fill="url(#jk)"/>
+ <path d="M60 136 L75 168 L90 136" fill="#f8fafc"/>
+ <path d="M66 140 Q75 150 84 140 L80 158 Q75 164 70 158Z" fill="#dc2626"/>
+ <path d="M52 136 L75 175 L64 136Z M98 136 L75 175 L86 136Z" fill="#1b2747"/>
+ <circle cx="75" cy="184" r="2.6" fill="#f5c542"/><circle cx="75" cy="197" r="2.6" fill="#f5c542"/>
+ <path d="M36 160 L50 160" stroke="#f5c542" stroke-width="2"/>
+ <!-- cuello y cara -->
+ <rect x="67" y="104" width="16" height="20" rx="6" fill="#f0bf98"/>
+ <ellipse cx="75" cy="78" rx="25" ry="30" fill="#f6cba6"/>
+ <!-- flequillo/mechones delante -->
+ <path d="M50 64 Q56 40 80 44 Q100 46 102 68 Q94 54 82 56 Q70 50 58 60 Q54 68 50 64Z" fill="url(#hair)"/>
+ <path d="M50 64 Q44 86 50 104 Q42 96 42 80Z M100 66 Q106 88 100 104 Q108 94 108 80Z" fill="url(#hair)"/>
+ <!-- gorro de Papá Noel -->
+ <g class="shat"><path d="M48 44 Q50 14 80 10 Q106 8 116 36 Q104 26 92 28 Q80 32 76 42Z" fill="#dc2626"/>
+ <path d="M60 22 Q72 14 86 14" stroke="#ef4444" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
+ <rect x="45" y="37" width="62" height="11" rx="5.5" fill="#fff"/>
+ <circle cx="117" cy="38" r="6.5" fill="#fff"/></g>
+ <!-- ojos de diva (cerrados, con pestañas) -->
+ <path d="M60 76 Q65 72 70 76" stroke="#3b2a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+ <path d="M80 76 Q85 72 90 76" stroke="#3b2a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+ <path d="M60 76 l-3 -2 M62 74.5 l-2 -3 M90 76 l3 -2 M88 74.5 l2 -3" stroke="#3b2a1a" stroke-width="1.2" stroke-linecap="round"/>
+ <path d="M58 68 Q65 63 71 66 M79 66 Q85 63 92 68" stroke="#8a5a2b" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+ <ellipse cx="62" cy="86" rx="5" ry="3" fill="#f59e9e" opacity=".55"/><ellipse cx="88" cy="86" rx="5" ry="3" fill="#f59e9e" opacity=".55"/>
+ <!-- boca: cerrada / abierta (se alternan al hablar) -->
+ <g class="mc"><path d="M68 94 Q75 99 82 94 Q75 96.5 68 94Z" fill="#dc2626"/></g>
+ <g class="mo"><ellipse cx="75" cy="96" rx="6.5" ry="5.5" fill="#7f1d1d"/><path d="M68.5 95 Q75 89 81.5 95" stroke="#dc2626" stroke-width="2.4" fill="none"/><path d="M69 97.5 Q75 103 81 97.5" stroke="#dc2626" stroke-width="2.4" fill="none"/></g>
+ <!-- brazo levantado (pose de diva) -->
+ <g class="arm"><path d="M112 146 Q132 120 128 86" stroke="#26355f" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <circle cx="128" cy="80" r="7.5" fill="#f6cba6"/><path d="M124 74 l-2 -8 M128 72 l0 -9 M132 74 l2 -8" stroke="#f6cba6" stroke-width="3.2" stroke-linecap="round"/></g>
+</svg>
+<div class="bubble"><span class="bt">IT'S TIIIME!</span><i></i></div>
+<b class="spark" style="left:6px;top:40px">✦</b><b class="spark" style="left:132px;top:30px;animation-delay:.3s">✦</b><b class="spark" style="left:20px;top:120px;animation-delay:.6s">✧</b>
+</div>
+ <div class="spk"><svg viewBox="0 0 34 34"><path d="M4 12h6l8-7v24l-8-7H4z" fill="#fde68a"/><path class="w w1" d="M22 12q3 5 0 10"/><path class="w w2" d="M25.5 8.5q6 8.5 0 17"/><path class="w w3" d="M29 5q9 12 0 24"/></svg></div>
+ <b class="nt" style="left:70px;top:330px;--x:-20px;--r:-20deg;animation-delay:2.6s">❄</b><b class="nt" style="left:120px;top:350px;--x:15px;--r:15deg;animation-delay:2.8s">🎵</b><b class="nt" style="left:230px;top:335px;--x:-10px;--r:-12deg;animation-delay:2.7s">❄</b><b class="nt" style="left:280px;top:355px;--x:25px;--r:22deg;animation-delay:2.95s">🎵</b><b class="nt" style="left:175px;top:320px;--x:0px;--r:8deg;animation-delay:3.1s">✨</b><b class="nt" style="left:95px;top:360px;--x:-30px;--r:-25deg;animation-delay:3.3s">🎵</b><b class="nt" style="left:255px;top:325px;--x:20px;--r:18deg;animation-delay:3.45s">❄</b>
+ <div class="frost"></div>
+ <div class="flash"></div>
+ <div class="tap" id="tap">🔊 Toca la pantalla para oír los efectos de sonido</div>
+ <div class="cap">Maqueta · pantalla de inicio de Navidad</div>
+</div>
+<script>
+var st=document.getElementById('stage');
+function fit(){var s=Math.min(innerWidth/360,innerHeight/640);st.style.transform='scale('+s+')';}
+fit();addEventListener('resize',fit);
+
+var AC=null, sonido=false;
+function ruido(t,dur,vol,fc){var n=AC.sampleRate*dur,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);
+  for(var i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+  var s=AC.createBufferSource();s.buffer=b;var f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=fc;
+  var g=AC.createGain();g.gain.value=vol;s.connect(f).connect(g).connect(AC.destination);s.start(t);}
+function campana(t,fr,vol){var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=fr;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+1.2);
+  o.connect(g).connect(AC.destination);o.start(t);o.stop(t+1.3);}
+function sonar(){if(!sonido||!AC)return;var t=AC.currentTime+.02;
+  ruido(t+.8,.12,.5,1800);ruido(t+1.4,.16,.7,1400);ruido(t+2.0,.22,.9,1000);
+  ruido(t+2.4,.7,1.0,600);[2093,2637,3136,2349,2794].forEach(function(f,i){campana(t+2.42+i*.05,f,.08);});
+  [784,988,1175,1568,1175,1568].forEach(function(f,i){campana(t+2.6+i*.14,f,.18);});
+  ruido(t+3.0,.9,.25,300);
+  for(var k=0;k<14;k++){campana(t+2.7+k*.12,2600+(k%3)*350,.05);ruido(t+2.7+k*.12,.05,.12,4000);}
+  try{setTimeout(function(){var h=new SpeechSynthesisUtterance('Jo, jo, jo');h.lang='es-ES';h.pitch=.3;h.rate=.7;speechSynthesis.speak(h);},3200);}catch(e){}
+  try{setTimeout(function(){var u=new SpeechSynthesisUtterance("It's tiiime!");u.lang='en-US';u.pitch=1.6;u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u);},3000);}catch(e){}}
+document.addEventListener('click',function(){if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}
+  sonido=true;var tp=document.getElementById('tap');if(tp)tp.textContent='🔊 Sonido activado';play();sonar();});
+function play(){st.classList.remove('run');void st.offsetWidth;st.classList.add('run');sonar();}
+if(!/static/.test(location.hash)){play();setInterval(play,5500);}
+</script>
+</body></html>
