@@ -36,13 +36,23 @@ android {
             enableV2Signing true
             enableV3Signing true
         }
+        // Private upload key for Google Play. CI decodes it from the repo secrets and sets these
+        // variables only for the bundle (AAB) build; it never lives in the repo.
+        if (System.getenv("UPLOAD_KEYSTORE_PATH")) {
+            upload {
+                storeFile file(System.getenv("UPLOAD_KEYSTORE_PATH"))
+                storePassword System.getenv("UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias 'upload'
+                keyPassword System.getenv("UPLOAD_KEYSTORE_PASSWORD")
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            signingConfig signingConfigs.release
+            signingConfig = System.getenv("UPLOAD_KEYSTORE_PATH") ? signingConfigs.upload : signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

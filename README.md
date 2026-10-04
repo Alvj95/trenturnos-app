@@ -28,6 +28,20 @@ Cada push compila un APK nuevo con GitHub Actions (`.github/workflows/android.ym
 | `capacitor.config.json` | Nombre (`TrenTurnos`) e identificador (`com.trenturnos.app`) de la app |
 | `android/` | Proyecto nativo de Android |
 
+## Google Play
+
+Google Play pide un **App Bundle (`.aab`)** firmado con una clave privada de subida (*upload key*).
+
+1. En GitHub: **Settings → Secrets and variables → Actions → New repository secret** y crea:
+   - `UPLOAD_KEYSTORE_BASE64`: el contenido del keystore en base64.
+   - `UPLOAD_KEYSTORE_PASSWORD`: su contraseña (alias `upload`).
+2. A partir del siguiente push, cada release trae también `TrenTurnos.aab`.
+3. Súbelo en Play Console → *Prueba cerrada* (o *Producción*) → *Crear versión*, con **Play App Signing** activado.
+
+Guarda una copia del keystore y su contraseña fuera de GitHub: sin ellos no se pueden publicar actualizaciones.
+El `.apk` de Releases sigue firmado con la clave de prueba del repo, así que quien lo instaló a mano tendrá que
+desinstalarlo antes de instalar la versión de Google Play.
+
 ## Limitaciones
 
 - Necesita internet para las librerías que el HTML carga de CDN (PDF, OCR, Excel, Supabase) y para las fuentes.
