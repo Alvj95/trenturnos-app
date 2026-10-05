@@ -3465,92 +3465,6 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <div class="sp-bloom"></div>
 </div>
 <script>
-// NUEVO — "Ding-dong-ding" de megafonía de tren al entrar, mientras se ve
-// la pantalla de inicio (sonido propio, creado con Web Audio, sin
-// archivos). Una vez por visita. Si el navegador no deja sonar hasta que
-// se toque la pantalla, suena al tocar DURANTE la pantalla de inicio;
-// después ya no suena, para que nunca salga a destiempo.
-// Sonido de megafonía de tren (propio): clic de micro, fondo de altavoz,
-// "ding-dong-ding" tipo vibráfono, todo por un "altavoz de techo" con
-// eco de vagón, y clic de apagado. ctx = AudioContext u OfflineAudioContext.
-function megafoniaDingDong(ctx, t){
-  var sr = ctx.sampleRate, out = ctx.destination;
-  function ruido(seg){ var n=Math.floor(sr*seg), b=ctx.createBuffer(1,n,sr), d=b.getChannelData(0), last=0;
-    for(var i=0;i<n;i++){ var w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*3.5; } return b; }
-  // "altavoz de techo": sin graves ni agudos, presencia en medios, algo saturado
-  var hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=320; hp.Q.value=.8;
-  var lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3600; lp.Q.value=.9;
-  var pk=ctx.createBiquadFilter(); pk.type='peaking'; pk.frequency.value=1700; pk.Q.value=1.1; pk.gain.value=5;
-  var sh=ctx.createWaveShaper(), cur=new Float32Array(1024);
-  for(var i=0;i<1024;i++){ var x=i/511.5-1; cur[i]=Math.tanh(1.8*x)/Math.tanh(1.8); } sh.curve=cur;
-  var bus=ctx.createGain(); bus.gain.value=1;
-  bus.connect(hp); hp.connect(lp); lp.connect(pk); pk.connect(sh);
-  // eco de vagón: reverberación corta + rebote
-  var ir=ctx.createBuffer(2,Math.floor(sr*1.3),sr);
-  for(var c=0;c<2;c++){ var d=ir.getChannelData(c); for(var j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*Math.pow(1-j/d.length,3.2); }
-  var rev=ctx.createConvolver(); rev.buffer=ir;
-  var dl=ctx.createDelay(); dl.delayTime.value=.11; var fb=ctx.createGain(); fb.gain.value=.22; dl.connect(fb); fb.connect(dl);
-  var seco=ctx.createGain(); seco.gain.value=.9; var hum=ctx.createGain(); hum.gain.value=.38; var eco=ctx.createGain(); eco.gain.value=.18;
-  sh.connect(seco); sh.connect(rev); rev.connect(hum); sh.connect(dl); dl.connect(eco);
-  var master=ctx.createGain(); master.gain.value=.9;
-  seco.connect(master); hum.connect(master); eco.connect(master); master.connect(out);
-  // clic de micrófono (encendido y apagado) y soplido de fondo con zumbido
-  function clic(at, v){ var s=ctx.createBufferSource(); s.buffer=ruido(.012); var g=ctx.createGain(); g.gain.value=v; s.connect(g); g.connect(bus); s.start(at); }
-  var fin=t+3.0;
-  clic(t-0.32, .9); clic(fin, .7);
-  var fondo=ctx.createBufferSource(); fondo.buffer=ruido(fin-t+0.35); var fg=ctx.createGain();
-  fg.gain.setValueAtTime(0,t-.3); fg.gain.linearRampToValueAtTime(.05,t-.25); fg.gain.setValueAtTime(.05,fin-.05); fg.gain.linearRampToValueAtTime(0,fin+.02);
-  fondo.connect(fg); fg.connect(bus); fondo.start(t-.3);
-  [100,150].forEach(function(f,k){ var o=ctx.createOscillator(); o.frequency.value=f; var g=ctx.createGain();
-    g.gain.setValueAtTime(0,t-.3); g.gain.linearRampToValueAtTime(k?.008:.014,t-.25); g.gain.setValueAtTime(k?.008:.014,fin-.05); g.gain.linearRampToValueAtTime(0,fin+.02);
-    o.connect(g); g.connect(bus); o.start(t-.3); o.stop(fin+.05); });
-  // "ding-dong-ding": tres notas tipo vibráfono (sol-si-re), suaves
-  function nota(at, f){
-    [[1,.42,1.9],[4,.08,.35],[2.76,.04,.6],[10.2,.015,.12]].forEach(function(p){
-      var o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f*p[0];
-      var g=ctx.createGain(); g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(p[1],at+.012);
-      g.gain.exponentialRampToValueAtTime(0.0001,at+p[2]);
-      var tr=ctx.createGain(); tr.gain.value=1; var lfo=ctx.createOscillator(); lfo.frequency.value=5.2; var ld=ctx.createGain(); ld.gain.value=.12;
-      lfo.connect(ld); ld.connect(tr.gain);
-      o.connect(g); g.connect(tr); tr.connect(bus); o.start(at); o.stop(at+p[2]+.05); lfo.start(at); lfo.stop(at+p[2]+.05);
-    });
-  }
-  nota(t,392); nota(t+.5,494); nota(t+1.0,587);
-  return fin+0.6; // fin aproximado
-}
-
-(function(){
-  try{
-    if(sessionStorage.getItem('dingDongSonado')) return;
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    var ctx = new AC(), hecho = false;
-    function enPantallaInicio(){
-      var sp = document.getElementById('splash-screen');
-      return !document.body || !!sp; // antes de pintarse o mientras exista el splash
-    }
-    function sonar(){
-      if(hecho || ctx.state !== 'running' || !enPantallaInicio()) return;
-      hecho = true;
-      try{ sessionStorage.setItem('dingDongSonado','1'); }catch(e){}
-      megafoniaDingDong(ctx, ctx.currentTime + 0.35);
-      quitar();
-    }
-    function alTocar(){
-      if(hecho || !enPantallaInicio()){ quitar(); return; }
-      ctx.resume().then(sonar).catch(function(){});
-    }
-    function quitar(){
-      ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.removeEventListener(ev, alTocar, true); });
-    }
-    ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.addEventListener(ev, alTocar, true); });
-    // Intento al entrar (suena si el navegador lo permite).
-    if(ctx.state === 'running') sonar();
-    else ctx.resume().then(sonar).catch(function(){});
-  }catch(e){}
-})();
-</script>
-<script>
 // ACTUALIZADO — se elimina la persistencia diaria (localStorage +
 // comparación de fechas). El splash se ejecuta SIEMPRE que la página
 // se cargue o se refresque. No se toca la animación CSS (@keyframes)
@@ -3678,13 +3592,6 @@ function megafoniaDingDong(ctx, t){
       <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:#94A3B8;display:block;margin-bottom:4px">NOMBRE COMPLETO</label>
       <input type="text" id="solicitudNombreInputTrip" placeholder="Tu nombre completo…" autocomplete="off"
         style="width:100%;background:#132236;border:2px solid #1E293B;border-radius:12px;color:#F8FAFC;font-size:14px;font-weight:600;padding:12px 14px;margin-bottom:10px;outline:none;box-sizing:border-box">
-      <!-- NUEVO — alta de empleado nuevo: base y fecha de ingreso las rellena el propio empleado. -->
-      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:#94A3B8;display:block;margin-bottom:4px">BASE</label>
-      <input type="text" id="solicitudBaseInputTrip" list="listaSedes" placeholder="Barcelona, Madrid..." autocomplete="off" onfocus="this.select()"
-        style="width:100%;background:#132236;border:2px solid #1E293B;border-radius:12px;color:#F8FAFC;font-size:14px;font-weight:600;padding:12px 14px;margin-bottom:10px;outline:none;box-sizing:border-box">
-      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:#94A3B8;display:block;margin-bottom:4px">FECHA DE INGRESO EN LA EMPRESA</label>
-      <input type="date" id="solicitudFechaIngresoInputTrip"
-        style="width:100%;background:#132236;border:2px solid #1E293B;border-radius:12px;color:#F8FAFC;font-size:14px;font-weight:600;padding:12px 14px;margin-bottom:10px;outline:none;box-sizing:border-box;color-scheme:dark">
       <button id="btnEnviarSolicitudAccesoTrip" onclick="enviarSolicitudAccesoTrip()" style="width:100%;background:linear-gradient(135deg,#2563EB,#3B82F6);
         border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:800;padding:12px;cursor:pointer;margin-bottom:8px">📨 Enviar solicitud de acceso</button>
       <div id="estadoSolicitudAccesoTrip" style="display:none;font-size:11px;color:#94A3B8;margin-bottom:8px;line-height:1.4"></div>
@@ -7038,7 +6945,7 @@ function megafoniaDingDong(ctx, t){
 
     <div class="padm-group">
       <div class="padm-group-hdr" onclick="padmToggle('padm-accesos')">
-        <div class="padm-group-tit">🔑 Accesos <span class="padm-group-badge">6</span></div>
+        <div class="padm-group-tit">🔑 Accesos <span class="padm-group-badge">4</span></div>
         <div class="padm-group-chev" id="padm-accesos-chev">⌄</div>
       </div>
       <div class="padm-group-body padm-cerrado" id="padm-accesos">
@@ -7056,39 +6963,6 @@ function megafoniaDingDong(ctx, t){
       <button class="m-save" style="width:100%;margin-bottom:8px" onclick="cargarAceptacionesDescargoAdmin()">🔄 Actualizar lista</button>
       <div class="estado-archivo sin-archivo" id="estadoAceptacionesDescargo">Toca "Actualizar lista" para ver los accesos.</div>
       <div id="listaAceptacionesDescargo" style="margin-top:8px"></div>
-    </div>
-
-    <!-- NUEVO — Altas de empleados nuevos: acceso PROVISIONAL para
-         tripulantes que todavía no salen en el Horario General de su
-         sede. Caduca solo al subir el siguiente PDF de esa sede (ver
-         altaCaducarProvisionalesSede). Interventores: no, tienen su
-         propio sistema. -->
-    <div class="admin-card">
-      <div class="admin-card-hdr">
-        <div class="admin-card-ico" style="background:rgba(16,185,129,.15);color:#6EE7B7">👤</div>
-        <div>
-          <div class="admin-card-tit">Accesos provisionales</div>
-          <div class="admin-card-sub">Empleados nuevos aceptados que aún no salen en el Horario General de su base. Caducan solos al subir el PDF de esa base.</div>
-        </div>
-      </div>
-      <button class="m-save" style="width:100%;margin-bottom:8px" onclick="altaCargarProvisionales()">🔄 Ver accesos provisionales</button>
-      <div class="estado-archivo sin-archivo" id="estadoAltasProvisionales">Toca "Ver accesos provisionales" para ver la lista.</div>
-      <div id="listaAltasProvisionales" style="margin-top:8px"></div>
-    </div>
-
-    <!-- NUEVO — Avisos de solicitudes de acceso en ESTE móvil: estado y prueba. -->
-    <div class="admin-card">
-      <div class="admin-card-hdr">
-        <div class="admin-card-ico" style="background:rgba(37,99,235,.15);color:#93C5FD">🔔</div>
-        <div>
-          <div class="admin-card-tit">Avisos en este móvil</div>
-          <div class="admin-card-sub">Para que te lleguen las solicitudes de acceso aunque tengas la app cerrada.</div>
-        </div>
-      </div>
-      <div class="estado-archivo sin-archivo" id="avisosAdminEstado">Comprobando...</div>
-      <button class="m-save" style="width:100%;margin-top:8px" id="avisosAdminBtnActivar" onclick="avisosAdminActivar()">🔔 Activar notificaciones en este móvil</button>
-      <button class="m-save" style="width:100%;margin-top:8px;background:#2563EB" onclick="avisosAdminPrueba()">📲 Enviarme una notificación de prueba</button>
-      <div id="avisosAdminMsg" style="margin-top:8px;font-size:11.5px;line-height:1.45"></div>
     </div>
 
     <!-- NUEVO — Solicitudes de acceso: matrículas que pidieron entrar
@@ -26476,10 +26350,6 @@ async function subirArchivoGlobalAdmin(tipo, file){
   refrescarEstadoArchivosAdmin();
   var sedePublicada = payload.sede || '';
   toast('✅ Archivo publicado' + (sedeSlug ? ' para '+sedePublicada : ' para todos'));
-  // NUEVO — caducan los accesos provisionales de ESA sede (altas de empleados nuevos).
-  if(sedeSlug && sedePublicada && typeof altaCaducarProvisionalesSede==='function'){
-    altaCaducarProvisionalesSede(sedePublicada, datosValidacion);
-  }
 
   // FIX — limpiar el formulario tras publicar con éxito: la sede y el
   // archivo elegido se quedaban puestos, lo que hacía parecer que ya
@@ -26869,15 +26739,6 @@ async function cargarAceptacionesDescargoAdmin(){
 // General publicado (ver enviarSolicitudAcceso), con botones para
 // aceptar/rechazar cada una. Al aceptar, esa matrícula queda válida
 // para crear cuenta gracias a _matriculaTieneSolicitudAceptada().
-// NUEVO — una solicitud cuenta como pendiente si está 'pendiente' y no es
-// de Interventor anterior al reinicio de accesos (esas ya no dan acceso
-// aunque se acepten, ver INTERV_ACCESO_DESDE).
-function _solicitudPendienteVigente(f){
-  if(!f || f.estado!=='pendiente') return false;
-  if(typeof _esFilaSolicitudInterventor==='function' && _esFilaSolicitudInterventor(f)
-     && typeof INTERV_ACCESO_DESDE!=='undefined' && String(f.fecha_hora||'') < INTERV_ACCESO_DESDE) return false;
-  return true;
-}
 function _escHtmlSol(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function cargarSolicitudesAccesoAdmin(){
   if(!perfilAdminActual || perfilAdminActual.rol !== 'admin') return;
@@ -26885,22 +26746,12 @@ async function cargarSolicitudesAccesoAdmin(){
   var elEstado = document.getElementById('estadoSolicitudesAcceso');
   if(elEstado) elEstado.textContent = 'Cargando...';
   var resp = await sbAdmin.from('solicitudes_acceso').select('*').order('fecha_hora', { ascending:false }).limit(50);
-  // NUEVO — además de las 50 últimas, TODAS las pendientes (aunque sean
-  // antiguas), para que el número del aviso cuadre siempre con la lista.
-  if(!resp.error){
-    var respPend = await sbAdmin.from('solicitudes_acceso').select('*').eq('estado','pendiente');
-    if(!respPend.error && respPend.data){
-      var vistos = {}; (resp.data||[]).forEach(function(f){ vistos[f.id] = true; });
-      var extra = respPend.data.filter(function(f){ return !vistos[f.id]; });
-      if(extra.length) resp.data = (resp.data||[]).concat(extra);
-    }
-  }
   if(resp.error){
     if(elEstado) elEstado.textContent = 'Error al cargar: ' + resp.error.message;
     return;
   }
   var filas = resp.data || [];
-  var pendientes = filas.filter(_solicitudPendienteVigente);
+  var pendientes = filas.filter(function(f){ return f.estado==='pendiente'; });
   _actualizarBadgeSolicitudesAcceso(pendientes.length);
   if(elEstado) elEstado.textContent = filas.length ? (pendientes.length+' pendiente(s) de '+filas.length+' en total') : 'No hay ninguna solicitud todavía.';
   if(!elLista) return;
@@ -26909,14 +26760,12 @@ async function cargarSolicitudesAccesoAdmin(){
     var div = document.createElement('div');
     div.style.cssText = 'background:var(--s2);border:1px solid var(--div);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12px';
     var fecha = fila.fecha_hora ? new Date(fila.fecha_hora).toLocaleString('es-ES') : '';
-    var antiguaInterv = fila.estado==='pendiente' && !_solicitudPendienteVigente(fila);
-    var etiquetaEstado = fila.estado==='aceptada' ? '✅ Aceptada' : (fila.estado==='rechazada' ? '🚫 Rechazada' : (antiguaInterv ? '🗄️ Antigua (Interventor, de antes del reinicio de accesos) — ya no cuenta' : '⏳ Pendiente'));
+    var etiquetaEstado = fila.estado==='aceptada' ? '✅ Aceptada' : (fila.estado==='rechazada' ? '🚫 Rechazada' : '⏳ Pendiente');
     var filaHtml = '<div style="display:flex;justify-content:space-between;align-items:center">'
       + '<span><b>'+_escHtmlSol(fila.nombre||'(sin nombre)')+'</b> · '+fila.matricula+(fila.base?' · 📍 '+_escHtmlSol(fila.base):'')+'</span>'
       + '<span style="color:var(--tx3);font-size:10px">'+fecha+'</span></div>'
-      + '<div style="margin-top:4px;font-size:11px;color:var(--tx3)">'+etiquetaEstado+'</div>'
-      + ((fila.sede_provisional || fila.fecha_ingreso) && typeof _altaFilaDatosHtml==='function' ? _altaFilaDatosHtml(fila) : '');
-    if(fila.estado==='pendiente' && !antiguaInterv){
+      + '<div style="margin-top:4px;font-size:11px;color:var(--tx3)">'+etiquetaEstado+'</div>';
+    if(fila.estado==='pendiente'){
       filaHtml += '<div style="display:flex;gap:6px;margin-top:6px">'
         + '<button style="flex:1;padding:7px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);border-radius:8px;color:#6EE7B7;font-size:11px;font-weight:700;cursor:pointer" onclick="aceptarSolicitudAcceso('+fila.id+',\''+fila.matricula+'\')">✅ Aceptar</button>'
         + '<button style="flex:1;padding:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#FCA5A5;font-size:11px;font-weight:700;cursor:pointer" onclick="rechazarSolicitudAcceso('+fila.id+')">🚫 Rechazar</button>'
@@ -27440,11 +27289,8 @@ async function parsearBufferPdfDiasLibres(buf){
 async function _matriculaTieneSolicitudAceptada(matricula){
   if(!sbAdmin) return false;
   try{
-    // NUEVO — puede haber varias filas aceptadas (p. ej. un acceso
-    // provisional caducado y uno nuevo): vale si alguna NO está caducada.
-    var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('matricula', matricula).eq('estado','aceptada');
-    if(!r || r.error || !r.data) return false;
-    return r.data.some(function(f){ return !f.caducada_en; });
+    var r = await sbAdmin.from('solicitudes_acceso').select('estado').eq('matricula', matricula).eq('estado','aceptada').maybeSingle();
+    return !!(r && r.data);
   }catch(e){ return false; }
 }
 // NUEVO — Confirmado por el usuario: cuando el acceso de un Interventor
@@ -27512,7 +27358,7 @@ async function enviarSolicitudAccesoBusc(){
       return;
     }
   }
-    _crearEventoPush('4179742', '🚆 Tripulante pide acceso', nombre+' ('+matricula+') · desde el Buscador de compañeros.');
+    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
@@ -27546,14 +27392,6 @@ async function enviarSolicitudAccesoTrip(){
 
   if(!matricula){ mostrar('Falta la matrícula — escríbela arriba primero.'); return; }
   if(!nombre){ mostrar('Escribe tu nombre completo.'); return; }
-  // NUEVO — alta de empleado nuevo: base y fecha de ingreso.
-  var baseInp = document.getElementById('solicitudBaseInputTrip');
-  var fechaInp = document.getElementById('solicitudFechaIngresoInputTrip');
-  var baseSol = baseInp ? baseInp.value.trim() : '';
-  var fechaSol = fechaInp ? fechaInp.value : '';
-  if(baseInp && !baseSol){ mostrar('Escribe tu base.'); return; }
-  if(fechaInp && !fechaSol){ mostrar('Indica tu fecha de ingreso en la empresa.'); return; }
-  if(fechaSol && typeof _altaHoyISO==='function' && fechaSol > _altaHoyISO()){ mostrar('La fecha de ingreso no puede ser futura.'); return; }
   if(!sbAdmin){ mostrar('No se pudo conectar. Inténtalo de nuevo en unos segundos.'); return; }
 
   var btn = document.getElementById('btnEnviarSolicitudAccesoTrip');
@@ -27565,26 +27403,18 @@ async function enviarSolicitudAccesoTrip(){
     if(btn){ btn.disabled = false; btn.textContent = '📨 Enviar solicitud de acceso'; }
     return;
   }
-  var datosAlta = (baseSol || fechaSol) ? { sede_provisional: baseSol || null, fecha_ingreso: fechaSol || null } : {};
   if(!yaPendiente.data){
-    var alta = await sbAdmin.from('solicitudes_acceso').insert(Object.assign({ matricula: matricula, nombre: nombre, estado: 'pendiente' }, datosAlta));
-    // Si Supabase aún no tiene las columnas nuevas, no se pierde la solicitud.
-    if(alta.error && /sede_provisional|fecha_ingreso|column/i.test(alta.error.message||'')){
-      alta = await sbAdmin.from('solicitudes_acceso').insert({ matricula: matricula, nombre: nombre, estado: 'pendiente' });
-    }
+    var alta = await sbAdmin.from('solicitudes_acceso').insert({ matricula: matricula, nombre: nombre, estado: 'pendiente' });
     if(alta.error){
       mostrar('No se pudo enviar la solicitud: ' + alta.error.message);
       if(btn){ btn.disabled = false; btn.textContent = '📨 Enviar solicitud de acceso'; }
       return;
     }
-  } else if(datosAlta.sede_provisional || datosAlta.fecha_ingreso){
-    // Ya había una pendiente: se actualiza con los datos nuevos (por si los corrige).
-    await sbAdmin.from('solicitudes_acceso').update(Object.assign({ nombre: nombre }, datosAlta)).eq('id', yaPendiente.data.id);
   }
-    _crearEventoPush('4179742', '🚆 Tripulante nuevo pide acceso', nombre+' ('+matricula+')' + (baseSol ? ' · 📍 '+baseSol : '') + (fechaSol && typeof _altaFechaES==='function' ? ' · 📅 Ingreso '+_altaFechaES(fechaSol) : ''));
+    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
-  mostrar('Solicitud guardada' + (baseSol ? (' — 📍 ' + baseSol) : '') + (fechaSol && typeof _altaFechaES==='function' ? (' · 📅 Ingreso ' + _altaFechaES(fechaSol)) : '') + '. Cuando el administrador la acepte, vuelve aquí y entra con tu matrícula. Si quieres, avisa también por WhatsApp o correo:');
+  mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
 
   var textoAviso = 'Hola, soy '+nombre+' (matrícula '+matricula+'). He solicitado acceso a TrenTurnos, ¿puedes revisarlo?';
   var linkWa = document.getElementById('linkWhatsappSolicitudTrip');
@@ -27708,7 +27538,7 @@ async function enviarSolicitudAccesoInterv(){
       return;
     }
   }
-    _crearEventoPush('4179742', '🕵️ Interventor pide acceso', nombre+' ('+matricula+') · 📍 '+base);
+    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+', base '+base+') ha pedido acceso como Interventor.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
@@ -27750,7 +27580,7 @@ async function enviarSolicitudAcceso(){
       return;
     }
   }
-    _crearEventoPush('4179742', '🚆 Tripulante pide acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
+    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
@@ -32726,11 +32556,6 @@ async function _crearEventoPush(matriculaDestino, titulo, cuerpo){
     });
   }catch(e){ console.warn('_crearEventoPush:', e); }
 }
-// FIX — esta función vive dentro de un bloque aislado; las pantallas de
-// solicitud de acceso (fuera de él) la llamaban y fallaba con
-// "_crearEventoPush is not defined": el aviso al admin nunca se creaba y
-// el envío se cortaba ahí. Se expone para toda la app.
-window._crearEventoPush = _crearEventoPush;
 
 function _resumenTurno(det){
   if(!det) return 'sin datos';
@@ -35234,7 +35059,6 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
     }
     if(btn){ btn.disabled = false; btn.textContent = textoOriginal; }
 
-    var esAccesoProvisional = false;
     if(!resultado || !resultado.valida){
       // NUEVO — si el admin ya aceptó manualmente una solicitud de
       // acceso para esta matrícula, se deja pasar como si la
@@ -35243,7 +35067,6 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
       var solicitudAceptadaTrip = await _matriculaTieneSolicitudAceptada(matricula);
       if(solicitudAceptadaTrip){
         resultado = { valida:true, nombre:null, sede:null };
-        esAccesoProvisional = true;
       } else {
         if(msg) msg.innerHTML = '<span style="color:#FCA5A5">'+(resultado && resultado.motivo ? resultado.motivo : 'Esa matrícula no aparece en ningún Horario General publicado.')+'</span>';
         mostrarBloqueSolicitudAccesoTrip();
@@ -35267,14 +35090,6 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
     // preguntar nada (ni matrícula ni condiciones), porque ya quedó
     // resuelto aquí, en el primer acceso a la app.
     try{ localStorage.setItem('descargoAceptado_matricula', matricula); }catch(e){}
-    // NUEVO — alta de empleado nuevo: rellena el perfil (base, categoría,
-    // antigüedad, última liquidación) y recuerda que el acceso es provisional.
-    // Si entra porque ya sale en el PDF, deja de ser provisional.
-    if(esAccesoProvisional){
-      if(typeof _altaAplicarAlPerfil==='function'){ try{ await _altaAplicarAlPerfil(matricula); }catch(eAlta){} }
-    } else {
-      try{ localStorage.removeItem('accesoProvisional'); }catch(e){}
-    }
 
     // NUEVO — Registro del acceso (matrícula + nombre + sede + fecha)
     // en la tabla dedicada accesos_tripulante, para que el admin
@@ -35423,25 +35238,6 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
       }
     } else if(elegido !== 'tripulante'){
       mostrarPortal();
-    } else {
-      // NUEVO — acceso PROVISIONAL (alta de empleado nuevo): si el admin ya
-      // subió el Horario General nuevo de su sede, el acceso caducó y se
-      // le vuelve a pedir la matrícula. Sus datos (turnos, ajustes...) no
-      // se tocan. Sin conexión o si algo falla, se le deja dentro.
-      var provRaw = null; try{ provRaw = localStorage.getItem('accesoProvisional'); }catch(eP){}
-      if(provRaw && typeof _altaAccesoSigueValido==='function'){
-        var prov = null; try{ prov = JSON.parse(provRaw); }catch(eP2){}
-        if(prov && prov.matricula){
-          _altaAccesoSigueValido(prov.matricula).then(function(valido){
-            if(valido === false){
-              try{ localStorage.removeItem('perfilPortalTrenTurnos'); localStorage.removeItem('accesoProvisional'); }catch(eP3){}
-              mostrarAccesoTripulante('🔄 Ya está publicado el Horario General nuevo de tu base. Vuelve a introducir tu matrícula: tus turnos, calendario y ajustes siguen guardados.');
-              var inp = document.getElementById('accesoMatriculaTripulanteInput');
-              if(inp && !inp.value) inp.value = prov.matricula;
-            }
-          });
-        }
-      }
     }
   }
   window.__revisarPerfilAlTerminarSplash = revisarPerfil;
@@ -35802,347 +35598,5 @@ refrescarNotificacionesActivas();
 })();
 </script>
 
-
-<script>
-// ═══════════════════════════════════════════════════════════
-// NUEVO — ALTAS DE EMPLEADOS NUEVOS (acceso provisional).
-// Tabla Supabase: solicitudes_acceso, con 3 columnas nuevas:
-//   sede_provisional (texto), fecha_ingreso (fecha), caducada_en (fecha-hora).
-// · El empleado envía la solicitud con su base y fecha de ingreso; el admin solo acepta.
-// · Al subir el Horario General de una sede, sus provisionales caducan
-//   (caducada_en = ahora). Quien ya sale en el PDF entra normal; quien
-//   no, vuelve a pedir acceso.
-// · Categoría: menos de 2 años desde el ingreso = Auxiliar; 2 o más =
-//   Tripulante (y se cambia sola el día que se cumplen).
-// · Solo tripulación. Las solicitudes de Interventor siguen igual.
-// ═══════════════════════════════════════════════════════════
-function _altaHoyISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-function _altaFechaDosAnios(fechaISO){ var p=String(fechaISO||'').split('-'); if(p.length<3) return ''; return (parseInt(p[0],10)+2)+'-'+p[1]+'-'+p[2]; }
-function _altaCategoria(fechaISO){ if(!fechaISO) return null; return _altaHoyISO() >= _altaFechaDosAnios(fechaISO) ? 'tripulante' : 'auxiliar'; }
-function _altaFechaES(fechaISO){ var p=String(fechaISO||'').split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : ''; }
-function _altaEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function _altaFaltanColumnas(err){ return !!(err && /sede_provisional|fecha_ingreso|caducada_en|column/i.test(err.message||'')); }
-var ALTA_MSG_SQL = 'Falta preparar la tabla en Supabase (añadir las columnas sede_provisional, fecha_ingreso y caducada_en). Ejecuta supabase-altas-empleados.sql una vez.';
-
-// Datos del alta (base, fecha de ingreso, categoría) para mostrarlos en una solicitud.
-function _altaFilaDatosHtml(f){
-  var cat = _altaCategoria(f.fecha_ingreso);
-  var tag = !cat ? '' : (cat==='tripulante'
-    ? ' <span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:1px 7px;background:rgba(16,185,129,.12);color:#6EE7B7;border:1px solid rgba(16,185,129,.35)">Tripulante</span>'
-    : ' <span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:1px 7px;background:rgba(56,189,248,.12);color:#7DD3FC;border:1px solid rgba(56,189,248,.35)">Auxiliar</span>');
-  return '<div style="margin-top:4px;font-size:11px;color:var(--tx2)">'
-    + (f.sede_provisional ? '📍 '+_altaEsc(f.sede_provisional) : '')
-    + (f.fecha_ingreso ? (f.sede_provisional?' · ':'')+'📅 Ingreso '+_altaFechaES(f.fecha_ingreso) : '')
-    + tag + '</div>';
-}
-async function _altaListarProvisionales(){
-  var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('estado','aceptada').not('fecha_ingreso','is',null).is('caducada_en',null).order('fecha_hora',{ascending:false});
-  return r;
-}
-async function altaCargarProvisionales(){
-  if(typeof perfilAdminActual==='undefined' || !perfilAdminActual || perfilAdminActual.rol!=='admin') return;
-  var est = document.getElementById('estadoAltasProvisionales'), lista = document.getElementById('listaAltasProvisionales');
-  if(!est || !lista) return;
-  est.textContent = 'Cargando...';
-  var r = await _altaListarProvisionales();
-  if(r.error){ est.textContent = _altaFaltanColumnas(r.error) ? ALTA_MSG_SQL : ('Error al cargar: '+r.error.message); lista.innerHTML=''; return; }
-  var filas = r.data || [];
-  est.textContent = filas.length ? (filas.length+' acceso(s) provisional(es) activo(s)') : 'No hay ningún acceso provisional activo.';
-  lista.innerHTML = filas.map(function(f){
-    var cat = _altaCategoria(f.fecha_ingreso);
-    var tagCat = cat==='tripulante'
-      ? '<span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:2px 7px;background:rgba(16,185,129,.12);color:#6EE7B7;border:1px solid rgba(16,185,129,.35)">Tripulante</span>'
-      : '<span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:2px 7px;background:rgba(56,189,248,.12);color:#7DD3FC;border:1px solid rgba(56,189,248,.35)">Auxiliar</span>';
-    return '<div style="background:var(--s2);border:1px solid var(--div);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12px">'
-      + '<div><b>'+_altaEsc(f.nombre||'(sin nombre)')+'</b> · '+_altaEsc(f.matricula)+' · 📍 '+_altaEsc(f.sede_provisional||'')+'</div>'
-      + '<div style="margin-top:3px;font-size:11px;color:var(--tx3)">Ingreso: '+_altaFechaES(f.fecha_ingreso)+'</div>'
-      + '<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;align-items:center">'+tagCat
-      + '<span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:2px 7px;background:rgba(245,158,11,.12);color:#FCD34D;border:1px solid rgba(245,158,11,.35)">Hasta el próximo PDF de '+_altaEsc(f.sede_provisional||'')+'</span></div>'
-      + '<button style="margin-top:7px;width:100%;padding:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#FCA5A5;font-size:11px;font-weight:700;cursor:pointer" onclick="altaQuitarAcceso('+f.id+')">🗑️ Quitar acceso ahora</button>'
-      + '</div>';
-  }).join('');
-}
-async function altaQuitarAcceso(id){
-  if(!confirm('¿Quitar ya el acceso provisional? La próxima vez que abra la app tendrá que volver a meter su matrícula (no pierde sus datos).')) return;
-  var r = await sbAdmin.from('solicitudes_acceso').update({ caducada_en: new Date().toISOString() }).eq('id', id);
-  if(r.error){ toast('Error: '+r.error.message); return; }
-  toast('Acceso provisional quitado.');
-  altaCargarProvisionales();
-}
-// Llamada desde subirArchivoGlobalAdmin al publicar el Horario General de una sede.
-async function altaCaducarProvisionalesSede(sede, datosPdf){
-  try{
-    if(!sbAdmin || !sede) return;
-    var r = await _altaListarProvisionales();
-    if(r.error || !r.data) return;
-    var slug = (typeof _baseSlug==='function') ? _baseSlug(sede) : String(sede).toLowerCase();
-    var deSede = r.data.filter(function(f){ return ((typeof _baseSlug==='function') ? _baseSlug(f.sede_provisional||'') : String(f.sede_provisional||'').toLowerCase()) === slug; });
-    if(!deSede.length) return;
-    var ids = deSede.map(function(f){ return f.id; });
-    var u = await sbAdmin.from('solicitudes_acceso').update({ caducada_en: new Date().toISOString() }).in('id', ids);
-    if(u.error){ toast('No se pudieron caducar los accesos provisionales: '+u.error.message); return; }
-    var enPdf = {};
-    (datosPdf||[]).forEach(function(emp){ if(emp && emp[0]!=null) enPdf[String(emp[0]).trim()] = true; });
-    var lineas = deSede.map(function(f){
-      return (enPdf[String(f.matricula).trim()] ? '✅ ' : '⚠️ ') + (f.nombre||'') + ' (' + f.matricula + ')' + (enPdf[String(f.matricula).trim()] ? ' — ya sale en el PDF nuevo.' : ' — no sale en el PDF nuevo: tendrá que pedir acceso otra vez.');
-    });
-    alert('Horario General de ' + sede + ' publicado.\n\nAccesos provisionales de ' + sede + ' que terminan:\n\n' + lineas.join('\n') + '\n\nLos de otras bases siguen activos hasta que subas su PDF.');
-    altaCargarProvisionales();
-  }catch(e){}
-}
-// ¿Sigue siendo válido el acceso provisional de esta matrícula? true / false / null (no se pudo comprobar).
-async function _altaAccesoSigueValido(matricula){
-  try{
-    if(!sbAdmin) return null;
-    var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('matricula', matricula).eq('estado','aceptada');
-    if(r.error || !r.data) return null;
-    return r.data.some(function(f){ return !f.caducada_en; });
-  }catch(e){ return null; }
-}
-// Al entrar con un acceso provisional: rellena el perfil con los datos del alta.
-async function _altaAplicarAlPerfil(matricula){
-  var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('matricula', matricula).eq('estado','aceptada');
-  if(r.error || !r.data) return;
-  var f = r.data.filter(function(x){ return !x.caducada_en && x.fecha_ingreso; })[0];
-  try{ localStorage.setItem('accesoProvisional', JSON.stringify({ matricula: matricula, sede: f ? (f.sede_provisional||'') : '' })); }catch(e){}
-  if(!f || typeof AJ==='undefined') return;
-  if(f.nombre) AJ.nombre = String(f.nombre).replace(/\s*\(Base:.*\)\s*$/i,'');
-  if(f.sede_provisional) AJ.base = f.sede_provisional;
-  AJ.antiguedad = f.fecha_ingreso;
-  AJ.liquidacion = f.fecha_ingreso;
-  AJ.rolAuto = true;
-  try{ localStorage.setItem('aj5', JSON.stringify(AJ)); }catch(e){}
-  var cat = _altaCategoria(f.fecha_ingreso);
-  if(cat && typeof setRol==='function' && AJ.rol !== 'jefe'){ try{ setRol(cat); }catch(e){ AJ.rol = cat; } }
-  try{ localStorage.setItem('aj5', JSON.stringify(AJ)); }catch(e){}
-  if(typeof loadAjUI==='function'){ try{ loadAjUI(); }catch(e){} }
-}
-// Cambio automático de Auxiliar a Tripulante al cumplir 2 años (solo si la
-// categoría la puso el alta automática, no si la persona la eligió a mano).
-function altaRevisarCategoriaAutomatica(){
-  try{
-    if(typeof AJ==='undefined' || !AJ || !AJ.rolAuto || !AJ.antiguedad || AJ.rol!=='auxiliar') return;
-    if(_altaCategoria(AJ.antiguedad)==='tripulante' && typeof setRol==='function'){
-      setRol('tripulante');
-      if(typeof toast==='function') toast('🎉 Ya llevas 2 años: tu categoría pasa a Tripulante');
-    }
-  }catch(e){}
-}
-(function(){
-  function go(){ setTimeout(altaRevisarCategoriaAutomatica, 1500); }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', go); else go();
-})();
-// Si la persona cambia la categoría a mano en Ajustes, ya no se toca sola.
-(function(){
-  function eng(){
-    ['rs-t','rs-a','rs-j'].forEach(function(id){
-      var b = document.getElementById(id);
-      if(b) b.addEventListener('click', function(){ if(typeof AJ!=='undefined' && AJ){ AJ.rolAuto = false; try{ localStorage.setItem('aj5', JSON.stringify(AJ)); }catch(e){} } });
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', eng); else eng();
-})();
-// Al actualizar las solicitudes, también la lista de provisionales.
-(function(){
-  function eng(){
-    if(typeof cargarSolicitudesAccesoAdmin!=='function' || cargarSolicitudesAccesoAdmin.__alta) return;
-    var o = cargarSolicitudesAccesoAdmin;
-    window.cargarSolicitudesAccesoAdmin = async function(){ var r = await o.apply(this, arguments); altaCargarProvisionales(); return r; };
-    window.cargarSolicitudesAccesoAdmin.__alta = true;
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', eng); else eng();
-})();
-</script>
-
-<!-- NUEVO — "Desliza hacia abajo para actualizar". Como la página ya no se
-     desplaza (para que el menú inferior quede fijo), el gesto del navegador
-     dejó de funcionar; esto lo recupera: estando arriba del todo de una
-     sección, arrastrar hacia abajo y soltar recarga la app. No actúa
-     dentro de ventanas emergentes ni al deslizar de lado. -->
-<div id="ptrInd" aria-hidden="true" style="position:fixed;top:0;left:50%;z-index:10060;width:44px;height:44px;margin-left:-22px;border-radius:50%;background:var(--s1,#0F1A2B);border:1px solid var(--div,#223149);box-shadow:0 6px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:20px;transform:translateY(-60px);opacity:0;pointer-events:none;transition:opacity .15s">
-  <span id="ptrIco" style="display:inline-block">🔄</span>
-</div>
-<div id="ptrTxt" aria-hidden="true" style="position:fixed;top:0;left:50%;z-index:10060;white-space:nowrap;font:800 11.5px system-ui,sans-serif;color:var(--tx,#E8EDF5);background:var(--s1,#0F1A2B);border:1px solid var(--div,#223149);border-radius:999px;padding:5px 12px;box-shadow:0 4px 12px rgba(0,0,0,.4);opacity:0;pointer-events:none;transform:translate(-50%,-30px)"></div>
-<script>
-(function(){
-  var UMBRAL = 70, MAX = 110;
-  var ind = document.getElementById('ptrInd'), ico = document.getElementById('ptrIco'), txt = document.getElementById('ptrTxt');
-  var y0 = null, x0 = 0, tirando = false, dist = 0, recargando = false;
-  function scrollerDe(el){
-    while(el && el !== document.body){
-      var cs = getComputedStyle(el);
-      if(/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-  function permitido(t){
-    if(!t || !t.closest) return false;
-    if(t.closest('.ov, input, textarea, select, #splash-screen')) return false;
-    if(document.querySelector('.ov.on')) return false;
-    return true;
-  }
-  function pintar(d){
-    var v = Math.min(MAX, d);
-    ind.style.opacity = v > 8 ? '1' : '0';
-    ind.style.transform = 'translateY(' + (v - 50) + 'px)';
-    ico.style.transform = 'rotate(' + (v * 3) + 'deg)';
-    txt.style.opacity = v > 25 ? '1' : '0';
-    txt.style.transform = 'translate(-50%,' + (v + 2) + 'px)';
-    txt.textContent = v >= UMBRAL ? 'Suelta para actualizar' : 'Desliza para actualizar';
-  }
-  function reset(){
-    ind.style.transition = 'transform .2s ease, opacity .2s'; txt.style.transition = 'transform .2s ease, opacity .2s';
-    pintar(0);
-    setTimeout(function(){ ind.style.transition = 'opacity .15s'; txt.style.transition = ''; }, 220);
-  }
-  document.addEventListener('touchstart', function(e){
-    if(recargando || e.touches.length !== 1){ y0 = null; return; }
-    var t = e.target;
-    if(!permitido(t)){ y0 = null; return; }
-    var sc = scrollerDe(t);
-    if(sc && sc.scrollTop > 0){ y0 = null; return; }
-    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; tirando = false; dist = 0;
-  }, { passive: true });
-  document.addEventListener('touchmove', function(e){
-    if(y0 === null || recargando) return;
-    var dy = e.touches[0].clientY - y0, dx = Math.abs(e.touches[0].clientX - x0);
-    if(!tirando){
-      if(dy > 10 && dy > dx * 1.5){ tirando = true; ind.style.transition = 'opacity .15s'; }
-      else if(dy < -5 || dx > 12){ y0 = null; return; }
-      else return;
-    }
-    dist = Math.max(0, dy * 0.55);
-    pintar(dist);
-  }, { passive: true });
-  function fin(){
-    if(y0 === null) return;
-    y0 = null;
-    if(tirando && dist >= UMBRAL){
-      recargando = true;
-      txt.textContent = 'Actualizando...';
-      ind.style.transform = 'translateY(' + (UMBRAL - 50) + 'px)';
-      ico.style.transition = 'transform .8s linear';
-      ico.style.transform = 'rotate(720deg)';
-      setTimeout(function(){ location.reload(); }, 350);
-    } else if(tirando){
-      reset();
-    }
-    tirando = false; dist = 0;
-  }
-  document.addEventListener('touchend', fin, { passive: true });
-  document.addEventListener('touchcancel', function(){ if(!recargando){ y0 = null; tirando = false; reset(); } }, { passive: true });
-})();
-</script>
-
-<!-- NUEVO — Aviso de solicitudes de acceso pendientes para el admin: cartel
-     arriba y globo en el botón 🧑‍💼. No depende de las notificaciones push. -->
-<style>
-#avisoSolAdmin{display:none;margin:8px 14px 0;align-items:center;gap:10px;background:rgba(220,38,38,.12);border:1px solid #DC2626;border-radius:12px;padding:10px 12px;font-size:12.5px;font-weight:700;color:var(--tx);cursor:pointer}
-#avisoSolAdmin.on{display:flex}
-#avisoSolAdmin span{flex:1}
-#avisoSolAdmin b.v{color:#FCA5A5}
-#hbtn-admin{position:relative}
-#badgeAdminHdr{display:none;position:absolute;top:-6px;right:-6px;background:#DC2626;color:#fff;border-radius:10px;font-size:10px;font-weight:900;padding:1px 6px;border:2px solid var(--s1,#0F1A2B);line-height:1.3}
-</style>
-<script>
-(function(){
-  var ADMIN_MATRICULA = '4179742'; // la misma a la que ya llegan los avisos de solicitudes
-  function esAdmin(){ return typeof perfilAdminActual!=='undefined' && perfilAdminActual && perfilAdminActual.rol==='admin'; }
-  function montar(){
-    var sal = document.getElementById('saludo-personal');
-    if(sal && !document.getElementById('avisoSolAdmin')){
-      sal.insertAdjacentHTML('beforebegin','<div id="avisoSolAdmin" onclick="avisosAdminVerSolicitudes()">📨 <span id="avisoSolAdminTxt"></span><b style="color:#FCA5A5">Ver ›</b></div>');
-    }
-    var hb = document.getElementById('hbtn-admin');
-    if(hb && !document.getElementById('badgeAdminHdr')) hb.insertAdjacentHTML('beforeend','<span id="badgeAdminHdr"></span>');
-  }
-  async function revisar(){
-    var av = document.getElementById('avisoSolAdmin'), bd = document.getElementById('badgeAdminHdr');
-    if(!esAdmin() || typeof sbAdmin==='undefined' || !sbAdmin){ if(av) av.classList.remove('on'); if(bd) bd.style.display='none'; return; }
-    try{
-      var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('estado','pendiente');
-      if(r.error || !r.data) return;
-      var n = r.data.filter(function(f){ return typeof _solicitudPendienteVigente==='function' ? _solicitudPendienteVigente(f) : true; }).length;
-      if(av){ av.classList.toggle('on', n>0); var t=document.getElementById('avisoSolAdminTxt'); if(t) t.innerHTML = 'Tienes <b class="v">'+n+' solicitud'+(n===1?'':'es')+' de acceso</b> pendiente'+(n===1?'':'s'); }
-      if(bd){ bd.style.display = n>0 ? 'inline-block' : 'none'; bd.textContent = n; }
-    }catch(e){}
-  }
-  window.avisosAdminRevisar = revisar;
-  window.avisosAdminVerSolicitudes = function(){
-    if(typeof abrirAccesoAdmin==='function') abrirAccesoAdmin();
-    // Despliega el apartado "🔑 Accesos" del panel si está plegado.
-    var grp = document.getElementById('padm-accesos');
-    if(grp && grp.classList.contains('padm-cerrado') && typeof padmToggle==='function') padmToggle('padm-accesos');
-    if(typeof cargarSolicitudesAccesoAdmin==='function') cargarSolicitudesAccesoAdmin();
-    setTimeout(function(){ var l=document.getElementById('listaSolicitudesAcceso'); var c=l && l.closest('.admin-card'); if(c && c.scrollIntoView) c.scrollIntoView({block:'start',behavior:'smooth'}); }, 250);
-  };
-  // Estado de los avisos en este móvil (tarjeta del panel).
-  async function estadoAvisos(){
-    var el = document.getElementById('avisosAdminEstado'), btn = document.getElementById('avisosAdminBtnActivar');
-    if(!el) return;
-    var soporta = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
-    var mat = (typeof AJ!=='undefined' && AJ && AJ.matricula) ? String(AJ.matricula) : '';
-    var lineas = [];
-    var activo = false;
-    if(!soporta){
-      lineas.push('⚠️ Este navegador no admite notificaciones push. Usa Chrome (o, en iPhone, la web añadida a la pantalla de inicio).');
-    } else {
-      var perm = Notification.permission, sub = null;
-      try{ var reg = await navigator.serviceWorker.getRegistration(); if(reg) sub = await reg.pushManager.getSubscription(); }catch(e){}
-      activo = perm==='granted' && !!sub;
-      lineas.push('Notificaciones: ' + (activo ? '✅ activadas' : (perm==='denied' ? '🚫 bloqueadas en el navegador' : '❌ sin activar')));
-    }
-    lineas.push('Matrícula de este móvil (Ajustes → Perfil): ' + (mat || '— sin poner —'));
-    if(mat && mat !== ADMIN_MATRICULA) lineas.push('⚠️ Los avisos de solicitudes se envían a la matrícula '+ADMIN_MATRICULA+'. Pon esa matrícula en Ajustes → Perfil para recibirlos aquí.');
-    el.textContent = lineas.join('\n'); el.style.whiteSpace = 'pre-line';
-    el.classList.toggle('sin-archivo', !activo);
-    if(btn) btn.style.display = (soporta && !activo) ? '' : 'none';
-  }
-  window.avisosAdminEstado = estadoAvisos;
-  window.avisosAdminActivar = async function(){
-    var msg = document.getElementById('avisosAdminMsg');
-    if(typeof activarNotificacionesPush!=='function'){ if(msg) msg.textContent='No disponible.'; return; }
-    // activarNotificacionesPush escribe su resultado en #notifPushEstado (Ajustes): se refleja aquí también.
-    await activarNotificacionesPush();
-    var st = document.getElementById('notifPushEstado');
-    if(msg && st) msg.innerHTML = st.innerHTML;
-    estadoAvisos();
-  };
-  window.avisosAdminPrueba = async function(){
-    var msg = document.getElementById('avisosAdminMsg');
-    var mat = (typeof AJ!=='undefined' && AJ && AJ.matricula) ? String(AJ.matricula) : ADMIN_MATRICULA;
-    if(typeof _crearEventoPush!=='function' || typeof sbAdmin==='undefined' || !sbAdmin){ if(msg) msg.innerHTML='<span style="color:#FCA5A5">No se pudo conectar.</span>'; return; }
-    await _crearEventoPush(mat, '🔔 Prueba de TrenTurnos', 'Si ves esto, los avisos de solicitudes de acceso te llegan a este móvil.');
-    if(msg) msg.innerHTML = '<span style="color:#A7F3D0">Enviada a la matrícula '+mat+'. Si en unos segundos no te llega, revisa los permisos de notificaciones del navegador. Si aun así no llega, el problema está en la función de Supabase que envía los avisos.</span>';
-  };
-  // Al abrir el panel de admin, refrescar estado y aviso.
-  function engancharPanel(){
-    if(typeof abrirAccesoAdmin!=='function' || abrirAccesoAdmin.__avisos) return;
-    var o = abrirAccesoAdmin;
-    window.abrirAccesoAdmin = function(){ var r = o.apply(this, arguments); setTimeout(function(){ estadoAvisos(); revisar(); }, 50); return r; };
-    window.abrirAccesoAdmin.__avisos = true;
-  }
-  function iniciar(){
-    montar(); engancharPanel();
-    setTimeout(revisar, 4000);           // tras recuperar la sesión de admin
-    setInterval(revisar, 120000);        // cada 2 minutos con la app abierta
-    document.addEventListener('visibilitychange', function(){ if(!document.hidden) revisar(); });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
-  // Al aceptar/rechazar o actualizar la lista, el aviso se actualiza también.
-  (function(){
-    function eng(){
-      ['aceptarSolicitudAcceso','rechazarSolicitudAcceso'].forEach(function(fn){
-        if(typeof window[fn]!=='function' || window[fn].__avisos) return;
-        var o = window[fn];
-        window[fn] = async function(){ var r = await o.apply(this, arguments); revisar(); return r; };
-        window[fn].__avisos = true;
-      });
-    }
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', eng); else eng();
-  })();
-})();
-</script>
 </body>
 </html>
