@@ -160,6 +160,7 @@ button{font-family:inherit}
 .ck-row .pos small{display:block;font-size:9.5px;color:var(--tx2);font-weight:700}
 .ck-row .det{color:var(--tx2);font-weight:600;line-height:1.35}
 .ck-row .det b{color:var(--tx)}
+.ck-row.tap{cursor:pointer}
 .ck-row.warn{background:rgba(249,115,22,.1);border-radius:10px;padding:9px 6px;border:1px solid rgba(249,115,22,.4)}
 .ck-row .why{color:var(--nar2);font-weight:800;font-size:11px}
 </style>
@@ -246,6 +247,7 @@ button{font-family:inherit}
     <!-- RESUMEN -->
     <div class="panel" id="p-resumen">
       <div class="card" id="rs-total"></div>
+      <div class="card" id="rs-lista"></div>
       <div class="card" id="rs-comidas"></div>
       <div class="card" id="rs-coches"></div>
     </div>
@@ -450,6 +452,13 @@ function validar(r){
   if(!r.menu) return 'Falta el menú';
   return '';
 }
+// Una fila de la lista (se usa en la comprobación y en Resumen)
+function filaHTML(r, icono, onclick){
+  var m=r.k?COMIDAS[r.k]:null;
+  return '<div class="ck-row'+(r.aviso?' warn':'')+(onclick?' tap':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span>'+icono+'</span>'+
+    '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>Coche '+(r.coche||'?')+'</small></div>'+
+    '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+'<b>'+(m?m.e+' '+m.n:'?')+'</b> · '+(r.menu||'—')+'<br>'+bonito(r.origen||'?')+' → '+bonito(r.destino||'?')+(r.nombre?' · '+r.nombre:'')+(r.cumple?' · 🎂':'')+'</div></div>';
+}
 function mostrarComprobacion(){
   var F=LEIDO.filas, ok=F.filter(function(r){return !r.aviso}), coches={}, tipos={};
   ok.forEach(function(r){ coches[r.coche]=1; tipos[COMIDAS[r.k].n]=(tipos[COMIDAS[r.k].n]||0)+1; });
@@ -457,12 +466,7 @@ function mostrarComprobacion(){
     '<div style="font-size:15px;font-weight:800">He encontrado <span style="color:var(--acc3)">'+ok.length+' servicios</span>'+(F.length>ok.length?' y <span style="color:var(--nar2)">'+(F.length-ok.length)+' fila(s) a revisar</span>':'')+'</div>'+
     '<div class="ck-sum" style="margin-top:8px"><span>📅 '+(ok[0]?ok[0].fecha:'')+'</span><span>🚃 Coches '+Object.keys(coches).join(', ')+'</span>'+
     Object.keys(tipos).map(function(t){return '<span>'+t+' · '+tipos[t]+'</span>'}).join('')+'</div>';
-  document.getElementById('ck-list').innerHTML=F.map(function(r){
-    var m=r.k?COMIDAS[r.k]:null;
-    return '<div class="ck-row'+(r.aviso?' warn':'')+'"><span>'+(r.aviso?'⚠️':'✅')+'</span>'+
-      '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>Coche '+(r.coche||'?')+'</small></div>'+
-      '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+'<b>'+(m?m.e+' '+m.n:'?')+'</b> · '+(r.menu||'—')+'<br>'+bonito(r.origen||'?')+' → '+bonito(r.destino||'?')+(r.nombre?' · '+r.nombre:'')+(r.cumple?' · 🎂':'')+'</div></div>';
-  }).join('');
+  document.getElementById('ck-list').innerHTML=F.map(function(r){ return filaHTML(r, r.aviso?'⚠️':'✅', ''); }).join('');
   ['tren','mapa','resumen'].forEach(function(k){document.getElementById('p-'+k).classList.remove('on');document.getElementById('nav-'+k).classList.remove('on');});
   document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
 }
@@ -515,6 +519,7 @@ function pintarMapa(){
   document.getElementById('legend').innerHTML=usados.map(function(k){return '<span><i class="dot" style="background:'+COMIDAS[k].c+'"></i> '+COMIDAS[k].n+'</span>'}).join('')+'<span>🎂 Cumpleaños</span><span><i class="dot" style="background:var(--s2);border:1px solid var(--div)"></i> Sin servicio</span>';
 }
 function grupo(campo){ var g={}; LISTA.forEach(function(f){ g[f[campo]]=(g[f[campo]]||0)+1; }); return Object.keys(g).sort(function(a,b){return g[b]-g[a]}).map(function(k){return [k,g[k]]}); }
+var verLista='todos';
 function pintarResumen(){
   var t=cuenta(), s=nServidos();
   document.getElementById('rs-total').innerHTML='<div class="card-t">✅ Servidos</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:900">'+s+'</span><span style="color:var(--tx2);font-weight:700">de '+t+' servicios</span></div><div class="prog"><i style="width:'+(t?Math.round(s/t*100):0)+'%"></i></div>';
@@ -522,6 +527,16 @@ function pintarResumen(){
   document.getElementById('rs-coches').innerHTML='<div class="card-t">🚉 Suben en</div>'+grupo('origen').map(function(g){return '<div class="rs-row"><div class="rs-n">'+g[0]+'</div><div class="rs-c" style="font-size:16px">'+g[1]+'</div></div>';}).join('')+
     '<div class="card-t" style="margin-top:12px">🏁 Bajan en</div>'+grupo('destino').map(function(g){return '<div class="rs-row"><div class="rs-n">'+g[0]+'</div><div class="rs-c" style="font-size:16px">'+g[1]+'</div></div>';}).join('')+
     '<div class="card-t" style="margin-top:12px">🚃 Por coche</div>'+COCHES.map(function(c){return '<div class="rs-row"><div class="rs-n">Coche '+c+'<small>'+nServidos(c)+' de '+cuenta(null,c)+' servidos</small></div><button class="chip" onclick="coche='+c+';filtro=null;goP(\'mapa\')">Ver ›</button></div>';}).join('');
+  pintarListaResumen();
+}
+function pintarListaResumen(){
+  var orden=LISTA.slice().sort(function(a,b){return a.coche-b.coche||a.fila-b.fila||(a.letra<b.letra?-1:1)});
+  var F=orden.filter(function(r){var s=!!servidos[id(r)]; return verLista==='todos'||(verLista==='serv'?s:!s);});
+  var n=nServidos(), t=LISTA.length;
+  document.getElementById('rs-lista').innerHTML='<div class="card-t">📋 Lista de servicios del PDF</div>'+
+    '<div class="chips" style="margin-bottom:6px">'+
+    [['todos','Todos · '+t],['pend','⏳ Pendientes · '+(t-n)],['serv','✅ Servidos · '+n]].map(function(o){return '<button class="chip'+(verLista===o[0]?' sel':'')+'" onclick="verLista=\''+o[0]+'\';pintarListaResumen()">'+o[1]+'</button>';}).join('')+'</div>'+
+    (F.length?F.map(function(r){ var k=id(r); return filaHTML(r, servidos[k]?'✅':'⏳', "ficha('"+k+"')"); }).join(''):'<div class="vacio">Nada en esta lista.</div>');
 }
 function ficha(key){
   var p=key.split('-'), c=p[0], asiento=p[1], d=DATA[key], h='<div class="sh-handle"></div>';
@@ -536,11 +551,12 @@ function ficha(key){
       (d.nombre?'<div><span>Nombre</span><b>'+d.nombre+'</b></div>':'')+
       '<div><span>Sube en</span><b>'+d.origen+'</b></div><div><span>Baja en</span><b>'+d.destino+'</b></div>'+
       '<div><span>Estado</span><b>'+(servidos[key]?'✅ Servido':'⏳ Pendiente')+'</b></div></div></div>'+
-      '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cerrar</button><button class="m-ok" onclick="servidos[\''+key+'\']=!servidos[\''+key+'\'];cerrar();pintarMapa()">'+(servidos[key]?'↩︎ Desmarcar':'✓ Marcar servido')+'</button></div>';
+      '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cerrar</button><button class="m-ok" onclick="servidos[\''+key+'\']=!servidos[\''+key+'\'];cerrar();refrescar()">'+(servidos[key]?'↩︎ Desmarcar':'✓ Marcar servido')+'</button></div>';
   }
   document.getElementById('sh-asiento').innerHTML=h;
   document.getElementById('ov-asiento').classList.add('on');
 }
+function refrescar(){ if(document.getElementById('p-resumen').classList.contains('on')) pintarResumen(); else pintarMapa(); }
 function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); }
 pintarTipos();
 if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
