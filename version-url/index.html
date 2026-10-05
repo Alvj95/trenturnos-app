@@ -3935,6 +3935,13 @@ function megafoniaDingDong(ctx, t){
       <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:#94A3B8;display:block;margin-bottom:4px">NOMBRE COMPLETO</label>
       <input type="text" id="solicitudNombreInputTrip" placeholder="Tu nombre completo…" autocomplete="off"
         style="width:100%;background:#132236;border:2px solid #1E293B;border-radius:12px;color:#F8FAFC;font-size:14px;font-weight:600;padding:12px 14px;margin-bottom:10px;outline:none;box-sizing:border-box">
+      <!-- NUEVO — alta de empleado nuevo: base y fecha de ingreso las rellena el propio empleado. -->
+      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:#94A3B8;display:block;margin-bottom:4px">BASE</label>
+      <input type="text" id="solicitudBaseInputTrip" list="listaSedes" placeholder="Barcelona, Madrid..." autocomplete="off" onfocus="this.select()"
+        style="width:100%;background:#132236;border:2px solid #1E293B;border-radius:12px;color:#F8FAFC;font-size:14px;font-weight:600;padding:12px 14px;margin-bottom:10px;outline:none;box-sizing:border-box">
+      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:#94A3B8;display:block;margin-bottom:4px">FECHA DE INGRESO EN LA EMPRESA</label>
+      <input type="date" id="solicitudFechaIngresoInputTrip"
+        style="width:100%;background:#132236;border:2px solid #1E293B;border-radius:12px;color:#F8FAFC;font-size:14px;font-weight:600;padding:12px 14px;margin-bottom:10px;outline:none;box-sizing:border-box;color-scheme:dark">
       <button id="btnEnviarSolicitudAccesoTrip" onclick="enviarSolicitudAccesoTrip()" style="width:100%;background:linear-gradient(135deg,#2563EB,#3B82F6);
         border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:800;padding:12px;cursor:pointer;margin-bottom:8px">📨 Enviar solicitud de acceso</button>
       <div id="estadoSolicitudAccesoTrip" style="display:none;font-size:11px;color:#94A3B8;margin-bottom:8px;line-height:1.4"></div>
@@ -7366,11 +7373,10 @@ function megafoniaDingDong(ctx, t){
       <div class="admin-card-hdr">
         <div class="admin-card-ico" style="background:rgba(16,185,129,.15);color:#6EE7B7">👤</div>
         <div>
-          <div class="admin-card-tit">Altas de empleados nuevos</div>
-          <div class="admin-card-sub">Acceso provisional hasta que salgan en el Horario General de su sede.</div>
+          <div class="admin-card-tit">Accesos provisionales</div>
+          <div class="admin-card-sub">Empleados nuevos aceptados que aún no salen en el Horario General de su base. Caducan solos al subir el PDF de esa base.</div>
         </div>
       </div>
-      <button class="m-save" style="width:100%;margin-bottom:8px;background:#DC2626" onclick="altaAbrirFormulario()">➕ Dar de alta empleado nuevo</button>
       <button class="m-save" style="width:100%;margin-bottom:8px" onclick="altaCargarProvisionales()">🔄 Ver accesos provisionales</button>
       <div class="estado-archivo sin-archivo" id="estadoAltasProvisionales">Toca "Ver accesos provisionales" para ver la lista.</div>
       <div id="listaAltasProvisionales" style="margin-top:8px"></div>
@@ -27247,10 +27253,11 @@ async function cargarSolicitudesAccesoAdmin(){
     var filaHtml = '<div style="display:flex;justify-content:space-between;align-items:center">'
       + '<span><b>'+_escHtmlSol(fila.nombre||'(sin nombre)')+'</b> · '+fila.matricula+(fila.base?' · 📍 '+_escHtmlSol(fila.base):'')+'</span>'
       + '<span style="color:var(--tx3);font-size:10px">'+fecha+'</span></div>'
-      + '<div style="margin-top:4px;font-size:11px;color:var(--tx3)">'+etiquetaEstado+'</div>';
+      + '<div style="margin-top:4px;font-size:11px;color:var(--tx3)">'+etiquetaEstado+'</div>'
+      + ((fila.sede_provisional || fila.fecha_ingreso) && typeof _altaFilaDatosHtml==='function' ? _altaFilaDatosHtml(fila) : '');
     if(fila.estado==='pendiente'){
       filaHtml += '<div style="display:flex;gap:6px;margin-top:6px">'
-        + '<button style="flex:1;padding:7px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);border-radius:8px;color:#6EE7B7;font-size:11px;font-weight:700;cursor:pointer" onclick="'+(_esFilaSolicitudInterventor(fila) ? 'aceptarSolicitudAcceso('+fila.id+',\''+fila.matricula+'\')' : 'altaAbrirFormulario({id:'+fila.id+',matricula:\''+_escHtmlSol(fila.matricula)+'\',nombre:\''+_escHtmlSol(String(fila.nombre||'').replace(/'/g,''))+'\'})')+'">'+(_esFilaSolicitudInterventor(fila)?'✅ Aceptar':'✅ Aceptar…')+'</button>'
+        + '<button style="flex:1;padding:7px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);border-radius:8px;color:#6EE7B7;font-size:11px;font-weight:700;cursor:pointer" onclick="aceptarSolicitudAcceso('+fila.id+',\''+fila.matricula+'\')">✅ Aceptar</button>'
         + '<button style="flex:1;padding:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#FCA5A5;font-size:11px;font-weight:700;cursor:pointer" onclick="rechazarSolicitudAcceso('+fila.id+')">🚫 Rechazar</button>'
         + '</div>';
     }
@@ -27878,6 +27885,14 @@ async function enviarSolicitudAccesoTrip(){
 
   if(!matricula){ mostrar('Falta la matrícula — escríbela arriba primero.'); return; }
   if(!nombre){ mostrar('Escribe tu nombre completo.'); return; }
+  // NUEVO — alta de empleado nuevo: base y fecha de ingreso.
+  var baseInp = document.getElementById('solicitudBaseInputTrip');
+  var fechaInp = document.getElementById('solicitudFechaIngresoInputTrip');
+  var baseSol = baseInp ? baseInp.value.trim() : '';
+  var fechaSol = fechaInp ? fechaInp.value : '';
+  if(baseInp && !baseSol){ mostrar('Escribe tu base.'); return; }
+  if(fechaInp && !fechaSol){ mostrar('Indica tu fecha de ingreso en la empresa.'); return; }
+  if(fechaSol && typeof _altaHoyISO==='function' && fechaSol > _altaHoyISO()){ mostrar('La fecha de ingreso no puede ser futura.'); return; }
   if(!sbAdmin){ mostrar('No se pudo conectar. Inténtalo de nuevo en unos segundos.'); return; }
 
   var btn = document.getElementById('btnEnviarSolicitudAccesoTrip');
@@ -27889,18 +27904,26 @@ async function enviarSolicitudAccesoTrip(){
     if(btn){ btn.disabled = false; btn.textContent = '📨 Enviar solicitud de acceso'; }
     return;
   }
+  var datosAlta = (baseSol || fechaSol) ? { sede_provisional: baseSol || null, fecha_ingreso: fechaSol || null } : {};
   if(!yaPendiente.data){
-    var alta = await sbAdmin.from('solicitudes_acceso').insert({ matricula: matricula, nombre: nombre, estado: 'pendiente' });
+    var alta = await sbAdmin.from('solicitudes_acceso').insert(Object.assign({ matricula: matricula, nombre: nombre, estado: 'pendiente' }, datosAlta));
+    // Si Supabase aún no tiene las columnas nuevas, no se pierde la solicitud.
+    if(alta.error && /sede_provisional|fecha_ingreso|column/i.test(alta.error.message||'')){
+      alta = await sbAdmin.from('solicitudes_acceso').insert({ matricula: matricula, nombre: nombre, estado: 'pendiente' });
+    }
     if(alta.error){
       mostrar('No se pudo enviar la solicitud: ' + alta.error.message);
       if(btn){ btn.disabled = false; btn.textContent = '📨 Enviar solicitud de acceso'; }
       return;
     }
+  } else if(datosAlta.sede_provisional || datosAlta.fecha_ingreso){
+    // Ya había una pendiente: se actualiza con los datos nuevos (por si los corrige).
+    await sbAdmin.from('solicitudes_acceso').update(Object.assign({ nombre: nombre }, datosAlta)).eq('id', yaPendiente.data.id);
   }
     _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
-  mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
+  mostrar('Solicitud guardada' + (baseSol ? (' — 📍 ' + baseSol) : '') + (fechaSol && typeof _altaFechaES==='function' ? (' · 📅 Ingreso ' + _altaFechaES(fechaSol)) : '') + '. Cuando el administrador la acepte, vuelve aquí y entra con tu matrícula. Si quieres, avisa también por WhatsApp o correo:');
 
   var textoAviso = 'Hola, soy '+nombre+' (matrícula '+matricula+'). He solicitado acceso a TrenTurnos, ¿puedes revisarlo?';
   var linkWa = document.getElementById('linkWhatsappSolicitudTrip');
@@ -36114,32 +36137,12 @@ refrescarNotificacionesActivas();
 </script>
 
 
-<!-- NUEVO — Formulario de alta de empleado nuevo (admin). -->
-<div id="altaOverlay" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center" onclick="if(event.target===this)altaCerrarFormulario()">
-  <div style="width:100%;max-width:480px;background:var(--s1);border-top:1px solid var(--div);border-radius:22px 22px 0 0;padding:16px 16px 22px;max-height:92vh;overflow-y:auto">
-    <div style="width:40px;height:4px;border-radius:2px;background:var(--div);margin:0 auto 12px"></div>
-    <div style="font-size:17px;font-weight:900;margin-bottom:6px;color:var(--tx)" id="altaTitulo">➕ Dar de alta empleado nuevo</div>
-    <div style="font-size:11.5px;color:var(--tx2);margin:10px 0 4px;font-weight:700">Matrícula</div>
-    <input class="aj-nombre-inp" id="altaMatricula" inputmode="numeric" autocomplete="off" placeholder="Ej. 4180215">
-    <div style="font-size:11.5px;color:var(--tx2);margin:10px 0 4px;font-weight:700">Nombre y apellidos</div>
-    <input class="aj-nombre-inp" id="altaNombre" autocomplete="off" placeholder="Nombre y apellidos">
-    <div style="font-size:11.5px;color:var(--tx2);margin:10px 0 4px;font-weight:700">Base</div>
-    <input class="aj-nombre-inp" id="altaBase" list="listaSedes" autocomplete="off" placeholder="Barcelona, Madrid..." onfocus="this.select()">
-    <div style="font-size:11.5px;color:var(--tx2);margin:10px 0 4px;font-weight:700">Fecha de ingreso en la empresa</div>
-    <input class="aj-nombre-inp" id="altaFecha" type="date" oninput="altaActualizarCalculo()">
-    <div id="altaCalculo" style="margin-top:12px;background:rgba(16,185,129,.08);border:1px dashed rgba(16,185,129,.4);border-radius:10px;padding:10px;font-size:12px;line-height:1.5;color:var(--tx);display:none"></div>
-    <div id="altaMsg" style="margin-top:10px;font-size:12px"></div>
-    <button class="m-save" id="altaBtnGuardar" style="width:100%;margin-top:12px;background:#DC2626" onclick="altaGuardar()">✅ Dar acceso provisional</button>
-    <button class="m-save" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--div);color:var(--tx2)" onclick="altaCerrarFormulario()">Cancelar</button>
-    <div style="font-size:11px;color:var(--tx3);margin-top:10px;line-height:1.4">Podrá entrar con su matrícula hasta que subas el próximo Horario General de su base. Su perfil (base, categoría, fecha de antigüedad y de última liquidación) se rellenará solo.</div>
-  </div>
-</div>
 <script>
 // ═══════════════════════════════════════════════════════════
 // NUEVO — ALTAS DE EMPLEADOS NUEVOS (acceso provisional).
 // Tabla Supabase: solicitudes_acceso, con 3 columnas nuevas:
 //   sede_provisional (texto), fecha_ingreso (fecha), caducada_en (fecha-hora).
-// · El admin da de alta (o acepta una solicitud) con base y fecha de ingreso.
+// · El empleado envía la solicitud con su base y fecha de ingreso; el admin solo acepta.
 // · Al subir el Horario General de una sede, sus provisionales caducan
 //   (caducada_en = ahora). Quien ya sale en el PDF entra normal; quien
 //   no, vuelve a pedir acceso.
@@ -36147,66 +36150,24 @@ refrescarNotificacionesActivas();
 //   Tripulante (y se cambia sola el día que se cumplen).
 // · Solo tripulación. Las solicitudes de Interventor siguen igual.
 // ═══════════════════════════════════════════════════════════
-var _altaSolicitudId = null;
 function _altaHoyISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function _altaFechaDosAnios(fechaISO){ var p=String(fechaISO||'').split('-'); if(p.length<3) return ''; return (parseInt(p[0],10)+2)+'-'+p[1]+'-'+p[2]; }
 function _altaCategoria(fechaISO){ if(!fechaISO) return null; return _altaHoyISO() >= _altaFechaDosAnios(fechaISO) ? 'tripulante' : 'auxiliar'; }
 function _altaFechaES(fechaISO){ var p=String(fechaISO||'').split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : ''; }
 function _altaEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function _altaFaltanColumnas(err){ return !!(err && /sede_provisional|fecha_ingreso|caducada_en|column/i.test(err.message||'')); }
-var ALTA_MSG_SQL = 'Falta preparar la tabla en Supabase (añadir las columnas sede_provisional, fecha_ingreso y caducada_en). Pide las instrucciones a quien mantiene la app.';
+var ALTA_MSG_SQL = 'Falta preparar la tabla en Supabase (añadir las columnas sede_provisional, fecha_ingreso y caducada_en). Ejecuta supabase-altas-empleados.sql una vez.';
 
-function altaAbrirFormulario(pre){
-  if(typeof perfilAdminActual==='undefined' || !perfilAdminActual || perfilAdminActual.rol!=='admin') return;
-  pre = pre || {};
-  _altaSolicitudId = pre.id || null;
-  document.getElementById('altaTitulo').textContent = pre.id ? '✅ Aceptar solicitud de acceso' : '➕ Dar de alta empleado nuevo';
-  document.getElementById('altaMatricula').value = pre.matricula || '';
-  document.getElementById('altaNombre').value = pre.nombre || '';
-  document.getElementById('altaBase').value = pre.base || '';
-  document.getElementById('altaFecha').value = '';
-  document.getElementById('altaMsg').innerHTML = '';
-  altaActualizarCalculo();
-  document.getElementById('altaOverlay').style.display = 'flex';
-}
-function altaCerrarFormulario(){ document.getElementById('altaOverlay').style.display = 'none'; _altaSolicitudId = null; }
-function altaActualizarCalculo(){
-  var f = document.getElementById('altaFecha').value, el = document.getElementById('altaCalculo');
-  if(!f){ el.style.display='none'; return; }
-  var cat = _altaCategoria(f), dos = _altaFechaDosAnios(f);
-  el.style.display = 'block';
-  el.innerHTML = cat==='auxiliar'
-    ? '🧮 <b>Categoría: Auxiliar</b> (menos de 2 años)<br>Pasará a <b>Tripulante</b> automáticamente el <b>'+_altaFechaES(dos)+'</b>.'
-    : '🧮 <b>Categoría: Tripulante</b> (2 años o más desde el ingreso).';
-}
-async function altaGuardar(){
-  var msg = document.getElementById('altaMsg'), btn = document.getElementById('altaBtnGuardar');
-  function err(t){ msg.innerHTML = '<span style="color:#FCA5A5">'+_altaEsc(t)+'</span>'; }
-  var matricula = document.getElementById('altaMatricula').value.trim();
-  var nombre = document.getElementById('altaNombre').value.trim();
-  var base = document.getElementById('altaBase').value.trim();
-  var fecha = document.getElementById('altaFecha').value;
-  if(!matricula) return err('Escribe la matrícula.');
-  if(!nombre) return err('Escribe el nombre y apellidos.');
-  if(!base) return err('Escribe la base.');
-  if(!fecha) return err('Indica la fecha de ingreso en la empresa.');
-  if(fecha > _altaHoyISO()) return err('La fecha de ingreso no puede ser futura.');
-  if(!sbAdmin) return err('No se pudo conectar. Inténtalo de nuevo.');
-  btn.disabled = true; var txt = btn.textContent; btn.textContent = 'Guardando...';
-  var datos = { matricula: matricula, nombre: nombre, estado: 'aceptada', sede_provisional: base, fecha_ingreso: fecha, caducada_en: null };
-  var r;
-  if(_altaSolicitudId){
-    r = await sbAdmin.from('solicitudes_acceso').update(datos).eq('id', _altaSolicitudId);
-  } else {
-    datos.fecha_hora = new Date().toISOString();
-    r = await sbAdmin.from('solicitudes_acceso').insert(datos);
-  }
-  btn.disabled = false; btn.textContent = txt;
-  if(r.error){ return err(_altaFaltanColumnas(r.error) ? ALTA_MSG_SQL : ('No se pudo guardar: '+r.error.message)); }
-  altaCerrarFormulario();
-  toast('✅ '+nombre+' ('+matricula+') ya puede entrar hasta el próximo PDF de '+base);
-  if(typeof cargarSolicitudesAccesoAdmin==='function') cargarSolicitudesAccesoAdmin();
-  altaCargarProvisionales();
+// Datos del alta (base, fecha de ingreso, categoría) para mostrarlos en una solicitud.
+function _altaFilaDatosHtml(f){
+  var cat = _altaCategoria(f.fecha_ingreso);
+  var tag = !cat ? '' : (cat==='tripulante'
+    ? ' <span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:1px 7px;background:rgba(16,185,129,.12);color:#6EE7B7;border:1px solid rgba(16,185,129,.35)">Tripulante</span>'
+    : ' <span style="display:inline-block;font-size:10px;font-weight:800;border-radius:7px;padding:1px 7px;background:rgba(56,189,248,.12);color:#7DD3FC;border:1px solid rgba(56,189,248,.35)">Auxiliar</span>');
+  return '<div style="margin-top:4px;font-size:11px;color:var(--tx2)">'
+    + (f.sede_provisional ? '📍 '+_altaEsc(f.sede_provisional) : '')
+    + (f.fecha_ingreso ? (f.sede_provisional?' · ':'')+'📅 Ingreso '+_altaFechaES(f.fecha_ingreso) : '')
+    + tag + '</div>';
 }
 async function _altaListarProvisionales(){
   var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('estado','aceptada').not('fecha_ingreso','is',null).is('caducada_en',null).order('fecha_hora',{ascending:false});
