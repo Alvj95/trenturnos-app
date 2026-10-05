@@ -7884,7 +7884,8 @@ function megafoniaDingDong(ctx, t){
   </div>
 </div>
 
-<script src="convenio-data.js"></script>
+<!-- Convenio retirado de la versión URL (Alex): ya no se carga convenio-data.js.
+     El resto del código del Convenio queda sin usar y no afecta a nada. -->
 <script>
 // NUEVO — Confirmado por Alex: contenido íntegro del Convenio Colectivo
 // de Serveo Servicios (218 páginas, digitalizado en 131 entradas: 118
@@ -9748,13 +9749,9 @@ function cerrarAvisoNomina(){
 
 function abrirTutorial(){
   renderTutorial();
+  // Convenio retirado de la versión URL (Alex): ya no se muestra su tarjeta.
   var entrada = document.getElementById('convenio-entrada-tutorial');
-  if(entrada){
-    entrada.innerHTML = '<div class="conv-entrada" onclick="abrirConvenio()">'
-      + '<div class="conv-entrada-tit">📜 Convenio Colectivo</div>'
-      + '<div class="conv-entrada-sub">El convenio de Serveo, digitalizado y organizado como el resto de la app — busca por artículo o por tema.</div>'
-      + '<div class="conv-entrada-btn">Abrir el Convenio →</div></div>';
-  }
+  if(entrada) entrada.innerHTML = '';
   // FIX — Confirmado por Alex (Estilo A de Stats): "¿Qué significa
   // cada cuenta?" se movió aquí desde Stats — mismo overlay
   // ov-guia-cuentas de siempre, solo cambia desde dónde se abre.
@@ -10026,7 +10023,7 @@ function enviarPreguntaChatbot(){
   } else {
     var waUrl = 'https://wa.me/'+WHATSAPP_SOPORTE+'?text='+encodeURIComponent('Hola, tengo una duda con TrenTurnos: '+pregunta);
     conv.innerHTML += '<div class="chat-msg bot"><div class="chat-bubble">'
-      + 'No he encontrado nada claro sobre eso en el Tutorial ni en el Convenio. Puedes intentar con otras palabras, o hablar directamente conmigo:'
+      + 'No he encontrado nada claro sobre eso en el Tutorial. Puedes intentar con otras palabras, o hablar directamente conmigo:'
       + '<div><a class="chat-wa-btn" href="'+waUrl+'" target="_blank">💬 Hablar por WhatsApp</a></div>'
       + '</div></div>';
   }

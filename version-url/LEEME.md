@@ -10,7 +10,8 @@
 - "Desliza hacia abajo para actualizar" propio (el del navegador no funciona con la pantalla fija).
 - Al entrar suena un "ding-dong-ding" de megafonía de tren (propio, Web Audio: clic de micro, altavoz de techo, eco de vagón), una vez por visita y solo durante la pantalla de inicio.
 - **Servicios a bordo** (tercer botón de la pantalla de entrada, 🍽️): se sube el PDF del MOL y la app lo lee en el móvil (coche, asiento, comida, menú, tramo, cumpleaños, nombre), lo enseña para comprobarlo y lo coloca en un mapa por coches. Ficha de cada asiento, "Servido", control de embarque (subió / no subió) y Resumen (qué preparar, por tramo, lista). Sin matrícula; todo se queda en el móvil y se borra a los 2 días de cargarlo. El código fuente está en `servicios/servicios.html` y se incrusta aquí con `python3 servicios/incrustar.py` (no editar a mano el bloque SERVICIOS:INICIO/FIN). El plano de asientos es provisional hasta tener el de cada serie.
+- Sin Convenio: se quitó su tarjeta del Tutorial y ya no se carga `convenio-data.js` (no hace falta subirlo).
 - No lleva nada de la app Android (`native-bridge.js`) ni temas en archivos aparte.
-- Para publicarla: sustituir `index.html` en el otro GitHub (dejando allí `convenio-data.js` y `sw.js`).
+- Para publicarla: sustituir `index.html` en el otro GitHub (dejando allí `sw.js`).
 
 La **versión Console** (app Android / Google Play) es la de la carpeta `www/` de este repositorio.
