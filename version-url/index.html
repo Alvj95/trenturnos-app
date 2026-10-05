@@ -27243,6 +27243,15 @@ async function cargarAceptacionesDescargoAdmin(){
 // General publicado (ver enviarSolicitudAcceso), con botones para
 // aceptar/rechazar cada una. Al aceptar, esa matrícula queda válida
 // para crear cuenta gracias a _matriculaTieneSolicitudAceptada().
+// NUEVO — una solicitud cuenta como pendiente si está 'pendiente' y no es
+// de Interventor anterior al reinicio de accesos (esas ya no dan acceso
+// aunque se acepten, ver INTERV_ACCESO_DESDE).
+function _solicitudPendienteVigente(f){
+  if(!f || f.estado!=='pendiente') return false;
+  if(typeof _esFilaSolicitudInterventor==='function' && _esFilaSolicitudInterventor(f)
+     && typeof INTERV_ACCESO_DESDE!=='undefined' && String(f.fecha_hora||'') < INTERV_ACCESO_DESDE) return false;
+  return true;
+}
 function _escHtmlSol(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function cargarSolicitudesAccesoAdmin(){
   if(!perfilAdminActual || perfilAdminActual.rol !== 'admin') return;
@@ -27250,12 +27259,22 @@ async function cargarSolicitudesAccesoAdmin(){
   var elEstado = document.getElementById('estadoSolicitudesAcceso');
   if(elEstado) elEstado.textContent = 'Cargando...';
   var resp = await sbAdmin.from('solicitudes_acceso').select('*').order('fecha_hora', { ascending:false }).limit(50);
+  // NUEVO — además de las 50 últimas, TODAS las pendientes (aunque sean
+  // antiguas), para que el número del aviso cuadre siempre con la lista.
+  if(!resp.error){
+    var respPend = await sbAdmin.from('solicitudes_acceso').select('*').eq('estado','pendiente');
+    if(!respPend.error && respPend.data){
+      var vistos = {}; (resp.data||[]).forEach(function(f){ vistos[f.id] = true; });
+      var extra = respPend.data.filter(function(f){ return !vistos[f.id]; });
+      if(extra.length) resp.data = (resp.data||[]).concat(extra);
+    }
+  }
   if(resp.error){
     if(elEstado) elEstado.textContent = 'Error al cargar: ' + resp.error.message;
     return;
   }
   var filas = resp.data || [];
-  var pendientes = filas.filter(function(f){ return f.estado==='pendiente'; });
+  var pendientes = filas.filter(_solicitudPendienteVigente);
   _actualizarBadgeSolicitudesAcceso(pendientes.length);
   if(elEstado) elEstado.textContent = filas.length ? (pendientes.length+' pendiente(s) de '+filas.length+' en total') : 'No hay ninguna solicitud todavía.';
   if(!elLista) return;
@@ -27264,13 +27283,14 @@ async function cargarSolicitudesAccesoAdmin(){
     var div = document.createElement('div');
     div.style.cssText = 'background:var(--s2);border:1px solid var(--div);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12px';
     var fecha = fila.fecha_hora ? new Date(fila.fecha_hora).toLocaleString('es-ES') : '';
-    var etiquetaEstado = fila.estado==='aceptada' ? '✅ Aceptada' : (fila.estado==='rechazada' ? '🚫 Rechazada' : '⏳ Pendiente');
+    var antiguaInterv = fila.estado==='pendiente' && !_solicitudPendienteVigente(fila);
+    var etiquetaEstado = fila.estado==='aceptada' ? '✅ Aceptada' : (fila.estado==='rechazada' ? '🚫 Rechazada' : (antiguaInterv ? '🗄️ Antigua (Interventor, de antes del reinicio de accesos) — ya no cuenta' : '⏳ Pendiente'));
     var filaHtml = '<div style="display:flex;justify-content:space-between;align-items:center">'
       + '<span><b>'+_escHtmlSol(fila.nombre||'(sin nombre)')+'</b> · '+fila.matricula+(fila.base?' · 📍 '+_escHtmlSol(fila.base):'')+'</span>'
       + '<span style="color:var(--tx3);font-size:10px">'+fecha+'</span></div>'
       + '<div style="margin-top:4px;font-size:11px;color:var(--tx3)">'+etiquetaEstado+'</div>'
       + ((fila.sede_provisional || fila.fecha_ingreso) && typeof _altaFilaDatosHtml==='function' ? _altaFilaDatosHtml(fila) : '');
-    if(fila.estado==='pendiente'){
+    if(fila.estado==='pendiente' && !antiguaInterv){
       filaHtml += '<div style="display:flex;gap:6px;margin-top:6px">'
         + '<button style="flex:1;padding:7px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);border-radius:8px;color:#6EE7B7;font-size:11px;font-weight:700;cursor:pointer" onclick="aceptarSolicitudAcceso('+fila.id+',\''+fila.matricula+'\')">✅ Aceptar</button>'
         + '<button style="flex:1;padding:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#FCA5A5;font-size:11px;font-weight:700;cursor:pointer" onclick="rechazarSolicitudAcceso('+fila.id+')">🚫 Rechazar</button>'
@@ -36415,9 +36435,9 @@ function altaRevisarCategoriaAutomatica(){
     var av = document.getElementById('avisoSolAdmin'), bd = document.getElementById('badgeAdminHdr');
     if(!esAdmin() || typeof sbAdmin==='undefined' || !sbAdmin){ if(av) av.classList.remove('on'); if(bd) bd.style.display='none'; return; }
     try{
-      var r = await sbAdmin.from('solicitudes_acceso').select('id').eq('estado','pendiente');
+      var r = await sbAdmin.from('solicitudes_acceso').select('*').eq('estado','pendiente');
       if(r.error || !r.data) return;
-      var n = r.data.length;
+      var n = r.data.filter(function(f){ return typeof _solicitudPendienteVigente==='function' ? _solicitudPendienteVigente(f) : true; }).length;
       if(av){ av.classList.toggle('on', n>0); var t=document.getElementById('avisoSolAdminTxt'); if(t) t.innerHTML = 'Tienes <b class="v">'+n+' solicitud'+(n===1?'':'es')+' de acceso</b> pendiente'+(n===1?'':'s'); }
       if(bd){ bd.style.display = n>0 ? 'inline-block' : 'none'; bd.textContent = n; }
     }catch(e){}
