@@ -1,8 +1,16 @@
 name: Build TrenTurnos APK
 
 on:
+  # Solo se compila la app cuando cambia main (lo que va a Google Play) y no
+  # por maquetas, la versión URL o documentación. Para probar una rama:
+  # Actions → Build TrenTurnos APK → Run workflow.
   push:
-    branches: ['**']
+    branches: [main]
+    paths-ignore:
+      - 'maquetas/**'
+      - 'version-url/**'
+      - '**.md'
+      - 'privacidad.html'
   workflow_dispatch:
 
 permissions:
