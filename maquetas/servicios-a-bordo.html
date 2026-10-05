@@ -147,7 +147,23 @@ button{font-family:inherit}
 .pbtn .t{font-size:16px;font-weight:900}.pbtn .s{font-size:11px;color:#94A3B8;margin-top:2px}
 .nuevo{font-size:8.5px;font-weight:900;background:var(--acc2);color:#1a1006;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
 .toast{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);background:var(--s3);border:1px solid var(--div);color:var(--tx);font-size:12.5px;font-weight:700;padding:10px 16px;border-radius:12px;z-index:400;display:none;white-space:nowrap}
+.pdf-btns{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.pdf-btns label,.pdf-btns button{display:block;text-align:center;border-radius:10px;padding:11px;font-size:12.5px;font-weight:800;cursor:pointer;border:1px solid var(--div);background:var(--s3);color:var(--tx)}
+.pdf-btns .pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.err{color:var(--red2);font-size:12px;font-weight:700;margin-top:8px}
+.card-t{word-break:break-all}
+.ck-sum{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.ck-sum span{background:var(--s2);border:1px solid var(--div);border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:700}
+.ck-row{display:grid;grid-template-columns:22px 52px 1fr;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--div);font-size:12px}
+.ck-row:first-child{border-top:0}
+.ck-row .pos{font-weight:900;font-size:13px}
+.ck-row .pos small{display:block;font-size:9.5px;color:var(--tx2);font-weight:700}
+.ck-row .det{color:var(--tx2);font-weight:600;line-height:1.35}
+.ck-row .det b{color:var(--tx)}
+.ck-row.warn{background:rgba(249,115,22,.1);border-radius:10px;padding:9px 6px;border:1px solid rgba(249,115,22,.4)}
+.ck-row .why{color:var(--nar2);font-weight:800;font-size:11px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 <div class="ph">
@@ -193,16 +209,21 @@ button{font-family:inherit}
 
       <div class="card">
         <div class="card-t">📄 Servicios del MOL</div>
-        <div class="pdf" id="pdf" onclick="leerPdf()">
+        <div class="pdf" id="pdf">
           <div class="big">📄</div>
-          <b>Subir PDF o foto del MOL</b>
+          <b>PDF de servicios del MOL</b>
           <span>La app lee coche, asiento, comida y menú, y lo coloca en el mapa</span>
           <div class="bar" id="bar"><i></i></div>
+          <div class="pdf-btns">
+            <label class="pri">📂 Elegir PDF del móvil<input type="file" accept="application/pdf,.pdf" style="display:none" onchange="if(this.files[0]) leerArchivo(this.files[0]); this.value=''"></label>
+            <button id="btn-ejemplo" onclick="probarEjemplo()">🧪 Probar con el documento que enviaste</button>
+          </div>
+          <div class="err" id="pdf-err"></div>
         </div>
       </div>
 
       <button class="m-save" id="go" disabled onclick="abrirMapa()">💺 Ver mapa de asientos</button>
-      <div class="nota">Maqueta: pulsa el recuadro, carga el ejemplo real del MOL del 05/10.</div>
+      <div class="nota">El PDF se lee en el propio móvil: no se envía a ningún sitio.</div>
     </div>
 
     <!-- ASIENTOS -->
@@ -212,6 +233,14 @@ button{font-family:inherit}
       <div class="wagon" id="wagon"></div>
       <div class="legend" id="legend"></div>
       <div class="nota">Datos reales del ejemplo del MOL. La distribución de asientos (A · B C) es provisional hasta tener el plano de cada serie.</div>
+    </div>
+
+    <!-- COMPROBACIÓN -->
+    <div class="panel" id="p-check">
+      <div class="card" id="ck-head"></div>
+      <div class="card"><div class="card-t">🔎 Filas leídas del PDF</div><div id="ck-list"></div></div>
+      <button class="m-save" onclick="confirmarCarga()">✅ Colocar en el mapa</button>
+      <button class="m-sec" style="width:100%;margin-top:8px;height:44px" onclick="goP('tren')">↩︎ Elegir otro PDF</button>
     </div>
 
     <!-- RESUMEN -->
@@ -265,28 +294,6 @@ var TIPOS = {'AVE':['S-112','S-103','S-102','S-100'],'Alvia':['S-130','S-730','S
 var MODELO = {'112':'Talgo 350','103':'Siemens Velaro','102':'Talgo 350','100':'Alstom','130':'Talgo 250','730':'Talgo 250','120':'CAF'};
 var tipo='AVE', serie='S-112', filtro=null, coche=null, servidos={}, DATA={}, LISTA=[], COCHES=[], cargado=false;
 
-/* ── Texto tal cual sale del MOL (ejemplo real del 05/10/2026) ──
-   En la app real este texto vendrá del PDF o de la foto (OCR). */
-var EJEMPLO_MOL = [
- 'FECHA_VALE COCHE ASIENTO TIPO_REST NUM_SELECCION ESTAC_ORIGEN ESTAC_DESTINO CUMPLEAÑOS NOMBRE_CLIENTE',
- '05/10/2026 21 03C Cena Menú sin preferencia SEVILLA-SANTA JUSTA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 21 04C Cena De la granja CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 21 05A Cena Menú sin preferencia SEVILLA-SANTA JUSTA ZARAGOZA DELICIAS NO (en blanco)',
- '05/10/2026 21 05B Cena Menú sin posibilidad de elección SEVILLA-SANTA JUSTA ZARAGOZA DELICIAS NO (en blanco)',
- '05/10/2026 21 05C Cena Menú sin posibilidad de elección SEVILLA-SANTA JUSTA ZARAGOZA DELICIAS NO LUIS',
- '05/10/2026 21 06B Cena Menú sin preferencia SEVILLA-SANTA JUSTA ZARAGOZA DELICIAS NO (en blanco)',
- '05/10/2026 21 06C Cena Menú sin preferencia SEVILLA-SANTA JUSTA ZARAGOZA DELICIAS NO (en blanco)',
- '05/10/2026 21 07A Cena Menú sin posibilidad de elección CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 21 07B Cena DEL MOLINO CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 21 07C Cena De la granja CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 21 08A Cena Menú sin posibilidad de elección CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO JOSE',
- '05/10/2026 21 08B Cena Menú sin posibilidad de elección CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO DIMITRIOS',
- '05/10/2026 21 08C Cena Menú sin posibilidad de elección CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 23 04A Cena Menú sin posibilidad de elección CÓRDOBA-JULIO ANGUITA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 22 03A Cena De la granja SEVILLA-SANTA JUSTA BARCELONA-SANTS NO (en blanco)',
- '05/10/2026 22 06A Cena De la granja SEVILLA-SANTA JUSTA BARCELONA-SANTS NO (en blanco)'
-].join('\n');
-
 /* ── Lector del MOL ──
    Cada fila: FECHA · COCHE · ASIENTO · TIPO · MENÚ · ORIGEN · DESTINO · CUMPLEAÑOS · NOMBRE.
    - COCHE: el número tal cual (1-8, 11-20, 21-30…), nunca se supone un rango.
@@ -334,6 +341,7 @@ function bonito(est){ return est.split(/[- ]/)[0].charAt(0)+est.split(/[- ]/)[0]
 function pad(n){ return (n<10?'0':'')+n; }
 
 function goP(p){
+  document.getElementById('p-check').classList.remove('on');
   if(p!=='tren' && !cargado){ toast('Primero sube el PDF o la foto del MOL'); p='tren'; }
   ['tren','mapa','resumen'].forEach(function(k){
     document.getElementById('p-'+k).classList.toggle('on',k===p);
@@ -353,23 +361,122 @@ function pintarTipos(){
   for(var i=1;i<=16;i++) r+='<option'+(i===14?' selected':'')+'>'+base+'-0'+(i<10?'0':'')+i+'</option>';
   document.getElementById('i-rama').innerHTML=r;
 }
-function cargar(texto){
-  LISTA=leerTextoMOL(texto); DATA={};
+/* ── Lectura REAL del PDF (pdf.js, en el móvil) ──
+   1. Saca cada trozo de texto con su posición (x, y).
+   2. Junta los trozos que están a la misma altura → filas.
+   3. Busca la fila de títulos (COCHE, ASIENTO…) y apunta dónde está cada columna.
+   4. Cada dato de una fila va a la columna cuyo título le queda más cerca.
+      Así da igual el orden de las columnas o que el PDF cambie un poco.
+   5. Si no hay títulos o una fila no cuadra, se prueba con el lector de texto
+      (leerTextoMOL), que reconoce la fila por su forma: fecha, coche, asiento… */
+var COLS = [['fecha',/FECHA/],['coche',/COCHE/],['asiento',/ASIENTO|PLAZA/],['tipo',/TIPO|REST/],['menu',/SELEC|MEN[UÚ]/],
+            ['origen',/ORIGEN/],['destino',/DESTINO/],['cumple',/CUMPLE/],['nombre',/NOMBRE|CLIENTE/]];
+var EJEMPLO_PDF_B64 = ''; // el PDF de ejemplo no se guarda en el repo: lleva nombres de clientes
+var LEIDO = null;
+
+function probarEjemplo(){
+  var bin=atob(EJEMPLO_PDF_B64), u=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+  procesarPdf(u, 'informacion_extraida_y_especificacion.pdf');
+}
+function leerArchivo(file){
+  var r=new FileReader();
+  r.onload=function(){ procesarPdf(new Uint8Array(r.result), file.name); };
+  r.readAsArrayBuffer(file);
+}
+function barra(v){ var b=document.getElementById('bar'); b.style.display='block'; b.firstElementChild.style.width=v+'%'; }
+async function procesarPdf(bytes, nombre){
+  var err=document.getElementById('pdf-err'); err.textContent='';
+  try{
+    if(!window.pdfjsLib) throw new Error('No se pudo cargar el lector de PDF (¿sin conexión?)');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    barra(10);
+    var doc=await pdfjsLib.getDocument({data:bytes}).promise, filas=[];
+    for(var p=1;p<=doc.numPages;p++){
+      var tc=await (await doc.getPage(p)).getTextContent();
+      var trozos=tc.items.filter(function(t){return t.str.trim()}).map(function(t){return {x:t.transform[4],y:t.transform[5],w:t.width,s:t.str.trim()}});
+      trozos.sort(function(a,b){return b.y-a.y||a.x-b.x});
+      trozos.forEach(function(t){
+        var f=filas.length&&filas[filas.length-1];
+        if(f&&f.p===p&&Math.abs(f.y-t.y)<3) f.t.push(t); else filas.push({p:p,y:t.y,t:[t]});
+      });
+      barra(10+80*p/doc.numPages);
+    }
+    filas.forEach(function(f){ f.t.sort(function(a,b){return a.x-b.x}); f.txt=f.t.map(function(t){return t.s}).join(' '); });
+    LEIDO={nombre:nombre, filas:interpretar(filas)};
+    barra(100);
+    if(!LEIDO.filas.length) throw new Error('No he encontrado filas de servicio en este PDF');
+    mostrarComprobacion();
+  }catch(e){ err.textContent='⚠️ '+e.message; document.getElementById('bar').style.display='none'; }
+}
+function interpretar(filas){
+  var cab=null, res=[];
+  filas.forEach(function(f){
+    var up=f.txt.toUpperCase();
+    if(/COCHE/.test(up)&&/ASIENTO|PLAZA/.test(up)&&!/\d{2}\/\d{2}\/\d{4}/.test(up)){
+      var cols=[]; f.t.forEach(function(t){ COLS.forEach(function(c){ if(c[1].test(t.s.toUpperCase())&&!cols.some(function(k){return k.k===c[0]})) cols.push({k:c[0],c:t.x+t.w/2}); }); });
+      if(cols.length>=4) cab=cols; return;
+    }
+    if(!/^\d{2}\/\d{2}\/\d{4}/.test(f.txt)) return;
+    var r=null;
+    if(cab){
+      var celda={}; f.t.forEach(function(t){
+        var c=t.x+t.w/2, mejor=cab.reduce(function(a,b){return Math.abs(b.c-c)<Math.abs(a.c-c)?b:a});
+        celda[mejor.k]=(celda[mejor.k]?celda[mejor.k]+' ':'')+t.s;
+      });
+      r=deCeldas(celda, f.txt);
+    }
+    if(!r||r.aviso){ var t=leerTextoMOL(f.txt)[0]; if(t){ t.txt=f.txt; t.aviso=validar(t); if(!r||!t.aviso) r=t; } }
+    if(r) res.push(r);
+  });
+  return res;
+}
+function deCeldas(c, txt){
+  var coche=(c.coche||'').trim(), asi=(c.asiento||'').replace(/\s/g,'').toUpperCase();
+  var junto=(coche+' '+asi).match(/^(\d{1,3})\s*B?(\d{1,2})([A-Z])$/) || (coche+asi).match(/^(\d{1,3})B(\d{1,2})([A-Z])$/);
+  var m=asi.match(/^B?(\d{1,2})([A-Z])$/);
+  var r={fecha:(c.fecha||'').trim(), txt:txt,
+    coche:parseInt(junto?junto[1]:coche,10), fila:m?parseInt(m[1],10):(junto?parseInt(junto[2],10):NaN), letra:m?m[2]:(junto?junto[3]:''),
+    k:tipoComida((c.tipo||'').trim()), tipoTxt:(c.tipo||'').trim(), menu:(c.menu||'').trim(),
+    origen:(c.origen||'').trim(), destino:(c.destino||'').trim(),
+    cumple:/^S/i.test((c.cumple||'').trim()), nombre:(c.nombre||'').trim()};
+  if(/^\(?en blanco\)?$/i.test(r.nombre)) r.nombre='';
+  r.aviso=validar(r); return r;
+}
+function validar(r){
+  if(!(r.coche>0)) return 'No se lee el número de coche';
+  if(!(r.fila>0)||!/^[A-Z]$/.test(r.letra||'')) return 'No se lee el asiento';
+  if(!r.k) return 'Tipo de comida desconocido'+(r.tipoTxt?' ("'+r.tipoTxt+'")':'');
+  if(!r.menu) return 'Falta el menú';
+  return '';
+}
+function mostrarComprobacion(){
+  var F=LEIDO.filas, ok=F.filter(function(r){return !r.aviso}), coches={}, tipos={};
+  ok.forEach(function(r){ coches[r.coche]=1; tipos[COMIDAS[r.k].n]=(tipos[COMIDAS[r.k].n]||0)+1; });
+  document.getElementById('ck-head').innerHTML='<div class="card-t">📄 '+LEIDO.nombre+'</div>'+
+    '<div style="font-size:15px;font-weight:800">He encontrado <span style="color:var(--acc3)">'+ok.length+' servicios</span>'+(F.length>ok.length?' y <span style="color:var(--nar2)">'+(F.length-ok.length)+' fila(s) a revisar</span>':'')+'</div>'+
+    '<div class="ck-sum" style="margin-top:8px"><span>📅 '+(ok[0]?ok[0].fecha:'')+'</span><span>🚃 Coches '+Object.keys(coches).join(', ')+'</span>'+
+    Object.keys(tipos).map(function(t){return '<span>'+t+' · '+tipos[t]+'</span>'}).join('')+'</div>';
+  document.getElementById('ck-list').innerHTML=F.map(function(r){
+    var m=r.k?COMIDAS[r.k]:null;
+    return '<div class="ck-row'+(r.aviso?' warn':'')+'"><span>'+(r.aviso?'⚠️':'✅')+'</span>'+
+      '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>Coche '+(r.coche||'?')+'</small></div>'+
+      '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+'<b>'+(m?m.e+' '+m.n:'?')+'</b> · '+(r.menu||'—')+'<br>'+bonito(r.origen||'?')+' → '+bonito(r.destino||'?')+(r.nombre?' · '+r.nombre:'')+(r.cumple?' · 🎂':'')+'</div></div>';
+  }).join('');
+  ['tren','mapa','resumen'].forEach(function(k){document.getElementById('p-'+k).classList.remove('on');document.getElementById('nav-'+k).classList.remove('on');});
+  document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
+}
+function confirmarCarga(){
+  LISTA=LEIDO.filas.filter(function(r){return !r.aviso}); DATA={}; servidos={};
   LISTA.forEach(function(f){ DATA[f.coche+'-'+pad(f.fila)+f.letra]=f; });
   COCHES=LISTA.map(function(f){return f.coche}).filter(function(c,i,a){return a.indexOf(c)===i}).sort(function(a,b){return a-b});
   cargado=true;
-}
-function leerPdf(){
-  var p=document.getElementById('pdf'); if(p.classList.contains('ok')) return;
-  var bar=document.getElementById('bar'), i=bar.firstElementChild, v=0; bar.style.display='block';
-  var t=setInterval(function(){ v+=12; i.style.width=Math.min(v,100)+'%';
-    if(v>=100){ clearInterval(t); cargar(EJEMPLO_MOL);
-      var o=LISTA.map(function(f){return f.origen}).filter(function(x,i,a){return a.indexOf(x)===i}), d=LISTA.map(function(f){return f.destino});
-      document.getElementById('i-ruta').value=bonito(o[0])+' → '+bonito(d[d.length-1]);
-      p.classList.add('ok');
-      p.innerHTML='<div class="big">✅</div><b>Servicios MOL · '+LISTA[0].fecha+'</b><span>Leído: <b style="display:inline">'+LISTA.length+' servicios</b> en coches '+COCHES.join(', ')+'</span>';
-      document.getElementById('go').disabled=false; }
-  },130);
+  var dest=LISTA.map(function(f){return f.destino}), cuentaD={}; dest.forEach(function(d){cuentaD[d]=(cuentaD[d]||0)+1});
+  var origenes=LISTA.map(function(f){return f.origen});
+  document.getElementById('i-ruta').value=bonito(origenes[0])+' → '+bonito(Object.keys(cuentaD).sort(function(a,b){return cuentaD[b]-cuentaD[a]})[0]);
+  var p=document.getElementById('pdf'); p.classList.add('ok');
+  document.getElementById('go').disabled=false;
+  abrirMapa();
 }
 function abrirMapa(){
   document.getElementById('pill').textContent='🍽️ SERVICIOS · '+tipo.toUpperCase()+' '+document.getElementById('i-num').value;
@@ -436,6 +543,7 @@ function ficha(key){
 }
 function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); }
 pintarTipos();
+if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
 </script>
 </body>
 </html>
