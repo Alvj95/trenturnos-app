@@ -7344,7 +7344,7 @@ function megafoniaDingDong(ctx, t){
 
     <div class="padm-group">
       <div class="padm-group-hdr" onclick="padmToggle('padm-accesos')">
-        <div class="padm-group-tit">🔑 Accesos <span class="padm-group-badge">4</span></div>
+        <div class="padm-group-tit">🔑 Accesos <span class="padm-group-badge">6</span></div>
         <div class="padm-group-chev" id="padm-accesos-chev">⌄</div>
       </div>
       <div class="padm-group-body padm-cerrado" id="padm-accesos">
@@ -7380,6 +7380,21 @@ function megafoniaDingDong(ctx, t){
       <button class="m-save" style="width:100%;margin-bottom:8px" onclick="altaCargarProvisionales()">🔄 Ver accesos provisionales</button>
       <div class="estado-archivo sin-archivo" id="estadoAltasProvisionales">Toca "Ver accesos provisionales" para ver la lista.</div>
       <div id="listaAltasProvisionales" style="margin-top:8px"></div>
+    </div>
+
+    <!-- NUEVO — Avisos de solicitudes de acceso en ESTE móvil: estado y prueba. -->
+    <div class="admin-card">
+      <div class="admin-card-hdr">
+        <div class="admin-card-ico" style="background:rgba(37,99,235,.15);color:#93C5FD">🔔</div>
+        <div>
+          <div class="admin-card-tit">Avisos en este móvil</div>
+          <div class="admin-card-sub">Para que te lleguen las solicitudes de acceso aunque tengas la app cerrada.</div>
+        </div>
+      </div>
+      <div class="estado-archivo sin-archivo" id="avisosAdminEstado">Comprobando...</div>
+      <button class="m-save" style="width:100%;margin-top:8px" id="avisosAdminBtnActivar" onclick="avisosAdminActivar()">🔔 Activar notificaciones en este móvil</button>
+      <button class="m-save" style="width:100%;margin-top:8px;background:#2563EB" onclick="avisosAdminPrueba()">📲 Enviarme una notificación de prueba</button>
+      <div id="avisosAdminMsg" style="margin-top:8px;font-size:11.5px;line-height:1.45"></div>
     </div>
 
     <!-- NUEVO — Solicitudes de acceso: matrículas que pidieron entrar
@@ -27851,7 +27866,7 @@ async function enviarSolicitudAccesoBusc(){
       return;
     }
   }
-    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
+    _crearEventoPush('4179742', '🚆 Tripulante pide acceso', nombre+' ('+matricula+') · desde el Buscador de compañeros.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
@@ -27920,7 +27935,7 @@ async function enviarSolicitudAccesoTrip(){
     // Ya había una pendiente: se actualiza con los datos nuevos (por si los corrige).
     await sbAdmin.from('solicitudes_acceso').update(Object.assign({ nombre: nombre }, datosAlta)).eq('id', yaPendiente.data.id);
   }
-    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
+    _crearEventoPush('4179742', '🚆 Tripulante nuevo pide acceso', nombre+' ('+matricula+')' + (baseSol ? ' · 📍 '+baseSol : '') + (fechaSol && typeof _altaFechaES==='function' ? ' · 📅 Ingreso '+_altaFechaES(fechaSol) : ''));
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada' + (baseSol ? (' — 📍 ' + baseSol) : '') + (fechaSol && typeof _altaFechaES==='function' ? (' · 📅 Ingreso ' + _altaFechaES(fechaSol)) : '') + '. Cuando el administrador la acepte, vuelve aquí y entra con tu matrícula. Si quieres, avisa también por WhatsApp o correo:');
@@ -28047,7 +28062,7 @@ async function enviarSolicitudAccesoInterv(){
       return;
     }
   }
-    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+', base '+base+') ha pedido acceso como Interventor.');
+    _crearEventoPush('4179742', '🕵️ Interventor pide acceso', nombre+' ('+matricula+') · 📍 '+base);
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
@@ -28089,7 +28104,7 @@ async function enviarSolicitudAcceso(){
       return;
     }
   }
-    _crearEventoPush('4179742', '🔔 Nueva solicitud de acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
+    _crearEventoPush('4179742', '🚆 Tripulante pide acceso', nombre+' ('+matricula+') ha pedido acceso a TrenTurnos.');
 
   if(btn){ btn.disabled = false; btn.textContent = '✅ Solicitud enviada'; }
   mostrar('Solicitud guardada. Avisa también por WhatsApp o correo para que se revise antes:');
@@ -33065,6 +33080,11 @@ async function _crearEventoPush(matriculaDestino, titulo, cuerpo){
     });
   }catch(e){ console.warn('_crearEventoPush:', e); }
 }
+// FIX — esta función vive dentro de un bloque aislado; las pantallas de
+// solicitud de acceso (fuera de él) la llamaban y fallaba con
+// "_crearEventoPush is not defined": el aviso al admin nunca se creaba y
+// el envío se cortaba ahí. Se expone para toda la app.
+window._crearEventoPush = _crearEventoPush;
 
 function _resumenTurno(det){
   if(!det) return 'sin datos';
@@ -36366,6 +36386,116 @@ function altaRevisarCategoriaAutomatica(){
   }
   document.addEventListener('touchend', fin, { passive: true });
   document.addEventListener('touchcancel', function(){ if(!recargando){ y0 = null; tirando = false; reset(); } }, { passive: true });
+})();
+</script>
+
+<!-- NUEVO — Aviso de solicitudes de acceso pendientes para el admin: cartel
+     arriba y globo en el botón 🧑‍💼. No depende de las notificaciones push. -->
+<style>
+#avisoSolAdmin{display:none;margin:8px 14px 0;align-items:center;gap:10px;background:rgba(220,38,38,.12);border:1px solid #DC2626;border-radius:12px;padding:10px 12px;font-size:12.5px;font-weight:700;color:var(--tx);cursor:pointer}
+#avisoSolAdmin.on{display:flex}
+#avisoSolAdmin span{flex:1}
+#avisoSolAdmin b.v{color:#FCA5A5}
+#hbtn-admin{position:relative}
+#badgeAdminHdr{display:none;position:absolute;top:-6px;right:-6px;background:#DC2626;color:#fff;border-radius:10px;font-size:10px;font-weight:900;padding:1px 6px;border:2px solid var(--s1,#0F1A2B);line-height:1.3}
+</style>
+<script>
+(function(){
+  var ADMIN_MATRICULA = '4179742'; // la misma a la que ya llegan los avisos de solicitudes
+  function esAdmin(){ return typeof perfilAdminActual!=='undefined' && perfilAdminActual && perfilAdminActual.rol==='admin'; }
+  function montar(){
+    var sal = document.getElementById('saludo-personal');
+    if(sal && !document.getElementById('avisoSolAdmin')){
+      sal.insertAdjacentHTML('beforebegin','<div id="avisoSolAdmin" onclick="avisosAdminVerSolicitudes()">📨 <span id="avisoSolAdminTxt"></span><b style="color:#FCA5A5">Ver ›</b></div>');
+    }
+    var hb = document.getElementById('hbtn-admin');
+    if(hb && !document.getElementById('badgeAdminHdr')) hb.insertAdjacentHTML('beforeend','<span id="badgeAdminHdr"></span>');
+  }
+  async function revisar(){
+    var av = document.getElementById('avisoSolAdmin'), bd = document.getElementById('badgeAdminHdr');
+    if(!esAdmin() || typeof sbAdmin==='undefined' || !sbAdmin){ if(av) av.classList.remove('on'); if(bd) bd.style.display='none'; return; }
+    try{
+      var r = await sbAdmin.from('solicitudes_acceso').select('id').eq('estado','pendiente');
+      if(r.error || !r.data) return;
+      var n = r.data.length;
+      if(av){ av.classList.toggle('on', n>0); var t=document.getElementById('avisoSolAdminTxt'); if(t) t.innerHTML = 'Tienes <b class="v">'+n+' solicitud'+(n===1?'':'es')+' de acceso</b> pendiente'+(n===1?'':'s'); }
+      if(bd){ bd.style.display = n>0 ? 'inline-block' : 'none'; bd.textContent = n; }
+    }catch(e){}
+  }
+  window.avisosAdminRevisar = revisar;
+  window.avisosAdminVerSolicitudes = function(){
+    if(typeof abrirAccesoAdmin==='function') abrirAccesoAdmin();
+    // Despliega el apartado "🔑 Accesos" del panel si está plegado.
+    var grp = document.getElementById('padm-accesos');
+    if(grp && grp.classList.contains('padm-cerrado') && typeof padmToggle==='function') padmToggle('padm-accesos');
+    if(typeof cargarSolicitudesAccesoAdmin==='function') cargarSolicitudesAccesoAdmin();
+    setTimeout(function(){ var l=document.getElementById('listaSolicitudesAcceso'); var c=l && l.closest('.admin-card'); if(c && c.scrollIntoView) c.scrollIntoView({block:'start',behavior:'smooth'}); }, 250);
+  };
+  // Estado de los avisos en este móvil (tarjeta del panel).
+  async function estadoAvisos(){
+    var el = document.getElementById('avisosAdminEstado'), btn = document.getElementById('avisosAdminBtnActivar');
+    if(!el) return;
+    var soporta = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+    var mat = (typeof AJ!=='undefined' && AJ && AJ.matricula) ? String(AJ.matricula) : '';
+    var lineas = [];
+    var activo = false;
+    if(!soporta){
+      lineas.push('⚠️ Este navegador no admite notificaciones push. Usa Chrome (o, en iPhone, la web añadida a la pantalla de inicio).');
+    } else {
+      var perm = Notification.permission, sub = null;
+      try{ var reg = await navigator.serviceWorker.getRegistration(); if(reg) sub = await reg.pushManager.getSubscription(); }catch(e){}
+      activo = perm==='granted' && !!sub;
+      lineas.push('Notificaciones: ' + (activo ? '✅ activadas' : (perm==='denied' ? '🚫 bloqueadas en el navegador' : '❌ sin activar')));
+    }
+    lineas.push('Matrícula de este móvil (Ajustes → Perfil): ' + (mat || '— sin poner —'));
+    if(mat && mat !== ADMIN_MATRICULA) lineas.push('⚠️ Los avisos de solicitudes se envían a la matrícula '+ADMIN_MATRICULA+'. Pon esa matrícula en Ajustes → Perfil para recibirlos aquí.');
+    el.textContent = lineas.join('\n'); el.style.whiteSpace = 'pre-line';
+    el.classList.toggle('sin-archivo', !activo);
+    if(btn) btn.style.display = (soporta && !activo) ? '' : 'none';
+  }
+  window.avisosAdminEstado = estadoAvisos;
+  window.avisosAdminActivar = async function(){
+    var msg = document.getElementById('avisosAdminMsg');
+    if(typeof activarNotificacionesPush!=='function'){ if(msg) msg.textContent='No disponible.'; return; }
+    // activarNotificacionesPush escribe su resultado en #notifPushEstado (Ajustes): se refleja aquí también.
+    await activarNotificacionesPush();
+    var st = document.getElementById('notifPushEstado');
+    if(msg && st) msg.innerHTML = st.innerHTML;
+    estadoAvisos();
+  };
+  window.avisosAdminPrueba = async function(){
+    var msg = document.getElementById('avisosAdminMsg');
+    var mat = (typeof AJ!=='undefined' && AJ && AJ.matricula) ? String(AJ.matricula) : ADMIN_MATRICULA;
+    if(typeof _crearEventoPush!=='function' || typeof sbAdmin==='undefined' || !sbAdmin){ if(msg) msg.innerHTML='<span style="color:#FCA5A5">No se pudo conectar.</span>'; return; }
+    await _crearEventoPush(mat, '🔔 Prueba de TrenTurnos', 'Si ves esto, los avisos de solicitudes de acceso te llegan a este móvil.');
+    if(msg) msg.innerHTML = '<span style="color:#A7F3D0">Enviada a la matrícula '+mat+'. Si en unos segundos no te llega, revisa los permisos de notificaciones del navegador. Si aun así no llega, el problema está en la función de Supabase que envía los avisos.</span>';
+  };
+  // Al abrir el panel de admin, refrescar estado y aviso.
+  function engancharPanel(){
+    if(typeof abrirAccesoAdmin!=='function' || abrirAccesoAdmin.__avisos) return;
+    var o = abrirAccesoAdmin;
+    window.abrirAccesoAdmin = function(){ var r = o.apply(this, arguments); setTimeout(function(){ estadoAvisos(); revisar(); }, 50); return r; };
+    window.abrirAccesoAdmin.__avisos = true;
+  }
+  function iniciar(){
+    montar(); engancharPanel();
+    setTimeout(revisar, 4000);           // tras recuperar la sesión de admin
+    setInterval(revisar, 120000);        // cada 2 minutos con la app abierta
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) revisar(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+  // Al aceptar/rechazar o actualizar la lista, el aviso se actualiza también.
+  (function(){
+    function eng(){
+      ['aceptarSolicitudAcceso','rechazarSolicitudAcceso'].forEach(function(fn){
+        if(typeof window[fn]!=='function' || window[fn].__avisos) return;
+        var o = window[fn];
+        window[fn] = async function(){ var r = await o.apply(this, arguments); revisar(); return r; };
+        window[fn].__avisos = true;
+      });
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', eng); else eng();
+  })();
 })();
 </script>
 </body>
