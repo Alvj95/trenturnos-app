@@ -161,6 +161,34 @@ button{font-family:inherit}
 .ck-row .det{color:var(--tx2);font-weight:600;line-height:1.35}
 .ck-row .det b{color:var(--tx)}
 .ck-row.tap{cursor:pointer}
+.ck-row.nosube .pos,.ck-row.nosube .det{opacity:.45;text-decoration:line-through}
+/* 📎 Control de embarque */
+.clipwrap{grid-column:3}
+.clips{display:flex;gap:6px;margin-top:-2px}
+.clip{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer}
+.clip.si{background:rgba(22,163,74,.2);border-color:rgba(74,222,128,.6);color:var(--green2)}
+.clip.no{background:rgba(220,38,38,.18);border-color:rgba(252,165,165,.6);color:var(--red2)}
+.seat.sube::before{content:"🧍";position:absolute;top:-7px;left:-5px;font-size:11px;background:var(--green);border-radius:50%;width:16px;height:16px;line-height:16px}
+.seat.nosube{background:repeating-linear-gradient(135deg,#3a1c22 0 6px,#2a141a 6px 12px)!important;color:var(--red2);text-decoration:line-through}
+.seat.nosube .e{display:none}
+.seat.nosube::before{content:"🚫";position:absolute;top:-7px;left:-5px;font-size:12px}
+.clipbar{display:flex;align-items:center;gap:10px;background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:14px;padding:9px 12px;margin-bottom:10px}
+.clipbar .txt{flex:1;font-size:11.5px;color:var(--tx2);font-weight:600;line-height:1.35}
+.clipbar .txt b{color:var(--tx);font-size:12.5px}
+.tgl{width:46px;height:26px;border-radius:20px;background:var(--s3);border:1px solid var(--div);position:relative;cursor:pointer;flex:none}
+.tgl::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--tx2);transition:left .15s}
+.tgl.on{background:var(--acc)}
+.tgl.on::after{left:22px;background:#fff}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:0 0 10px}
+.seg button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:9px 4px;font-size:11.5px;font-weight:800;cursor:pointer}
+.seg button.si{background:rgba(22,163,74,.2);border-color:rgba(74,222,128,.6);color:var(--green2)}
+.seg button.no{background:rgba(220,38,38,.18);border-color:rgba(252,165,165,.6);color:var(--red2)}
+.seg button.nc{background:var(--s3);color:var(--tx)}
+.seg-t{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin:0 0 6px}
+.m-ok:disabled{background:var(--s3);color:var(--tx3);cursor:default}
+.est3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px}
+.est3 div{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:8px;text-align:center;font-size:10.5px;color:var(--tx2);font-weight:700}
+.est3 b{display:block;font-size:20px;color:var(--tx)}
 .ck-row.warn{background:rgba(249,115,22,.1);border-radius:10px;padding:9px 6px;border:1px solid rgba(249,115,22,.4)}
 .ck-row .why{color:var(--nar2);font-weight:800;font-size:11px}
 </style>
@@ -231,6 +259,7 @@ button{font-family:inherit}
     <div class="panel" id="p-mapa">
       <div class="sum" id="sum"></div>
       <div class="coches" id="coches"></div>
+      <div id="clipbar"></div>
       <div class="wagon" id="wagon"></div>
       <div class="legend" id="legend"></div>
       <div class="nota">Datos reales del ejemplo del MOL. La distribución de asientos (A · B C) es provisional hasta tener el plano de cada serie.</div>
@@ -453,11 +482,11 @@ function validar(r){
   return '';
 }
 // Una fila de la lista (se usa en la comprobación y en Resumen)
-function filaHTML(r, icono, onclick){
+function filaHTML(r, icono, onclick, extra){
   var m=r.k?COMIDAS[r.k]:null;
-  return '<div class="ck-row'+(r.aviso?' warn':'')+(onclick?' tap':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span>'+icono+'</span>'+
+  return '<div class="ck-row'+(r.aviso?' warn':'')+(onclick?' tap':'')+(LISTA.length&&subio[id(r)]==='no'&&extra?' nosube':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span>'+icono+'</span>'+
     '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>Coche '+(r.coche||'?')+'</small></div>'+
-    '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+'<b>'+(m?m.e+' '+m.n:'?')+'</b> · '+(r.menu||'—')+'<br>'+bonito(r.origen||'?')+' → '+bonito(r.destino||'?')+(r.nombre?' · '+r.nombre:'')+(r.cumple?' · 🎂':'')+'</div></div>';
+    '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+'<b>'+(m?m.e+' '+m.n:'?')+'</b> · '+(r.menu||'—')+'<br>'+bonito(r.origen||'?')+' → '+bonito(r.destino||'?')+(r.nombre?' · '+r.nombre:'')+(r.cumple?' · 🎂':'')+'</div>'+(extra?'<div class="clipwrap">'+extra+'</div>':'')+'</div>';
 }
 function mostrarComprobacion(){
   var F=LEIDO.filas, ok=F.filter(function(r){return !r.aviso}), coches={}, tipos={};
@@ -471,7 +500,7 @@ function mostrarComprobacion(){
   document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
 }
 function confirmarCarga(){
-  LISTA=LEIDO.filas.filter(function(r){return !r.aviso}); DATA={}; servidos={};
+  LISTA=LEIDO.filas.filter(function(r){return !r.aviso}); DATA={}; servidos={}; subio={};
   LISTA.forEach(function(f){ DATA[f.coche+'-'+pad(f.fila)+f.letra]=f; });
   COCHES=LISTA.map(function(f){return f.coche}).filter(function(c,i,a){return a.indexOf(c)===i}).sort(function(a,b){return a-b});
   cargado=true;
@@ -510,19 +539,41 @@ function pintarMapa(){
     letras.forEach(function(l){
       if(!l){ w+='<span></span>'; return; }
       var key=coche+'-'+pad(r)+l, d=DATA[key], cls='seat', st='';
-      if(d){ cls+=' has'; st='background:'+COMIDAS[d.k].c; if(servidos[key]) cls+=' done'; if(filtro&&d.k!==filtro) cls+=' dim'; } else if(filtro) cls+=' dim';
-      w+='<button class="'+cls+'" style="'+st+'" onclick="ficha(\''+key+'\')">'+pad(r)+l+(d?'<span class="e">'+(d.cumple?'🎂':COMIDAS[d.k].e)+'</span>':'')+'</button>';
+      if(d){ cls+=' has'; st='background:'+COMIDAS[d.k].c; if(servidos[key]) cls+=' done'; if(subio[key]==='si') cls+=' sube'; if(subio[key]==='no') cls+=' nosube'; if(filtro&&d.k!==filtro) cls+=' dim'; } else if(filtro) cls+=' dim';
+      w+='<button class="'+cls+'" style="'+st+'" onclick="tocarAsiento(\''+key+'\')">'+pad(r)+l+(d?'<span class="e">'+(d.cumple?'🎂':COMIDAS[d.k].e)+'</span>':'')+'</button>';
     });
     w+='</div>';
   }
   document.getElementById('wagon').innerHTML=w;
+  document.getElementById('clipbar').innerHTML='<div class="clipbar"><span style="font-size:20px">📎</span><div class="txt"><b>Control de embarque</b><br>'+
+    (modoClip?'Toca un asiento: 🧍 subió → 🚫 no subió → ❔ sin comprobar':'Actívalo para marcar rápido quién ha subido')+'</div>'+
+    '<button class="tgl'+(modoClip?' on':'')+'" onclick="modoClip=!modoClip;pintarMapa()" aria-label="Control de embarque"></button></div>';
   document.getElementById('legend').innerHTML=usados.map(function(k){return '<span><i class="dot" style="background:'+COMIDAS[k].c+'"></i> '+COMIDAS[k].n+'</span>'}).join('')+'<span>🎂 Cumpleaños</span><span><i class="dot" style="background:var(--s2);border:1px solid var(--div)"></i> Sin servicio</span>';
 }
-function grupo(campo){ var g={}; LISTA.forEach(function(f){ g[f[campo]]=(g[f[campo]]||0)+1; }); return Object.keys(g).sort(function(a,b){return g[b]-g[a]}).map(function(k){return [k,g[k]]}); }
-var verLista='todos';
+function grupo(campo){ var g={}; aServir().forEach(function(f){ g[f[campo]]=(g[f[campo]]||0)+1; }); return Object.keys(g).sort(function(a,b){return g[b]-g[a]}).map(function(k){return [k,g[k]]}); }
+var verLista='todos', subio={}, modoClip=false;
+/* 📎 Control de embarque: subio[asiento] = 'si' | 'no' | (sin comprobar).
+   Si NO subió → no se le da servicio (no cuenta como pendiente).
+   Marcar "Servido" da por hecho que subió. */
+function setSube(key, v){
+  if(subio[key]===v) delete subio[key]; else subio[key]=v;
+  if(subio[key]==='no') delete servidos[key];
+}
+function toggleServido(key){
+  servidos[key]=!servidos[key];
+  if(servidos[key]) subio[key]='si';
+}
+function clipsHTML(key){
+  var s=subio[key];
+  return '<div class="clips"><button class="clip'+(s==='si'?' si':'')+'" onclick="event.stopPropagation();setSube(\''+key+'\',\'si\');refrescar()">🧍 Subió</button>'+
+         '<button class="clip'+(s==='no'?' no':'')+'" onclick="event.stopPropagation();setSube(\''+key+'\',\'no\');refrescar()">🚫 No subió</button></div>';
+}
+function nEstado(v){ return LISTA.filter(function(r){ var s=subio[id(r)]; return v==='nc'?!s:s===v; }).length; }
+function aServir(){ return LISTA.filter(function(r){ return subio[id(r)]!=='no'; }); }
 function pintarResumen(){
-  var t=cuenta(), s=nServidos();
-  document.getElementById('rs-total').innerHTML='<div class="card-t">✅ Servidos</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:900">'+s+'</span><span style="color:var(--tx2);font-weight:700">de '+t+' servicios</span></div><div class="prog"><i style="width:'+(t?Math.round(s/t*100):0)+'%"></i></div>';
+  var t=aServir().length, s=nServidos();
+  document.getElementById('rs-total').innerHTML='<div class="card-t">✅ Servidos</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:900">'+s+'</span><span style="color:var(--tx2);font-weight:700">de '+t+' servicios'+(nEstado('no')?' <span style="color:var(--red2)">('+nEstado('no')+' no subieron)</span>':'')+'</span></div><div class="prog"><i style="width:'+(t?Math.round(s/t*100):0)+'%"></i></div>'+
+    '<div class="est3"><div><b style="color:var(--green2)">'+nEstado('si')+'</b>🧍 A bordo</div><div><b style="color:var(--red2)">'+nEstado('no')+'</b>🚫 No subió</div><div><b>'+nEstado('nc')+'</b>❔ Sin comprobar</div></div>';
   document.getElementById('rs-comidas').innerHTML='<div class="card-t">🍽️ Menús a preparar</div>'+grupo('menu').map(function(g){return '<div class="rs-row"><div class="rs-n">'+g[0]+'</div><div class="rs-c" style="font-size:16px">'+g[1]+'</div></div>';}).join('');
   document.getElementById('rs-coches').innerHTML='<div class="card-t">🚉 Suben en</div>'+grupo('origen').map(function(g){return '<div class="rs-row"><div class="rs-n">'+g[0]+'</div><div class="rs-c" style="font-size:16px">'+g[1]+'</div></div>';}).join('')+
     '<div class="card-t" style="margin-top:12px">🏁 Bajan en</div>'+grupo('destino').map(function(g){return '<div class="rs-row"><div class="rs-n">'+g[0]+'</div><div class="rs-c" style="font-size:16px">'+g[1]+'</div></div>';}).join('')+
@@ -531,33 +582,48 @@ function pintarResumen(){
 }
 function pintarListaResumen(){
   var orden=LISTA.slice().sort(function(a,b){return a.coche-b.coche||a.fila-b.fila||(a.letra<b.letra?-1:1)});
-  var F=orden.filter(function(r){var s=!!servidos[id(r)]; return verLista==='todos'||(verLista==='serv'?s:!s);});
-  var n=nServidos(), t=LISTA.length;
+  var F=orden.filter(function(r){var k=id(r), s=!!servidos[k], u=subio[k];
+    return verLista==='todos'||(verLista==='serv'&&s)||(verLista==='pend'&&!s&&u!=='no')||(verLista==='no'&&u==='no')||(verLista==='nc'&&!u);});
+  var n=nServidos(), t=LISTA.length, pend=aServir().length-n;
   document.getElementById('rs-lista').innerHTML='<div class="card-t">📋 Lista de servicios del PDF</div>'+
     '<div class="chips" style="margin-bottom:6px">'+
-    [['todos','Todos · '+t],['pend','⏳ Pendientes · '+(t-n)],['serv','✅ Servidos · '+n]].map(function(o){return '<button class="chip'+(verLista===o[0]?' sel':'')+'" onclick="verLista=\''+o[0]+'\';pintarListaResumen()">'+o[1]+'</button>';}).join('')+'</div>'+
-    (F.length?F.map(function(r){ var k=id(r); return filaHTML(r, servidos[k]?'✅':'⏳', "ficha('"+k+"')"); }).join(''):'<div class="vacio">Nada en esta lista.</div>');
+    [['todos','Todos · '+t],['pend','⏳ Por servir · '+pend],['serv','✅ Servidos · '+n],['no','🚫 No subió · '+nEstado('no')],['nc','❔ Sin comprobar · '+nEstado('nc')]].map(function(o){return '<button class="chip'+(verLista===o[0]?' sel':'')+'" onclick="verLista=\''+o[0]+'\';pintarListaResumen()">'+o[1]+'</button>';}).join('')+'</div>'+
+    (F.length?F.map(function(r){ var k=id(r); return filaHTML(r, subio[k]==='no'?'🚫':servidos[k]?'✅':'⏳', "ficha('"+k+"')", clipsHTML(k)); }).join(''):'<div class="vacio">Nada en esta lista.</div>');
 }
 function ficha(key){
-  var p=key.split('-'), c=p[0], asiento=p[1], d=DATA[key], h='<div class="sh-handle"></div>';
+  fichaAbierta=key;
+  var p=key.split('-'), c=p[0], asiento=p[1], d=DATA[key], h='<div class="sh-handle"></div>', su=subio[key];
   h+='<div class="sh-hdr"><div class="sh-ico">💺</div><div style="flex:1"><div class="sh-tit">Asiento '+asiento+' · Coche '+c+'</div><div class="sh-sub">'+(d?d.fecha:'Sin servicio')+'</div></div><button class="sh-close" onclick="cerrar()">✕</button></div>';
   if(!d){
     h+='<div class="sh-body"><div class="vacio">Este pasaje <b>no tiene</b> servicio de comida.</div></div><div class="mfoot"><button class="m-sec" style="flex:1" onclick="cerrar()">Cerrar</button></div>';
   }else{
     var m=COMIDAS[d.k];
-    h+='<div class="sh-body"><div class="big-meal" style="background:'+m.c+'"><span class="e">'+m.e+'</span><div><b>'+m.n+'</b><span>✅ Este pasaje tiene servicio</span></div></div>'+
+    h+='<div class="sh-body"><div class="big-meal" style="background:'+m.c+'"><span class="e">'+m.e+'</span><div><b>'+m.n+'</b><span>'+(su==='no'?'🚫 No subió · no se da servicio':'✅ Este pasaje tiene servicio')+'</span></div></div>'+
+      '<div class="seg-t">📎 ¿Ha subido al tren?</div><div class="seg">'+
+        '<button class="'+(su==='si'?'si':'')+'" onclick="setSube(\''+key+'\',\'si\');refrescar()">🧍 Subió</button>'+
+        '<button class="'+(su==='no'?'no':'')+'" onclick="setSube(\''+key+'\',\'no\');refrescar()">🚫 No subió</button>'+
+        '<button class="'+(!su?'nc':'')+'" onclick="delete subio[\''+key+'\'];refrescar()">❔ Sin comprobar</button></div>'+
       (d.cumple?'<div class="alerg" style="background:rgba(219,39,119,.12);border-color:rgba(219,39,119,.4);color:#F9A8D4;margin:0 0 10px">🎂 ¡Hoy es su cumpleaños!</div>':'')+
       '<div class="kv"><div><span>Menú elegido</span><b>'+d.menu+'</b></div>'+
       (d.nombre?'<div><span>Nombre</span><b>'+d.nombre+'</b></div>':'')+
       '<div><span>Sube en</span><b>'+d.origen+'</b></div><div><span>Baja en</span><b>'+d.destino+'</b></div>'+
-      '<div><span>Estado</span><b>'+(servidos[key]?'✅ Servido':'⏳ Pendiente')+'</b></div></div></div>'+
-      '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cerrar</button><button class="m-ok" onclick="servidos[\''+key+'\']=!servidos[\''+key+'\'];cerrar();refrescar()">'+(servidos[key]?'↩︎ Desmarcar':'✓ Marcar servido')+'</button></div>';
+      '<div><span>Estado</span><b>'+(su==='no'?'🚫 Sin servicio':servidos[key]?'✅ Servido':'⏳ Pendiente')+'</b></div></div></div>'+
+      '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cerrar</button><button class="m-ok"'+(su==='no'?' disabled':'')+' onclick="toggleServido(\''+key+'\');cerrar();refrescar()">'+(su==='no'?'No subió':servidos[key]?'↩︎ Desmarcar':'✓ Marcar servido')+'</button></div>';
   }
   document.getElementById('sh-asiento').innerHTML=h;
   document.getElementById('ov-asiento').classList.add('on');
 }
-function refrescar(){ if(document.getElementById('p-resumen').classList.contains('on')) pintarResumen(); else pintarMapa(); }
-function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); }
+function tocarAsiento(key){
+  if(!modoClip||!DATA[key]) return ficha(key);
+  var s=subio[key], v=!s?'si':s==='si'?'no':null;
+  if(v) setSube(key,v); else delete subio[key];
+  if(v==='no') delete servidos[key];
+  toast('Asiento '+key.split('-')[1]+': '+(v==='si'?'🧍 subió':v==='no'?'🚫 no subió · sin servicio':'❔ sin comprobar'));
+  pintarMapa();
+}
+function refrescar(){ if(document.getElementById('p-resumen').classList.contains('on')) pintarResumen(); else pintarMapa(); if(fichaAbierta&&document.getElementById('ov-asiento').classList.contains('on')) ficha(fichaAbierta); }
+var fichaAbierta=null;
+function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; }
 pintarTipos();
 if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
 </script>
