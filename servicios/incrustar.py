@@ -15,7 +15,8 @@ fuente = open(os.path.join(RAIZ, 'servicios', 'servicios.html'), encoding='utf-8
 # La app nunca lleva el PDF de prueba (tiene nombres de clientes).
 fuente = re.sub(r"var EJEMPLO_PDF_B64 = '[^']*';", "var EJEMPLO_PDF_B64 = '';", fuente)
 
-texto = json.dumps(fuente, ensure_ascii=False).replace('</', '<\\/')
+# "<" como \u003c: ni un </script> ni un <!-- del módulo pueden cortar el <script> de la app.
+texto = json.dumps(fuente, ensure_ascii=False).replace('<', '\\u003c')
 bloque = '''<!-- SERVICIOS:INICIO — generado por servicios/incrustar.py; no editar a mano -->
 <div id="servicios-screen" style="display:none;position:fixed;inset:0;z-index:9998;background:#07111F">
   <iframe id="servicios-frame" title="Servicios a bordo" style="border:0;width:100%;height:100%;display:block;background:#07111F"></iframe>

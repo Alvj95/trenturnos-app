@@ -313,6 +313,10 @@ var tipo='AVE', serie='S-112', filtro=null, coche=null, LISTA=[], ASIENTOS={}, C
 var servidos={}, subio={}, modoClip=false, verLista='todos', fichaAbierta=null, LEIDO=null;
 
 function pad(n){ return (n<10?'0':'')+n; }
+// Todo lo que viene del PDF (o del nombre del archivo) se pinta con innerHTML: se quitan
+// "<" y ">" para que un texto raro nunca pueda meter código en la página.
+function limpio(s){ return String(s==null?'':s).replace(/</g,'‹').replace(/>/g,'›'); }
+function limpiarFila(r){ ['fecha','tren','txt','tipoTxt','menu','especial','origen','destino','opcion','nombre','letra'].forEach(function(k){ if(k in r) r[k]=limpio(r[k]); }); return r; }
 function capital(s){ s=(s||'').trim(); return s&&s===s.toUpperCase()?s.charAt(0)+s.slice(1).toLowerCase():s; }
 function estNombre(s){ s=(s||'').trim(); return EST_COD[s.toUpperCase()]||s; }
 function estCorto(s){ var n=estNombre(s); if(!n) return '?'; var p=n.split(/[- ]/)[0]; return capital(p); }
@@ -376,7 +380,7 @@ async function procesarPdf(bytes, nombre){
       barra(10+80*p/doc.numPages);
     }
     filas.forEach(function(f){ f.t.sort(function(a,b){return a.x-b.x}); f.txt=f.t.map(function(t){return t.s}).join(' '); });
-    LEIDO={nombre:nombre, filas:interpretar(filas)};
+    LEIDO={nombre:limpio(nombre), filas:interpretar(filas)};
     barra(100);
     if(!LEIDO.filas.length) throw new Error('No he encontrado filas de servicio en este PDF');
     mostrarComprobacion();
@@ -432,7 +436,7 @@ function deCeldas(c, txt){
   r.k=tipoComida(r.tipoTxt, r.opcion);
   r.cumple=/^S/i.test((c.cumple||'').trim())||/CUMPLE/i.test(r.opcion)||r.k==='cum';
   if(/^\(?en blanco\)?$/i.test(r.nombre)) r.nombre='';
-  r.aviso=validar(r); return r;
+  limpiarFila(r); r.aviso=validar(r); return r;
 }
 // Formato antiguo (tabla sin columnas claras): se reconoce la fila por su forma.
 var ESTACIONES=['SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','CORDOBA-JULIO ANGUITA','ZARAGOZA DELICIAS','BARCELONA-SANTS','MADRID-PUERTA DE ATOCHA','MADRID-CHAMARTIN','MÁLAGA-MARÍA ZAMBRANO','CAMP TARRAGONA','LLEIDA','VALENCIA JOAQUIN SOROLLA','ALICANTE','GIRONA','FIGUERES VILAFANT'];
@@ -449,7 +453,7 @@ function leerTextoMOL(linea){
   for(var g=0;g<2;g++){ var h=ESTACIONES.filter(function(e){return antes.toUpperCase().slice(-e.length)===e})[0]; if(!h) break; est.unshift(antes.slice(-h.length)); antes=antes.slice(0,-h.length).trim(); }
   r.menu=antes.trim(); r.origen=est[0]||''; r.destino=est[1]||'';
   r.k=tipoComida(r.tipoTxt,''); if(r.cumple&&r.k==='otr') r.k='cum';
-  r.aviso=validar(r); return r;
+  limpiarFila(r); r.aviso=validar(r); return r;
 }
 function validar(r){
   if(!(r.coche>0)) return 'No se lee el número de coche';
@@ -699,7 +703,7 @@ function restaurar(){
   tipo=d.tipo||tipo; serie=d.serie||serie; pintarTipos();
   document.getElementById('i-rama').value=d.rama||''; document.getElementById('i-num').value=d.num||'';
   servidos=d.servidos||{}; subio=d.subio||{}; CARGADO_EN=d.cargadoEn;
-  montar(d.lista);
+  montar(d.lista.map(limpiarFila));
   abrirMapa();
 }
 function borrarServicio(){
