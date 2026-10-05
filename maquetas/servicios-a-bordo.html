@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maqueta Servicios a bordo</title>
+<style>
+  :root{--bg:#07111F;--card:#0F1C2E;--card2:#132236;--line:#223149;--tx:#F8FAFC;--tx2:#94A3B8;--tx3:#64748B;
+    --amb:#F59E0B;--amb2:#FBBF24;
+    --m-des:#F59E0B;--m-ape:#14B8A6;--m-alm:#22C55E;--m-mer:#EC4899;--m-cen:#6366F1}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .app{max-width:420px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden}
+  .scr{display:none;padding:16px 16px 40px;min-height:100vh}
+  .scr.on{display:block}
+  .note{font-size:11px;color:var(--tx3);text-align:center;margin:18px 0 0}
+  /* Portal */
+  #s-portal{display:none;align-items:center;justify-content:center}
+  #s-portal.on{display:flex}
+  .pbtn{width:100%;display:flex;align-items:center;gap:14px;border-radius:16px;padding:18px 20px;margin-bottom:14px;cursor:pointer;text-align:left;border:2px solid;font:inherit;color:inherit}
+  .pbtn .ic{font-size:32px}.pbtn .t{font-size:16px;font-weight:900}.pbtn .s{font-size:11px;color:var(--tx2);margin-top:2px}.pbtn .ar{font-size:20px}
+  .new{font-size:9px;font-weight:900;background:var(--amb);color:#1a1205;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+  /* Cabecera */
+  .hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .back{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:18px;cursor:pointer}
+  .hdr h1{font-size:18px;margin:0;font-weight:900}
+  .hdr .sub{font-size:11px;color:var(--tx2)}
+  .lbl{font-size:11px;font-weight:800;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid var(--line);background:var(--card);color:var(--tx);border-radius:12px;padding:9px 13px;font:inherit;font-weight:700;cursor:pointer}
+  .chip.sel{border-color:var(--amb);background:rgba(245,158,11,.14);color:var(--amb2)}
+  .chip small{display:block;font-size:10px;font-weight:500;color:var(--tx2)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .inp{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:12px;color:var(--tx);padding:11px 12px;font:inherit}
+  .pdf{margin-top:18px;border:2px dashed #3a4a63;border-radius:16px;padding:18px;text-align:center;background:var(--card);cursor:pointer}
+  .pdf .big{font-size:30px}
+  .pdf b{display:block;margin-top:4px}
+  .pdf span{font-size:12px;color:var(--tx2)}
+  .pdf.ok{border-style:solid;border-color:#22C55E;background:rgba(34,197,94,.08)}
+  .bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:10px;display:none}
+  .bar i{display:block;height:100%;width:0;background:var(--amb);transition:width .25s}
+  .go{width:100%;margin-top:18px;border:0;border-radius:14px;padding:15px;font:inherit;font-weight:900;font-size:15px;background:var(--amb);color:#1a1205;cursor:pointer}
+  .go:disabled{opacity:.35;cursor:default}
+  /* Mapa */
+  .tren{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:12px;color:var(--tx2);margin-bottom:12px}
+  .tren b{color:var(--tx)}
+  .sum{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
+  .sum .chip{flex:none;padding:7px 10px;font-size:12px;display:flex;align-items:center;gap:5px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .coches{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px}
+  .coche{flex:none;min-width:46px;border:1.5px solid var(--line);background:var(--card);border-radius:10px 10px 6px 6px;padding:6px 4px;text-align:center;cursor:pointer;color:var(--tx);font:inherit}
+  .coche .n{font-weight:900;font-size:14px}
+  .coche .c{font-size:9px;color:var(--tx2)}
+  .coche .k{font-size:10px;color:var(--amb2);font-weight:800;min-height:13px}
+  .coche.sel{border-color:var(--amb);background:rgba(245,158,11,.14)}
+  .coche.prem .c{color:var(--amb2)}
+  .wagon{background:#0B1727;border:2px solid #2b3d58;border-radius:28px;padding:14px 12px 16px;margin-top:4px}
+  .wtit{text-align:center;font-size:12px;color:var(--tx2);margin-bottom:10px}
+  .wtit b{color:var(--tx)}
+  .wend{text-align:center;font-size:10px;color:var(--tx3);margin:4px 0}
+  .srow{display:grid;align-items:center;gap:6px;margin:6px 0}
+  .srow .num{font-size:10px;color:var(--tx3);text-align:center}
+  .aisle{height:1px}
+  .seat{height:40px;border-radius:9px 9px 6px 6px;border:1.5px solid #2f4260;background:#13233a;color:var(--tx2);font:inherit;font-size:11px;font-weight:800;cursor:pointer;position:relative;padding:0}
+  .seat.has{color:#fff;border-color:transparent}
+  .seat .e{position:absolute;top:-7px;right:-5px;font-size:13px}
+  .seat.done::after{content:"✓";position:absolute;bottom:-6px;right:-4px;background:#22C55E;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px}
+  .seat.dim{opacity:.18}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--tx2);margin-top:12px;justify-content:center}
+  /* Ficha */
+  .shade{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:20}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:420px;margin:0 auto;background:var(--card2);border-radius:22px 22px 0 0;padding:10px 18px 24px;transform:translateY(105%);transition:transform .25s;z-index:21;border-top:1px solid var(--line)}
+  .sheet.on{transform:none}
+  .grab{width:40px;height:4px;border-radius:3px;background:#3a4a63;margin:0 auto 12px}
+  .stop{display:flex;align-items:center;gap:12px}
+  .sbig{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px}
+  .stop h2{margin:0;font-size:18px}
+  .stop .sub{font-size:12px;color:var(--tx2)}
+  .kv{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .kv div{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid var(--line);font-size:13px}
+  .kv div:first-child{border-top:0}
+  .kv span{color:var(--tx2)}
+  .kv b{text-align:right}
+  .alerg{margin-top:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#FCA5A5;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:700}
+  .sbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .sbtns button{border-radius:12px;padding:12px;font:inherit;font-weight:800;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--tx)}
+  .sbtns .ok{background:#16A34A;border-color:#16A34A;color:#fff}
+  .empty{text-align:center;color:var(--tx2);padding:8px 0 4px}
+  .tag{display:inline-block;font-size:10px;font-weight:900;color:#1a1205;background:var(--amb);border-radius:6px;padding:1px 6px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 1 · PORTAL -->
+  <section class="scr on" id="s-portal">
+    <div style="width:100%;max-width:360px;text-align:center">
+      <div style="font-size:44px;margin-bottom:6px">🚆</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:2px">TrenTurnos v5</div>
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:28px">¿Qué eres?</div>
+      <button class="pbtn" style="background:linear-gradient(135deg,#1A2D44,#132236);border-color:#2563EB">
+        <span class="ic">🚂</span><span style="flex:1"><div class="t" style="color:#3B82F6">Tripulante</div><div class="s">Tu calendario, horas y nómina</div></span><span class="ar" style="color:#3B82F6">›</span>
+      </button>
+      <button class="pbtn" style="background:linear-gradient(135deg,#2E1F4D,#1E1533);border-color:#7C3AED">
+        <span class="ic">🕵️</span><span style="flex:1"><div class="t" style="color:#A78BFA">Interventor</div><div class="s">Portal de Interventor</div></span><span class="ar" style="color:#A78BFA">›</span>
+      </button>
+      <button class="pbtn" onclick="ir('s-tren')" style="background:linear-gradient(135deg,#3A2A0C,#241A08);border-color:#F59E0B">
+        <span class="ic">🍽️</span><span style="flex:1"><div class="t" style="color:#FBBF24">Servicios<span class="new">NUEVO</span></div><div class="s">Servicio a bordo Prémium · mapa de asientos</div></span><span class="ar" style="color:#FBBF24">›</span>
+      </button>
+      <p class="note">Maqueta · pulsa <b>Servicios</b></p>
+    </div>
+  </section>
+
+  <!-- 2 · ELEGIR TREN + PDF -->
+  <section class="scr" id="s-tren">
+    <div class="hdr"><button class="back" onclick="ir('s-portal')">‹</button><div><h1>🍽️ Servicios</h1><div class="sub">¿En qué tren vas hoy?</div></div></div>
+
+    <div class="lbl">1 · Tipo de tren</div>
+    <div class="chips" id="c-tipo"></div>
+
+    <div class="lbl">2 · Serie</div>
+    <div class="chips" id="c-serie"></div>
+
+    <div class="lbl">3 · Rama y tren</div>
+    <div class="row2">
+      <select class="inp" id="i-rama"></select>
+      <input class="inp" id="i-num" value="03063" placeholder="Nº de tren">
+    </div>
+    <div class="row2" style="margin-top:10px">
+      <input class="inp" value="Madrid → Barcelona">
+      <input class="inp" type="date" value="2026-10-05">
+    </div>
+
+    <div class="lbl">4 · Lista de servicios</div>
+    <div class="pdf" id="pdf" onclick="leerPdf()">
+      <div class="big">📄</div>
+      <b>Subir PDF de servicios a bordo</b>
+      <span>La app lo lee y coloca cada comida en su asiento</span>
+      <div class="bar" id="bar"><i></i></div>
+    </div>
+
+    <button class="go" id="go" disabled onclick="abrirMapa()">Ver mapa de asientos</button>
+    <p class="note">En la maqueta el PDF es simulado: pulsa el recuadro.</p>
+  </section>
+
+  <!-- 3 · MAPA -->
+  <section class="scr" id="s-mapa">
+    <div class="hdr"><button class="back" onclick="ir('s-tren')">‹</button><div><h1 id="m-tit">AVE 03063</h1><div class="sub" id="m-sub"></div></div></div>
+    <div class="sum" id="sum"></div>
+    <div class="coches" id="coches"></div>
+    <div class="wagon" id="wagon"></div>
+    <div class="legend" id="legend"></div>
+    <p class="note">Distribución de asientos de ejemplo. En la app real se dibujará el plano exacto de cada serie.</p>
+  </section>
+</div>
+
+<div class="shade" id="shade" onclick="cerrar()"></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+var COMIDAS = {
+  des:{n:'Desayuno',e:'☕',c:'var(--m-des)'},
+  ape:{n:'Aperitivo',e:'🥨',c:'var(--m-ape)'},
+  alm:{n:'Almuerzo',e:'🍽️',c:'var(--m-alm)'},
+  mer:{n:'Merienda',e:'🧁',c:'var(--m-mer)'},
+  cen:{n:'Cena',e:'🌙',c:'var(--m-cen)'}
+};
+var MENUS = ['Menú del día','Vegetariano','Sin gluten','Sin lactosa','Halal','Infantil'];
+var TIPOS = {
+  'AVE':['S-112','S-103','S-102','S-100'],
+  'Alvia':['S-130','S-730','S-120'],
+  'Avlo':['S-112 Avlo'],
+  'Euromed':['S-103']
+};
+var tipo='AVE', serie='S-112', filtro=null, coche=1, servidos={}, DATA={};
+
+function ir(id){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.toggle('on',s.id===id)});
+  window.scrollTo(0,0);
+}
+function pintarTipos(){
+  document.getElementById('c-tipo').innerHTML = Object.keys(TIPOS).map(function(t){
+    return '<button class="chip'+(t===tipo?' sel':'')+'" onclick="tipo=\''+t+'\';serie=TIPOS[tipo][0];pintarTipos()">'+t+'</button>';
+  }).join('');
+  document.getElementById('c-serie').innerHTML = TIPOS[tipo].map(function(s){
+    return '<button class="chip'+(s===serie?' sel':'')+'" onclick="serie=\''+s+'\';pintarTipos()">'+s+'<small>'+(s.indexOf('112')>-1?'Talgo 350':s.indexOf('103')>-1?'Siemens Velaro':s.indexOf('102')>-1?'Talgo 350':s.indexOf('100')>-1?'Alstom':s.indexOf('130')>-1||s.indexOf('730')>-1?'Talgo 250':'CAF')+'</small></button>';
+  }).join('');
+  var base = serie.replace(/\D/g,'').slice(0,3);
+  var r=''; for(var i=1;i<=16;i++){ r+='<option'+(i===14?' selected':'')+'>Rama '+base+'-0'+(i<10?'0':'')+i+'</option>'; }
+  document.getElementById('i-rama').innerHTML = r;
+}
+
+// Datos de ejemplo: coches 1-3 Prémium (1 + 2 por fila), 4 cafetería, 5-12 Estándar (2 + 2).
+var COCHES = [];
+for(var c=1;c<=12;c++) COCHES.push({n:c, cls: c<=3?'Prémium':c===4?'Cafetería':'Estándar', filas: c<=3?11:c===4?0:15});
+
+function generar(){
+  DATA={}; var seed=7;
+  function rnd(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+  var claves=Object.keys(COMIDAS);
+  [1,2,3].forEach(function(c){
+    for(var f=1;f<=11;f++) ['A','C','D'].forEach(function(l){
+      if(rnd()<0.62){
+        var k = rnd()<0.45?'alm':claves[Math.floor(rnd()*claves.length)];
+        DATA[c+'-'+f+l]={k:k,m:MENUS[Math.floor(rnd()*MENUS.length)],loc:'X'+Math.floor(rnd()*90000+10000).toString(36).toUpperCase(),al:rnd()<0.12?(rnd()<.5?'Frutos secos':'Marisco'):''};
+      }
+    });
+  });
+}
+function leerPdf(){
+  var bar=document.getElementById('bar'), i=bar.firstElementChild, p=document.getElementById('pdf');
+  if(p.classList.contains('ok')) return;
+  bar.style.display='block'; var v=0;
+  var t=setInterval(function(){
+    v+=12; i.style.width=Math.min(v,100)+'%';
+    if(v>=100){
+      clearInterval(t); generar();
+      var n=Object.keys(DATA).length;
+      p.classList.add('ok');
+      p.innerHTML='<div class="big">✅</div><b>servicios_03063_05-10.pdf</b><span>Leído: <b style="display:inline">'+n+' servicios</b> en coches 1, 2 y 3</span>';
+      document.getElementById('go').disabled=false;
+    }
+  },140);
+}
+function abrirMapa(){
+  document.getElementById('m-tit').textContent = tipo+' '+document.getElementById('i-num').value;
+  document.getElementById('m-sub').textContent = serie+' · '+document.getElementById('i-rama').value+' · Madrid → Barcelona';
+  coche=1; filtro=null; pintarMapa(); ir('s-mapa');
+}
+function cuenta(k,c){ return Object.keys(DATA).filter(function(s){return (!k||DATA[s].k===k)&&(!c||s.indexOf(c+'-')===0)}).length; }
+function pintarMapa(){
+  var total=cuenta();
+  document.getElementById('sum').innerHTML =
+    '<button class="chip'+(!filtro?' sel':'')+'" onclick="filtro=null;pintarMapa()">Todos · '+total+'</button>'+
+    Object.keys(COMIDAS).map(function(k){var m=COMIDAS[k];
+      return '<button class="chip'+(filtro===k?' sel':'')+'" onclick="filtro=\''+k+'\';pintarMapa()">'+m.e+' '+m.n+' · '+cuenta(k)+'</button>';}).join('');
+  document.getElementById('coches').innerHTML = COCHES.map(function(o){
+    var k=cuenta(filtro,o.n);
+    return '<button class="coche'+(o.n===coche?' sel':'')+(o.cls==='Prémium'?' prem':'')+'" onclick="coche='+o.n+';pintarMapa()"><div class="k">'+(k?k+'🍽️':'')+'</div><div class="n">'+o.n+'</div><div class="c">'+(o.cls==='Prémium'?'Prém.':o.cls==='Cafetería'?'Cafet.':'Est.')+'</div></button>';
+  }).join('');
+  var o=COCHES[coche-1], w='';
+  w+='<div class="wtit">Coche <b>'+o.n+'</b> · '+o.cls+(o.cls==='Prémium'?'<span class="tag">SERVICIO A BORDO</span>':'')+'</div>';
+  if(o.cls==='Cafetería'){
+    w+='<div class="empty">☕ Coche cafetería — sin asientos numerados</div>';
+  }else{
+    var prem=o.cls==='Prémium';
+    var cols = prem ? '22px 1fr 18px 1fr 1fr' : '22px 1fr 1fr 18px 1fr 1fr';
+    var letras = prem ? ['A',null,'C','D'] : ['A','B',null,'C','D'];
+    w+='<div class="wend">▲ hacia coche '+(o.n-1||'cabeza')+'</div>';
+    w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+letras.map(function(l){return l?'<span class="num">'+l+'</span>':'<span class="aisle"></span>'}).join('')+'</div>';
+    for(var f=1;f<=o.filas;f++){
+      w+='<div class="srow" style="grid-template-columns:'+cols+'"><span class="num">'+f+'</span>';
+      letras.forEach(function(l){
+        if(!l){ w+='<span class="aisle"></span>'; return; }
+        var id=o.n+'-'+f+l, d=DATA[id], st='', cls='seat';
+        if(d){ cls+=' has'; st='background:'+COMIDAS[d.k].c; if(servidos[id]) cls+=' done'; if(filtro&&d.k!==filtro) cls+=' dim'; }
+        else if(filtro) cls+=' dim';
+        w+='<button class="'+cls+'" style="'+st+'" onclick="ficha(\''+id+'\')">'+(f<10?'0':'')+f+l+(d?'<span class="e">'+COMIDAS[d.k].e+'</span>':'')+'</button>';
+      });
+      w+='</div>';
+    }
+    w+='<div class="wend">▼ hacia coche '+(o.n+1)+'</div>';
+  }
+  document.getElementById('wagon').innerHTML=w;
+  document.getElementById('legend').innerHTML = Object.keys(COMIDAS).map(function(k){return '<span><i class="dot" style="background:'+COMIDAS[k].c+'"></i> '+COMIDAS[k].n+'</span>'}).join('')+'<span><i class="dot" style="background:#13233a;border:1px solid #2f4260"></i> Sin servicio</span>';
+}
+function ficha(id){
+  var p=id.split('-'), c=p[0], a=p[1], d=DATA[id], h='<div class="grab"></div>';
+  var asiento=(a.length<3?'0':'')+a;
+  if(!d){
+    h+='<div class="stop"><div class="sbig" style="background:#13233a">💺</div><div><h2>Asiento '+asiento+'</h2><div class="sub">Coche '+c+'</div></div></div><div class="empty" style="margin-top:14px">Este pasaje <b>no tiene</b> servicio de comida.</div>';
+  }else{
+    var m=COMIDAS[d.k];
+    h+='<div class="stop"><div class="sbig" style="background:'+m.c+'">'+m.e+'</div><div><h2>Asiento '+asiento+' · Coche '+c+'</h2><div class="sub">✅ Este pasaje <b>tiene servicio</b> Prémium</div></div></div>'+
+      '<div class="kv"><div><span>Servicio</span><b>'+m.e+' '+m.n+'</b></div><div><span>Menú elegido</span><b>'+d.m+'</b></div><div><span>Localizador</span><b>'+d.loc+'</b></div></div>'+
+      (d.al?'<div class="alerg">⚠️ Alergia: '+d.al+'</div>':'')+
+      '<div class="sbtns"><button onclick="cerrar()">Cerrar</button><button class="ok" onclick="servidos[\''+id+'\']=!servidos[\''+id+'\'];cerrar();pintarMapa()">'+(servidos[id]?'↩︎ Desmarcar':'✓ Servido')+'</button></div>';
+  }
+  document.getElementById('sheet').innerHTML=h;
+  document.getElementById('shade').style.display='block';
+  requestAnimationFrame(function(){document.getElementById('sheet').classList.add('on')});
+}
+function cerrar(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('shade').style.display='none'; }
+pintarTipos();
+</script>
+</body>
+</html>
