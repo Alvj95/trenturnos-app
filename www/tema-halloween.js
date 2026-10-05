@@ -158,3 +158,147 @@ document.addEventListener('visibilitychange', function(){ if(!document.hidden) a
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar);
   else montar();
 })();
+
+
+// NUEVO — HALLOWEEN también en la pantalla de inicio y en el Portal de
+// Interventor. Mismas reglas que el resto del tema: solo entre
+// HW_DESDE y HW_HASTA, y solo si la persona ha elegido un tema
+// (html[data-estetica]). Fuera de fechas no hace nada.
+(function(){
+  try{
+    var d=new Date(), h=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    if(h < window.HW_DESDE || h > window.HW_HASTA) return;
+  }catch(e){ return; }
+
+  var CSS = [
+    /* ── Pantalla de inicio ── */
+    '#hw-sp{display:none;position:absolute;inset:0;pointer-events:none}',
+    'html[data-estetica] #hw-sp{display:block}',
+    '.hws-moon{position:absolute;top:1%;right:-14%;width:40%;aspect-ratio:1;border-radius:50%;opacity:0;animation:hwsIn 1s ease-out .2s forwards}',
+    'html[data-estetica="a"] .hws-moon,html[data-estetica="c"] .hws-moon{background:radial-gradient(circle at 40% 40%,#fdba74,#ea580c 70%);box-shadow:0 0 60px 14px rgba(249,115,22,.35)}',
+    'html[data-estetica="b"] .hws-moon{width:30%;top:7%;right:6%;background:radial-gradient(circle at 35% 35%,#fffbe0,#f3d56b);box-shadow:0 0 40px 10px rgba(243,213,107,.3)}',
+    '@keyframes hwsIn{to{opacity:.9}}',
+    '.hws-bat{position:absolute;left:-12%;font-size:calc(var(--k,1.8px) * 11);animation:hwsBat 3.2s linear forwards,hwsBob .5s ease-in-out infinite alternate;opacity:.95}',
+    '.hws-bat i{display:inline-block;font-style:normal;filter:brightness(.6);animation:hwFlap .18s ease-in-out infinite alternate}',
+    '@keyframes hwsBat{from{left:-12%}to{left:112%}}',
+    '@keyframes hwsBob{from{margin-top:0}to{margin-top:10px}}',
+    '@keyframes hwFlap{from{transform:scaleY(1)}to{transform:scaleY(.5)}}',
+    '.hws-spider{position:absolute;top:0;left:22%;text-align:center}',
+    '.hws-thr{width:1px;margin:0 auto;background:rgba(255,255,255,.55);height:0;animation:hwsDrop 1.1s cubic-bezier(.3,1.4,.5,1) .6s forwards}',
+    '@keyframes hwsDrop{to{height:16vh}}',
+    '.hws-spider span{display:block;margin-top:-2px;font-size:calc(var(--k,1.8px) * 10)}',
+    '.hws-pk{position:absolute;top:calc(58.5% - var(--k,1.8px) * 15);font-size:calc(var(--k,1.8px) * 15);opacity:0;filter:drop-shadow(0 0 8px rgba(249,115,22,.9));animation:hwsPop .4s cubic-bezier(.3,1.6,.5,1) forwards,hwsFlick 1.4s ease-in-out 1.6s infinite alternate}',
+    '@keyframes hwsPop{from{opacity:0;transform:scale(.2) translateY(20px)}to{opacity:1;transform:none}}',
+    '@keyframes hwsFlick{from{filter:drop-shadow(0 0 4px rgba(249,115,22,.6))}to{filter:drop-shadow(0 0 14px rgba(249,115,22,1))}}',
+    '.hws-ghost{position:absolute;top:38%;left:4%;font-size:calc(var(--k,1.8px) * 16);opacity:0;animation:hwsGhost 2.6s ease-in-out .9s forwards}',
+    '@keyframes hwsGhost{0%{opacity:0;transform:translate(0,10px)}30%{opacity:.85}70%{opacity:.85;transform:translate(14px,-16px)}100%{opacity:0;transform:translate(26px,-30px)}}',
+    '.hws-txt{position:absolute;top:37.5%;left:0;right:0;text-align:center;font-weight:900;font-size:calc(var(--k,1.8px) * 8.5);letter-spacing:calc(var(--k,1.8px) * 1);color:#fdba74;text-shadow:0 0 10px rgba(249,115,22,.8);opacity:0;animation:spTit .5s ease-out 1.4s both}',
+    'html[data-estetica="b"] .hws-txt{color:#d9f99d;text-shadow:0 0 10px rgba(132,204,22,.8)}',
+    '.hws-fog{position:absolute;left:-40%;bottom:-8%;width:180%;height:30%;background:radial-gradient(ellipse at 50% 70%,rgba(190,215,255,.18),transparent 65%);animation:hwFog 6s linear infinite alternate}',
+    '@keyframes hwFog{from{transform:translateX(-10%)}to{transform:translateX(10%)}}',
+    'html:not([data-estetica="b"]) .hws-fog{display:none}',
+
+    /* ── Portal de Interventor ── */
+    'html[data-estetica="a"] #portal-interventor-screen{background:linear-gradient(170deg,#140a22,#241033 62%,#2a1209)!important}',
+    'html[data-estetica="b"] #portal-interventor-screen{background:linear-gradient(170deg,#08121f,#0b1d27 70%,#0a1a1c)!important}',
+    'html[data-estetica="c"] #portal-interventor-screen{background:linear-gradient(170deg,#12081f,#1d0b2f 65%,#220d1d)!important}',
+    '#hw-decor-int{display:none;position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}',
+    'html[data-estetica] #hw-decor-int{display:block}',
+    'html[data-estetica] #portal-interventor-screen > *:not(#hw-decor-int){position:relative;z-index:1}',
+    'html[data-estetica] #interventorHdrTitulo{color:var(--hw-int,#FDBA74)!important}',
+    'html[data-estetica="b"]{--hw-int:#BEF264}',
+    '.hw-int-saludo{display:none;font-size:11.5px;font-weight:800;color:#FDBA74;margin-top:2px}',
+    'html[data-estetica="b"] .hw-int-saludo{color:#BEF264}',
+    'html[data-estetica] .hw-int-saludo{display:block}',
+    '#hwIntBtn{background:rgba(249,115,22,.14);border:1px solid #FB923C;border-radius:9px;color:#FDBA74;font-size:15px;padding:6px 10px;cursor:pointer;margin-right:6px}',
+    '#hwIntPanel{display:none;margin:-10px 0 14px;background:rgba(0,0,0,.35);border:1px solid #FB923C;border-radius:14px;padding:12px}',
+    '#hwIntPanel.on{display:block}',
+    '#hwIntPanel .hw-sub{margin-bottom:8px}',
+    '#hwIntAviso{display:none;margin:-8px 0 14px;align-items:center;gap:8px;background:rgba(0,0,0,.4);border:1px solid #FB923C;border-radius:12px;padding:8px 10px;font-size:12px;font-weight:700;color:#F8FAFC}',
+    '#hwIntAviso.on{display:flex}',
+    '#hwIntAviso span{flex:1}',
+    '#hwIntAviso button{all:unset;cursor:pointer;font-weight:800;color:#FDBA74;padding:2px 6px}'
+  ].join('\n');
+  var st=document.createElement('style'); st.textContent=CSS;
+  (document.head||document.documentElement).appendChild(st);
+
+  // ── Pantalla de inicio: adornos dentro de la columna del splash ──
+  var SPLASH =
+    '<div id="hw-sp" aria-hidden="true">' +
+      '<div class="hws-moon"></div><div class="hws-fog"></div>' +
+      '<span class="hws-bat" style="top:9%;animation-delay:.3s,0s"><i>🦇</i></span>' +
+      '<span class="hws-bat" style="top:20%;animation-delay:.9s,.2s;animation-duration:2.6s,.5s"><i>🦇</i></span>' +
+      '<span class="hws-bat" style="top:30%;animation-delay:1.5s,.1s;font-size:calc(var(--k,1.8px) * 8)"><i>🦇</i></span>' +
+      '<span class="hws-bat" style="top:66%;animation-delay:2.0s,.3s;animation-duration:2.4s,.5s"><i>🦇</i></span>' +
+      '<div class="hws-spider"><div class="hws-thr"></div><span>🕷️</span></div>' +
+      '<span class="hws-ghost">👻</span>' +
+      '<span class="hws-pk" style="left:9%;animation-delay:1.0s,1.6s">🎃</span>' +
+      '<span class="hws-pk" style="right:9%;animation-delay:1.2s,1.8s">🎃</span>' +
+      '<div class="hws-txt">🎃 FELIZ HALLOWEEN 🎃</div>' +
+    '</div>';
+  function decorarSplash(){
+    var sp=document.getElementById('splash-screen'); if(!sp) return false;
+    if(!document.getElementById('hw-sp')){
+      var col=sp.querySelector('.sp-col')||sp;
+      col.insertAdjacentHTML('afterbegin', SPLASH);
+    }
+    return true;
+  }
+  if(!decorarSplash()){
+    var mo=new MutationObserver(function(){ if(decorarSplash()) mo.disconnect(); });
+    mo.observe(document.documentElement,{childList:true,subtree:true});
+    document.addEventListener('DOMContentLoaded',function(){ mo.disconnect(); });
+  }
+
+  // ── Portal de Interventor: adornos, saludo y selector de estética ──
+  function montarInterventor(){
+    var scr=document.getElementById('portal-interventor-screen'); if(!scr || document.getElementById('hw-decor-int')) return;
+    var deco=document.getElementById('hw-decor');
+    scr.insertAdjacentHTML('afterbegin','<div id="hw-decor-int" aria-hidden="true">'+(deco?deco.innerHTML:'')+'</div>');
+    var sub=document.getElementById('interventorHdrSub');
+    if(sub) sub.insertAdjacentHTML('afterend','<div class="hw-int-saludo">🎃 Feliz Halloween</div>');
+    var btnCambiar=document.getElementById('btnCambiarPerfilInterventor');
+    if(btnCambiar){
+      btnCambiar.insertAdjacentHTML('beforebegin','<button type="button" id="hwIntBtn" aria-label="Estética de Halloween" onclick="hwIntTogglePanel()">🎃</button>');
+      var hdr=btnCambiar.parentNode;
+      var tiles=document.querySelector('#aj-acc-estetica .hw-tiles');
+      hdr.insertAdjacentHTML('afterend',
+        '<div id="hwIntAviso"><span>🎃 ¡Halloween! Puedes elegir cómo ver la app.</span>'+
+        '<button type="button" onclick="hwIntTogglePanel(true)">Elegir</button>'+
+        '<button type="button" aria-label="Cerrar aviso" onclick="hwIntCerrarAviso()">✕</button></div>'+
+        '<div id="hwIntPanel"><div class="hw-sub">Elige cómo quieres ver TrenTurnos. Es solo para ti.</div>'+
+        '<div class="hw-tiles">'+(tiles?tiles.innerHTML:'')+'</div>'+
+        '<div class="hw-cur">Elegida: <b class="hw-int-cur"></b></div></div>');
+    }
+    actualizarInt();
+  }
+  function actualizarInt(){
+    var e=(typeof esteticaActiva==='function')?esteticaActiva():'';
+    var cur=document.querySelector('.hw-int-cur');
+    if(cur && window.HW_NOMBRES) cur.textContent=HW_NOMBRES[e||'n'];
+    var av=document.getElementById('hwIntAviso');
+    if(av){
+      var visto=''; try{ visto=localStorage.getItem('hw_aviso_visto')||''; }catch(x){}
+      var yaEligio=!!(typeof AJ!=='undefined' && AJ && AJ.estetica);
+      av.classList.toggle('on', !visto && !yaEligio);
+    }
+  }
+  window.hwIntTogglePanel=function(abrir){
+    var p=document.getElementById('hwIntPanel'); if(!p) return;
+    p.classList.toggle('on', abrir===true ? true : !p.classList.contains('on'));
+    window.hwIntCerrarAviso();
+  };
+  window.hwIntCerrarAviso=function(){
+    var av=document.getElementById('hwIntAviso'); if(av) av.classList.remove('on');
+    try{ localStorage.setItem('hw_aviso_visto','1'); }catch(x){}
+  };
+  // Al elegir una estética (desde Ajustes o desde Interventor), refrescar lo de Interventor.
+  function engancharElegir(){
+    if(typeof window.elegirEstetica!=='function' || window.elegirEstetica.__hwInt) return;
+    var orig=window.elegirEstetica;
+    window.elegirEstetica=function(k){ var r=orig.apply(this,arguments); actualizarInt(); return r; };
+    window.elegirEstetica.__hwInt=true;
+  }
+  function alCargar(){ setTimeout(function(){ montarInterventor(); engancharElegir(); },0); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',alCargar); else alCargar();
+})();
