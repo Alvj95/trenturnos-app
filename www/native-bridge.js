@@ -9,6 +9,7 @@
  *     abre "Compartir" para mandarlas a Drive, WhatsApp, Archivos…
  *   - window.Notification → notificaciones locales del sistema
  *   - pantalla fija: la página no se desplaza, el menú inferior no se mueve
+ *   - botón "atrás" de Android: no cierra la app de golpe (ver index.html)
  *
  * En el navegador normal (web/PWA) no hace nada.
  */
@@ -61,6 +62,17 @@
 
   function isCancel(err) {
     return /cancel/i.test(String((err && err.message) || err));
+  }
+
+  // ── Botón "atrás" de Android ────────────────────────────────
+  // Sin esto Android cierra la app al pulsar "atrás". Se pasa al
+  // historial de la página, donde index.html decide: cerrar ventana,
+  // volver al inicio, o avisar y salir con la segunda pulsación.
+  if (P.App && P.App.addListener) {
+    P.App.addListener('backButton', function (ev) {
+      if (ev && ev.canGoBack) window.history.back();
+      else P.App.exitApp();
+    });
   }
 
   // ── navigator.share / canShare ───────────────────────────────

@@ -35856,6 +35856,7 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
      navegador, así "atrás" tiene algo que consumir antes de salir de
      verdad. 100% aditivo — no reemplaza closeOv()/goP(), los llama.
   ═══════════════════════════════════════════════════════════ */
+  var _ultimoAtrasInicio = 0;
   history.pushState({trenturnos:true}, '', location.href);
   window.addEventListener('popstate', function(){
     var overlaysAbiertos = document.querySelectorAll('.ov.on');
@@ -35867,16 +35868,38 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
       history.pushState({trenturnos:true}, '', location.href);
       return;
     }
-    var panelCal = document.getElementById('p-cal');
-    var yaEnCalendario = panelCal && panelCal.classList.contains('on');
-    if(!yaEnCalendario){
-      if(typeof goP==='function') goP('cal');
-      history.pushState({trenturnos:true}, '', location.href);
+    // NUEVO — Portal de Interventor: del detalle (por tren / por hora) vuelve al menú.
+    var pantallaInterv = document.getElementById('portal-interventor-screen');
+    var enInterventor = pantallaInterv && getComputedStyle(pantallaInterv).display !== 'none';
+    if(enInterventor){
+      var detT = document.getElementById('interventorDetalleTren'), detH = document.getElementById('interventorDetalleHora');
+      var enDetalle = (detT && getComputedStyle(detT).display !== 'none') || (detH && getComputedStyle(detH).display !== 'none');
+      if(enDetalle && typeof mostrarInterventorMenu==='function'){
+        mostrarInterventorMenu();
+        history.pushState({trenturnos:true}, '', location.href);
+        return;
+      }
+    } else {
+      var panelCal = document.getElementById('p-cal');
+      var yaEnCalendario = panelCal && panelCal.classList.contains('on');
+      if(!yaEnCalendario){
+        if(typeof goP==='function') goP('cal');
+        history.pushState({trenturnos:true}, '', location.href);
+        return;
+      }
+    }
+    // NUEVO — En la pantalla principal: el primer "atrás" solo avisa;
+    // el segundo (en menos de 2 s) sale de la app.
+    if(Date.now() - _ultimoAtrasInicio < 2000){
+      _ultimoAtrasInicio = 0;
+      var App = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App;
+      if(App && Capacitor.isNativePlatform && Capacitor.isNativePlatform()){ App.exitApp(); }
+      else { history.back(); } // en la web: sale de la página
       return;
     }
-    // Ya está en Calendario y no hay nada abierto: no se vuelve a
-    // añadir historial, así el siguiente "atrás" sale de la app de
-    // verdad — es el comportamiento esperado en la pantalla principal.
+    _ultimoAtrasInicio = Date.now();
+    if(typeof toast==='function') toast('Pulsa atrás otra vez para salir');
+    history.pushState({trenturnos:true}, '', location.href);
   });
 })();
 </script>
