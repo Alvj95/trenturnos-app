@@ -160,6 +160,26 @@ button{font-family:inherit}
 .ck-row.tap{cursor:pointer}
 .ck-row.nosube .pos,.ck-row.nosube .det{opacity:.45;text-decoration:line-through}
 /* 📎 Control de embarque */
+.estf{padding:12px 14px}
+.estf .card-t{margin-bottom:8px}
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.seg2 button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:8px 4px;font-size:12px;font-weight:800;cursor:pointer}
+.seg2 button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.estf .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}
+.estf .chip{flex:none;padding:7px 10px;font-size:12px}
+.estf-on{display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(217,119,6,.14);border:1px solid rgba(217,119,6,.45);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;color:var(--acc3)}
+.estf-on span{flex:1}
+.estf-on button{background:none;border:none;color:var(--acc3);font-weight:900;font-size:12px;cursor:pointer}
+#tema-decor{position:absolute!important;inset:0;z-index:0!important;pointer-events:none;overflow:hidden}
+.tema-saludo{display:none;font-size:11.5px;font-weight:800;color:var(--acc3);margin-top:3px}
+.tema-saludo.on{display:block}
+#tema-btn{display:none;background:rgba(0,0,0,.25);border:1px solid var(--tema-c,#FB923C)}
+#tema-btn.on{display:flex}
+.tema-panel{display:none;margin:0 0 12px;background:rgba(0,0,0,.35);border:1px solid var(--tema-c,#FB923C);border-radius:14px;padding:12px}
+.tema-panel.on{display:block}
+.tema-panel .t{font-size:12px;color:var(--tx2);margin-bottom:10px}
+.tema-panel .cur{margin-top:10px;font-size:11.5px;color:var(--tx2)}
+.tema-panel .cur b{color:var(--tx)}
 .clipwrap{grid-column:3}
 .clips{display:flex;gap:6px;margin-top:-2px}
 .clip{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer}
@@ -201,15 +221,18 @@ button{font-family:inherit}
       <div>
         <div class="hdr-pill" id="pill">🍽️ SERVICIOS · ELIGE TREN</div>
         <div class="hdr-sub" id="hsub">Servicio a bordo Prémium</div>
+        <div class="tema-saludo" id="tema-saludo"></div>
       </div>
       <div class="hdr-btns">
         <button class="hbtn" title="Subir PDF" onclick="goP('tren')">📄</button>
+        <button class="hbtn" id="tema-btn" title="Estética de temporada" onclick="temaPanel()"></button>
         <button class="hbtn" title="Cambiar de perfil" onclick="cambiarPerfil()">🔁</button>
       </div>
     </div>
   </div>
 
   <div class="body" id="body">
+    <div class="panel on" style="padding-bottom:0;display:block"><div class="tema-panel" id="tema-panel"></div></div>
     <!-- TREN -->
     <div class="panel on" id="p-tren">
       <div class="saludo" id="saludo">¿En qué tren vas hoy? 👋</div>
@@ -255,6 +278,7 @@ button{font-family:inherit}
 
     <!-- ASIENTOS -->
     <div class="panel" id="p-mapa">
+      <div id="est-mapa"></div>
       <div class="sum" id="sum"></div>
       <div class="coches" id="coches"></div>
       <div id="clipbar"></div>
@@ -273,6 +297,7 @@ button{font-family:inherit}
 
     <!-- RESUMEN -->
     <div class="panel" id="p-resumen">
+      <div id="est-resumen"></div>
       <div class="card" id="rs-total"></div>
       <div class="card" id="rs-lista"></div>
       <div class="card" id="rs-comidas"></div>
@@ -505,7 +530,7 @@ function mostrarComprobacion(){
   document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
 }
 function confirmarCarga(){
-  servidos={}; subio={}; CARGADO_EN=Date.now();
+  servidos={}; subio={}; CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null};
   montar(LEIDO.filas.filter(function(r){return !r.aviso}));
   var tren=(LISTA.filter(function(r){return r.tren})[0]||{}).tren; if(tren) document.getElementById('i-num').value=tren;
   guardar();
@@ -568,7 +593,33 @@ function clipsHTML(sid){
   return '<div class="clips"><button class="clip'+(s==='si'?' si':'')+'" onclick="event.stopPropagation();setSube('+sid+',\'si\');refrescar()">🧍 Subió</button>'+
          '<button class="clip'+(s==='no'?' no':'')+'" onclick="event.stopPropagation();setSube('+sid+',\'no\');refrescar()">🚫 No subió</button></div>';
 }
-function lista(fn){ return LISTA.filter(fn); }
+/* 🚉 Filtro por estación: ver solo quien SUBE en una estación o quien BAJA en ella.
+   Afecta a todo lo que se ve (mapa, contadores, Resumen y lista). */
+var estFiltro={modo:'sube', est:null};
+function pasaEst(r){ return !estFiltro.est || (estFiltro.modo==='sube'?r.origen:r.destino)===estFiltro.est; }
+function lista(fn){ return LISTA.filter(function(r){ return pasaEst(r)&&fn(r); }); }
+function setEst(modo, est){ estFiltro={modo:modo, est:est}; refrescar(); }
+function estacionesHTML(){
+  var campo=estFiltro.modo==='sube'?'origen':'destino', n={};
+  LISTA.forEach(function(r){ if(r[campo]) n[r[campo]]=(n[r[campo]]||0)+1; });
+  var ests=Object.keys(n).sort(function(a,b){return rangoEst(a)-rangoEst(b)});
+  var verbo=estFiltro.modo==='sube'?'Suben en':'Bajan en';
+  return '<div class="card estf"><div class="card-t">🚉 Filtrar por estación</div>'+
+    '<div class="seg2"><button class="'+(estFiltro.modo==='sube'?'sel':'')+'" onclick="setEst(\'sube\',null)">⬆️ Suben en</button>'+
+    '<button class="'+(estFiltro.modo==='baja'?'sel':'')+'" onclick="setEst(\'baja\',null)">⬇️ Bajan en</button></div>'+
+    '<div class="chips"><button class="chip'+(!estFiltro.est?' sel':'')+'" onclick="setEst(estFiltro.modo,null)">Todas · '+LISTA.length+'</button>'+
+    ests.map(function(e,i){ return '<button class="chip'+(estFiltro.est===e?' sel':'')+'" onclick="setEst(estFiltro.modo,ESTS_VISTA['+i+'])">'+estCorto(e)+' · '+n[e]+'</button>'; }).join('')+'</div>'+
+    (estFiltro.est?'<div class="estf-on"><span>Viendo solo: '+verbo.toLowerCase()+' '+estNombre(estFiltro.est)+'</span><button onclick="setEst(estFiltro.modo,null)">✕ Quitar</button></div>':'')+
+    '</div>';
+}
+var ESTS_VISTA=[];
+function pintarEstaciones(){
+  var campo=estFiltro.modo==='sube'?'origen':'destino', v={};
+  LISTA.forEach(function(r){ if(r[campo]) v[r[campo]]=1; });
+  ESTS_VISTA=Object.keys(v).sort(function(a,b){return rangoEst(a)-rangoEst(b)});
+  var html=estacionesHTML();
+  ['est-mapa','est-resumen'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=html; });
+}
 function cuenta(k,c){ return lista(function(r){return (!k||r.k===k)&&(!c||r.coche===c)}).length; }
 function nServidos(c){ return lista(function(r){return servidos[r.sid]&&(!c||r.coche===c)}).length; }
 function nEstado(v){ return lista(function(r){ var s=subio[r.sid]; return v==='nc'?!s:s===v; }).length; }
@@ -576,6 +627,7 @@ function aServir(){ return lista(function(r){ return subio[r.sid]!=='no'; }); }
 
 /* ── Mapa ── */
 function pintarMapa(){
+  pintarEstaciones();
   var usados=Object.keys(COMIDAS).filter(function(k){return cuenta(k)});
   document.getElementById('sum').innerHTML='<button class="chip'+(!filtro?' sel':'')+'" onclick="filtro=null;pintarMapa()">Todos · '+cuenta()+'</button>'+
     usados.map(function(k){var m=COMIDAS[k];return '<button class="chip'+(filtro===k?' sel':'')+'" onclick="filtro=\''+k+'\';pintarMapa()"><i class="dot" style="background:'+m.c+'"></i>'+m.n+' · '+cuenta(k)+'</button>';}).join('');
@@ -594,12 +646,13 @@ function pintarMapa(){
       if(!l){ w+='<span></span>'; return; }
       var key=coche+'-'+pad(f)+l, sv=ASIENTOS[key]||[], cls='seat', st='', badge='';
       if(sv.length){
+        var svE=sv.filter(pasaEst); if(svE.length) sv=svE;
         var vivos=sv.filter(function(r){return subio[r.sid]!=='no'}), pend=vivos.filter(function(r){return !servidos[r.sid]});
         var ver=pend[0]||vivos[0]||sv[0];
         cls+=' has'; st='background:'+COMIDAS[ver.k].c;
         if(vivos.length&&!pend.length) cls+=' done';
         if(!vivos.length) cls+=' nosube'; else if(sv.some(function(r){return subio[r.sid]==='si'})) cls+=' sube';
-        if(filtro&&!sv.some(function(r){return r.k===filtro})) cls+=' dim';
+        if((filtro&&!sv.some(function(r){return r.k===filtro}))||!svE.length) cls+=' dim';
         badge='<span class="e">'+COMIDAS[ver.k].e+'</span>'+(sv.length>1?'<span class="x2">×'+sv.length+'</span>':'');
       } else if(filtro) cls+=' dim';
       w+='<button class="'+cls+'" style="'+st+'" onclick="tocarAsiento(\''+key+'\')">'+pad(f)+l+badge+'</button>';
@@ -629,6 +682,7 @@ function grupo(fn, orden){ var g={}, o={}; aServir().forEach(function(r){ var k=
   return Object.keys(g).sort(function(a,b){return orden?o[a]-o[b]:g[b]-g[a]}).map(function(k){return [k,g[k]]}); }
 function filasGrupo(gs){ return gs.map(function(g){return '<div class="rs-row"><div class="rs-n">'+g[0]+'</div><div class="rs-c" style="font-size:16px">'+g[1]+'</div></div>';}).join(''); }
 function pintarResumen(){
+  pintarEstaciones();
   var t=aServir().length, s=nServidos();
   document.getElementById('rs-total').innerHTML='<div class="card-t">✅ Servidos</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:900">'+s+'</span><span style="color:var(--tx2);font-weight:700">de '+t+' servicios'+(nEstado('no')?' <span style="color:var(--red2)">('+nEstado('no')+' no subieron)</span>':'')+'</span></div><div class="prog"><i style="width:'+(t?Math.round(s/t*100):0)+'%"></i></div>'+
     '<div class="est3"><div><b style="color:var(--green2)">'+nEstado('si')+'</b>🧍 A bordo</div><div><b style="color:var(--red2)">'+nEstado('no')+'</b>🚫 No subió</div><div><b>'+nEstado('nc')+'</b>❔ Sin comprobar</div></div>';
@@ -642,10 +696,10 @@ function pintarResumen(){
   pintarListaResumen();
 }
 function pintarListaResumen(){
-  var orden=LISTA.slice().sort(function(a,b){return a.coche-b.coche||a.fila-b.fila||(a.letra<b.letra?-1:a.letra>b.letra?1:rangoEst(a.origen)-rangoEst(b.origen))});
+  var orden=lista(function(){return true}).sort(function(a,b){return a.coche-b.coche||a.fila-b.fila||(a.letra<b.letra?-1:a.letra>b.letra?1:rangoEst(a.origen)-rangoEst(b.origen))});
   var F=orden.filter(function(r){var s=!!servidos[r.sid], u=subio[r.sid];
     return verLista==='todos'||(verLista==='serv'&&s)||(verLista==='pend'&&!s&&u!=='no')||(verLista==='no'&&u==='no')||(verLista==='nc'&&!u);});
-  var n=nServidos(), t=LISTA.length, pend=aServir().length-n;
+  var n=nServidos(), t=lista(function(){return true}).length, pend=aServir().length-n;
   document.getElementById('rs-lista').innerHTML='<div class="card-t">📋 Lista de servicios del PDF</div>'+
     '<div class="chips" style="margin-bottom:6px">'+
     [['todos','Todos · '+t],['pend','⏳ Por servir · '+pend],['serv','✅ Servidos · '+n],['no','🚫 No subió · '+nEstado('no')],['nc','❔ Sin comprobar · '+nEstado('nc')]].map(function(o){return '<button class="chip'+(verLista===o[0]?' sel':'')+'" onclick="verLista=\''+o[0]+'\';pintarListaResumen()">'+o[1]+'</button>';}).join('')+'</div>'+
@@ -725,6 +779,32 @@ window.svAtras=function(){
 
 pintarTipos();
 restaurar();
+/* ── Temas de temporada (Halloween, Navidad…) ──
+   Los decide la app: este módulo solo recibe el tema activo (estilos, adornos,
+   saludo y opciones para elegir) y lo pinta. Sin tema, todo se ve normal.
+   Los botones de las opciones llaman a elegirEstetica / nvElegir: se pasan a la app. */
+var TEMA_ATTRS=[];
+window.svAplicarTema=function(t){
+  var root=document.documentElement;
+  TEMA_ATTRS.forEach(function(a){ root.removeAttribute(a); }); TEMA_ATTRS=[];
+  var st=document.getElementById('tema-css'); if(!st){ st=document.createElement('style'); st.id='tema-css'; document.head.appendChild(st); }
+  var dec=document.getElementById('tema-decor');
+  var btn=document.getElementById('tema-btn'), sal=document.getElementById('tema-saludo'), pan=document.getElementById('tema-panel');
+  if(!t){ st.textContent=''; if(dec) dec.remove(); btn.classList.remove('on'); sal.classList.remove('on'); pan.classList.remove('on'); pan.innerHTML=''; return; }
+  Object.keys(t.attrs||{}).forEach(function(a){ root.setAttribute(a,t.attrs[a]); TEMA_ATTRS.push(a); });
+  st.textContent=t.css||'';
+  if(!dec){ dec=document.createElement('div'); dec.id='tema-decor'; dec.setAttribute('aria-hidden','true'); var ph=document.querySelector('.ph'); ph.insertBefore(dec, ph.firstChild); }
+  dec.innerHTML='<div id="'+(t.decorId||'')+'">'+(t.decor||'')+'</div>';
+  root.style.setProperty('--tema-c', t.color||'#FB923C');
+  btn.textContent=t.emoji||'🎨'; btn.classList.add('on');
+  sal.textContent=t.saludo||''; sal.classList.toggle('on', !!t.saludo);
+  var abierto=pan.classList.contains('on');
+  pan.innerHTML='<div class="t">'+(t.titulo||'Elige cómo ver la app')+'. Es solo para ti.</div>'+(t.opciones||'')+'<div class="cur">Elegida: <b>'+(t.elegida||'')+'</b></div>';
+};
+function temaPanel(){ document.getElementById('tema-panel').classList.toggle('on'); document.getElementById('body').scrollTop=0; }
+window.elegirEstetica=function(k){ try{ parent.elegirEstetica(k); }catch(e){} };
+window.nvElegir=function(k){ try{ parent.nvElegir(k); }catch(e){} };
+try{ if(parent!==window && parent.__svSyncTema) parent.__svSyncTema(); }catch(e){}
 if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
 </script>
 </body>

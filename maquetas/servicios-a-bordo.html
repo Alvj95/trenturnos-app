@@ -170,6 +170,16 @@ button{font-family:inherit}
 .estf-on{display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(217,119,6,.14);border:1px solid rgba(217,119,6,.45);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;color:var(--acc3)}
 .estf-on span{flex:1}
 .estf-on button{background:none;border:none;color:var(--acc3);font-weight:900;font-size:12px;cursor:pointer}
+#tema-decor{position:absolute!important;inset:0;z-index:0!important;pointer-events:none;overflow:hidden}
+.tema-saludo{display:none;font-size:11.5px;font-weight:800;color:var(--acc3);margin-top:3px}
+.tema-saludo.on{display:block}
+#tema-btn{display:none;background:rgba(0,0,0,.25);border:1px solid var(--tema-c,#FB923C)}
+#tema-btn.on{display:flex}
+.tema-panel{display:none;margin:0 0 12px;background:rgba(0,0,0,.35);border:1px solid var(--tema-c,#FB923C);border-radius:14px;padding:12px}
+.tema-panel.on{display:block}
+.tema-panel .t{font-size:12px;color:var(--tx2);margin-bottom:10px}
+.tema-panel .cur{margin-top:10px;font-size:11.5px;color:var(--tx2)}
+.tema-panel .cur b{color:var(--tx)}
 .clipwrap{grid-column:3}
 .clips{display:flex;gap:6px;margin-top:-2px}
 .clip{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer}
@@ -211,15 +221,18 @@ button{font-family:inherit}
       <div>
         <div class="hdr-pill" id="pill">🍽️ SERVICIOS · ELIGE TREN</div>
         <div class="hdr-sub" id="hsub">Servicio a bordo Prémium</div>
+        <div class="tema-saludo" id="tema-saludo"></div>
       </div>
       <div class="hdr-btns">
         <button class="hbtn" title="Subir PDF" onclick="goP('tren')">📄</button>
+        <button class="hbtn" id="tema-btn" title="Estética de temporada" onclick="temaPanel()"></button>
         <button class="hbtn" title="Cambiar de perfil" onclick="cambiarPerfil()">🔁</button>
       </div>
     </div>
   </div>
 
   <div class="body" id="body">
+    <div class="panel on" style="padding-bottom:0;display:block"><div class="tema-panel" id="tema-panel"></div></div>
     <!-- TREN -->
     <div class="panel on" id="p-tren">
       <div class="saludo" id="saludo">¿En qué tren vas hoy? 👋</div>
@@ -766,6 +779,32 @@ window.svAtras=function(){
 
 pintarTipos();
 restaurar();
+/* ── Temas de temporada (Halloween, Navidad…) ──
+   Los decide la app: este módulo solo recibe el tema activo (estilos, adornos,
+   saludo y opciones para elegir) y lo pinta. Sin tema, todo se ve normal.
+   Los botones de las opciones llaman a elegirEstetica / nvElegir: se pasan a la app. */
+var TEMA_ATTRS=[];
+window.svAplicarTema=function(t){
+  var root=document.documentElement;
+  TEMA_ATTRS.forEach(function(a){ root.removeAttribute(a); }); TEMA_ATTRS=[];
+  var st=document.getElementById('tema-css'); if(!st){ st=document.createElement('style'); st.id='tema-css'; document.head.appendChild(st); }
+  var dec=document.getElementById('tema-decor');
+  var btn=document.getElementById('tema-btn'), sal=document.getElementById('tema-saludo'), pan=document.getElementById('tema-panel');
+  if(!t){ st.textContent=''; if(dec) dec.remove(); btn.classList.remove('on'); sal.classList.remove('on'); pan.classList.remove('on'); pan.innerHTML=''; return; }
+  Object.keys(t.attrs||{}).forEach(function(a){ root.setAttribute(a,t.attrs[a]); TEMA_ATTRS.push(a); });
+  st.textContent=t.css||'';
+  if(!dec){ dec=document.createElement('div'); dec.id='tema-decor'; dec.setAttribute('aria-hidden','true'); var ph=document.querySelector('.ph'); ph.insertBefore(dec, ph.firstChild); }
+  dec.innerHTML='<div id="'+(t.decorId||'')+'">'+(t.decor||'')+'</div>';
+  root.style.setProperty('--tema-c', t.color||'#FB923C');
+  btn.textContent=t.emoji||'🎨'; btn.classList.add('on');
+  sal.textContent=t.saludo||''; sal.classList.toggle('on', !!t.saludo);
+  var abierto=pan.classList.contains('on');
+  pan.innerHTML='<div class="t">'+(t.titulo||'Elige cómo ver la app')+'. Es solo para ti.</div>'+(t.opciones||'')+'<div class="cur">Elegida: <b>'+(t.elegida||'')+'</b></div>';
+};
+function temaPanel(){ document.getElementById('tema-panel').classList.toggle('on'); document.getElementById('body').scrollTop=0; }
+window.elegirEstetica=function(k){ try{ parent.elegirEstetica(k); }catch(e){} };
+window.nvElegir=function(k){ try{ parent.nvElegir(k); }catch(e){} };
+try{ if(parent!==window && parent.__svSyncTema) parent.__svSyncTema(); }catch(e){}
 if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
 </script>
 </body>

@@ -11,7 +11,8 @@ import json, os, re, sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 destino = sys.argv[1] if len(sys.argv) > 1 else os.path.join(RAIZ, 'version-url', 'index.html')
-fuente = open(os.path.join(RAIZ, 'servicios', 'servicios.html'), encoding='utf-8').read()
+with open(os.path.join(RAIZ, 'servicios', 'servicios.html'), encoding='utf-8') as fh:
+    fuente = fh.read()
 # La app nunca lleva el PDF de prueba (tiene nombres de clientes).
 fuente = re.sub(r"var EJEMPLO_PDF_B64 = '[^']*';", "var EJEMPLO_PDF_B64 = '';", fuente)
 
@@ -29,6 +30,7 @@ window.__svMostrar = function(){
   if(!s || !f) return;
   if(!f.getAttribute('srcdoc')) f.setAttribute('srcdoc', SERVICIOS_HTML);
   s.style.display = 'block';
+  window.__svSyncTema();
 };
 window.__svOcultar = function(){
   var s = document.getElementById('servicios-screen');
@@ -42,11 +44,63 @@ window.__svVisible = function(){
 window.__svAtras = function(){
   try{ var w = document.getElementById('servicios-frame').contentWindow; return !!(w && w.svAtras && w.svAtras()); }catch(e){ return false; }
 };
+// Temas de temporada: se pasa al módulo el tema activo de la app (Halloween, Navidad…):
+// atributos de <html>, sus estilos (reglas hw-/nv-), los adornos y las opciones para elegir.
+// No depende de ningún tema en concreto: si no hay ninguno activo, no se pasa nada.
+window.__svTema = function(){
+  var root = document.documentElement, attrs = {}, n = 0;
+  ['data-estetica','data-navidad'].forEach(function(a){ if(root.hasAttribute(a)){ attrs[a] = root.getAttribute(a); n++; } });
+  var hw = typeof hwVigente === 'function' && hwVigente();
+  var nvItem = document.getElementById('aj-acc-navidad');
+  var nv = !!(nvItem && nvItem.style.display !== 'none');
+  if(!hw && !nv) return null;
+  var css = [];
+  for(var i = 0; i < document.styleSheets.length; i++){
+    var reglas; try{ reglas = document.styleSheets[i].cssRules; }catch(e){ continue; }
+    for(var j = 0; j < reglas.length; j++){
+      var r = reglas[j];
+      if(r.type === 1){
+        var s = r.selectorText || '';
+        // Las de solo color de acento (html[data-…="a"]{--acc…}) no: Servicios conserva su ámbar.
+        if(/hw-|nv-|data-estetica|data-navidad/.test(s) && !/^html\\[data-(estetica|navidad)(="?\\w"?)?\\]$/.test(s.trim())) css.push(r.cssText);
+      } else if(r.type === 7 && /^(hw|nv)/i.test(r.name)) css.push(r.cssText);
+    }
+  }
+  var t = { attrs: attrs, css: css.join('\\n') };
+  if(nv){
+    var dn = document.getElementById('nv-decor'), tn = document.querySelector('#aj-acc-navidad .nv-tiles');
+    t.color = '#22C55E'; t.decorId = 'nv-decor'; t.decor = dn ? dn.innerHTML : ''; t.emoji = '🎄';
+    t.saludo = attrs['data-navidad'] ? '🎄 Feliz Navidad' : ''; t.titulo = 'Estética de Navidad';
+    t.opciones = tn ? '<div class="nv-tiles">'+tn.innerHTML+'</div>' : '';
+    var cn = document.getElementById('nv-cur'); t.elegida = cn ? cn.textContent : '';
+  } else {
+    var dh = document.getElementById('hw-decor'), th = document.querySelector('#aj-acc-estetica .hw-tiles');
+    t.color = '#FB923C'; t.decorId = 'hw-decor'; t.decor = dh ? dh.innerHTML : ''; t.emoji = '🎃';
+    t.saludo = attrs['data-estetica'] ? '🎃 Feliz Halloween' : ''; t.titulo = 'Estética de Halloween';
+    t.opciones = th ? '<div class="hw-tiles">'+th.innerHTML+'</div>' : '';
+    var ch = document.getElementById('hw-cur'); t.elegida = ch ? ch.textContent : '';
+  }
+  return t;
+};
+window.__svSyncTema = function(){
+  try{ var w = document.getElementById('servicios-frame').contentWindow; if(w && w.svAplicarTema) w.svAplicarTema(window.__svTema()); }catch(e){}
+};
+// Al elegir estética (desde Ajustes o desde Servicios), Servicios se actualiza.
+(function(){
+  function envolver(nombre){
+    var f = window[nombre]; if(typeof f !== 'function' || f.__sv) return;
+    window[nombre] = function(){ var r = f.apply(this, arguments); window.__svSyncTema(); return r; };
+    window[nombre].__sv = true;
+  }
+  function enganchar(){ envolver('elegirEstetica'); envolver('nvElegir'); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(enganchar, 0); }); else setTimeout(enganchar, 0);
+})();
 </script>
 <!-- SERVICIOS:FIN -->
 '''
 
-html = open(destino, encoding='utf-8').read()
+with open(destino, encoding='utf-8') as fh:
+    html = fh.read()
 ini, fin = '<!-- SERVICIOS:INICIO', '<!-- SERVICIOS:FIN -->'
 if ini in html:
     a = html.index(ini); b = html.index(fin, a) + len(fin) + 1
@@ -54,5 +108,6 @@ if ini in html:
 else:
     i = html.rindex('</body>')
     html = html[:i] + bloque + html[i:]
-open(destino, 'w', encoding='utf-8').write(html)
+with open(destino, 'w', encoding='utf-8') as fh:
+    fh.write(html)
 print('Servicios incrustado en', destino, '(%d KB)' % (len(bloque) // 1024))
