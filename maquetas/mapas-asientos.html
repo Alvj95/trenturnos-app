@@ -138,12 +138,12 @@ function coches(def){ // 'pref:1-5,caf:6,tur:7-12' → [{n,clase}]
     for(;i<=f;i++) out.push({n:i, clase:a[0]}); }); return out; }
 /* Catálogo: tipo → series. Composición y distribución sacadas de la guía. */
 var SERIES={
-  'S-100':{modelo:'Alstom', tractoras:true, comp:'pref:1,tur:2-5,caf:6,tur:7-9', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
+  'S-100':{modelo:'Alstom', tractoras:true, comp:'pref:1-3,caf:4,tur:5-8', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
   'S-102':{modelo:'Talgo 350 «Pato»', tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
   'S-112':{modelo:'Talgo 350 «Pato»', tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
   'S-103':{modelo:'Siemens Velaro E', tractoras:false, comp:'pref:1-3,caf:4,tur:5-8', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
-  'S-106':{modelo:'Talgo Avril', tractoras:true, comp:'pref:1-3,caf:4,tur:5-11', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
-  'S-106 Avlo':{modelo:'Talgo Avril', tractoras:true, comp:'tur:1-3,caf:4,tur:5-11', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
+  'S-106':{modelo:'Talgo Avril', tractoras:true, comp:'pref:1-2,tur:3-5,caf:6,tur:7-12', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
+  'S-106 Avlo':{modelo:'Talgo Avril', tractoras:true, comp:'tur:1-12', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
   'S-112 Avlo':{modelo:'Talgo 350', tractoras:true, comp:'tur:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}}
 };
 var TIPOS={'AVE':['S-112','S-102','S-103','S-106','S-100'],'Avlo':['S-112 Avlo','S-106 Avlo'],'Alvia':[],'Euromed':[]};
@@ -200,7 +200,7 @@ function pintar(){
   w+='<div class="extremo">— Plataforma —</div>';
   document.getElementById('wagon').innerHTML=w;
   document.getElementById('fuente').innerHTML=S?
-    '<b>De la guía:</b> composición ('+S.comp.replace(/pref/g,'Preferente').replace(/tur/g,'Turista').replace(/caf/g,'Cafetería').replace(/,/g,' · ')+'), tractoras '+(S.tractoras?'sí':'no')+', distribución Preferente '+S.pref+' y Turista '+S.tur+'.<br>'+
+    '<b>Composición (guía contrastada con internet):</b> ('+S.comp.replace(/pref/g,'Preferente').replace(/tur/g,'Turista').replace(/caf/g,'Cafetería').replace(/,/g,' · ')+'), tractoras '+(S.tractoras?'sí':'no')+', distribución Preferente '+S.pref+' y Turista '+S.tur+'.<br>'+
     '<b>De tus MOL:</b> las letras de los asientos.<br><b>Provisional:</b> nº de filas por coche.'+(cc.eraCaf?'<br><b>Coche '+coche+':</b> la guía lo da como cafetería, pero el MOL trae servicios aquí: se muestra como coche de viajeros (borde punteado).':cc.extra?'<br><b>Coche '+coche+':</b> no está en la composición de la guía; se ha añadido porque viene en el MOL (borde punteado).':'')
     :'Sin plano de la guía para '+tipo+'.';
 }
