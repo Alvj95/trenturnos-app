@@ -210,6 +210,20 @@ button{font-family:inherit}
 .est3 b{display:block;font-size:20px;color:var(--tx)}
 .ck-row.warn{background:rgba(249,115,22,.1);border-radius:10px;padding:9px 6px;border:1px solid rgba(249,115,22,.4)}
 .ck-row .why{color:var(--nar2);font-weight:800;font-size:11px}
+/* 📤 Compartir MOL */
+#comp-btn.on{background:rgba(217,119,6,.22);box-shadow:inset 0 0 0 1px var(--acc2)}
+.cp-opt{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin-top:8px}
+.cp-opt .txt{flex:1;font-size:12.5px;font-weight:700}
+.cp-opt .txt small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600;margin-top:2px}
+.cp-pin{display:flex;justify-content:center;gap:8px;margin:6px 0 10px}
+.cp-pin span{width:50px;height:60px;border-radius:12px;background:var(--s2);border:1.5px solid var(--acc2);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;color:var(--acc3)}
+.cp-est{border-radius:12px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:10px;background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.4);color:var(--acc3)}
+.cp-est.ok{background:rgba(22,163,74,.12);border-color:rgba(74,222,128,.45);color:var(--green2)}
+.cp-in{text-align:center;font-size:26px;letter-spacing:12px;font-weight:900;height:58px}
+.rc-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--div)}
+.rc-row:first-of-type{border-top:0}
+.rc-row .txt{flex:1;font-size:12.5px;font-weight:700}
+.rc-row .txt small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -226,7 +240,8 @@ button{font-family:inherit}
       <div class="hdr-btns">
         <button class="hbtn" title="Subir PDF" onclick="goP('tren')">📄</button>
         <button class="hbtn" id="tema-btn" title="Estética de temporada" onclick="temaPanel()"></button>
-        <button class="hbtn" title="Cambiar de perfil" onclick="cambiarPerfil()">🔁</button>
+        <button class="hbtn" id="comp-btn" title="Compartir MOL" onclick="abrirCompartir()" style="display:none">📤</button>
+        <button class="hbtn" id="perfil-btn" title="Cambiar de perfil" onclick="cambiarPerfil()">🔁</button>
       </div>
     </div>
   </div>
@@ -236,6 +251,7 @@ button{font-family:inherit}
     <!-- TREN -->
     <div class="panel on" id="p-tren">
       <div class="saludo" id="saludo">¿En qué tren vas hoy? 👋</div>
+      <div id="sv-recibidos"></div>
 
       <div class="card">
         <div class="card-t">🚆 Tipo de tren</div>
@@ -334,7 +350,6 @@ var COMIDAS = {
 var TIPOS = {'AVE':['S-112','S-103','S-102','S-100'],'Alvia':['S-130','S-730','S-120'],'Avlo':['S-112 Avlo'],'Euromed':['S-103']};
 var MODELO = {'112':'Talgo 350','103':'Siemens Velaro','102':'Talgo 350','100':'Alstom','130':'Talgo 250','730':'Talgo 250','120':'CAF'};
 /* Códigos de estación que salen en el MOL. Los que no estén aquí se muestran tal cual. */
-var EST_COD = {BSN:'Barcelona-Sants',VLN:'València-Joaquín Sorolla',ALC:'Alicante',FVL:'Figueres-Vilafant',GIR:'Girona'};
 var tipo='AVE', serie='S-112', filtro=null, coche=null, LISTA=[], ASIENTOS={}, COCHES=[], cargado=false;
 var servidos={}, subio={}, modoClip=false, verLista='todos', fichaAbierta=null, LEIDO=null;
 
@@ -342,18 +357,86 @@ function pad(n){ return (n<10?'0':'')+n; }
 // Todo lo que viene del PDF (o del nombre del archivo) se pinta con innerHTML: se quitan
 // "<" y ">" para que un texto raro nunca pueda meter código en la página.
 function limpio(s){ return String(s==null?'':s).replace(/</g,'‹').replace(/>/g,'›'); }
-function limpiarFila(r){ ['fecha','tren','txt','tipoTxt','menu','especial','origen','destino','opcion','nombre','letra'].forEach(function(k){ if(k in r) r[k]=limpio(r[k]); }); return r; }
+function limpiarFila(r){ ['fecha','tren','txt','tipoTxt','menu','especial','origen','destino','opcion','nombre','letra'].forEach(function(k){ if(k in r) r[k]=limpio(r[k]); });
+  // estaciones: un solo nombre para todas las formas de escribirla (ver catálogo)
+  if(r.origen){ if(!r.origenTxt) r.origenTxt=r.origen; r.origen=estNombre(r.origen); }
+  if(r.destino){ if(!r.destinoTxt) r.destinoTxt=r.destino; r.destino=estNombre(r.destino); }
+  return r; }
 function capital(s){ s=(s||'').trim(); return s&&s===s.toUpperCase()?s.charAt(0)+s.slice(1).toLowerCase():s; }
-var EST_LARGOS=['MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES','MADRID-CHAMARTÍN-CLARA CAMPOAMOR','BARCELONA-SANTS','SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA',
-  'MÁLAGA-MARÍA ZAMBRANO','ZARAGOZA-DELICIAS','VALÈNCIA-JOAQUÍN SOROLLA','ALICANTE-TERMINAL','CAMP DE TARRAGONA','GUADALAJARA-YEBES','ANTEQUERA-SANTA ANA'];
-function estNombre(s){
-  s=(s||'').trim(); if(EST_COD[s.toUpperCase()]) return EST_COD[s.toUpperCase()];
-  // El Excel corta los nombres largos: si coincide el principio con uno conocido, el nombre completo.
-  var u=s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  if(u.length>=14) for(var i=0;i<EST_LARGOS.length;i++){ var c=EST_LARGOS[i].normalize('NFD').replace(/[\u0300-\u036f]/g,''); if(c.indexOf(u.slice(0,Math.min(u.length-2,c.length)))===0) return capital(EST_LARGOS[i]).replace(/-(\w)/g,function(m,x){return '-'+x.toUpperCase();}).replace(/ (\w)/g,function(m,x){return ' '+x.toUpperCase();}).replace(/ De /g,' de '); }
-  return s;
+/* ── Catálogo de estaciones ──
+   Cada MOL escribe las estaciones a su manera: "MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES",
+   "MADRID-PUERTA DE ATOCHA- ALMUDENA G…" (cortado por el Excel), "Madrid Pta. Atocha",
+   "Zaragoza Delicias" / "ZARAGOZA-DELICIAS", o con código ("BSN"). Aquí se reconocen todas y
+   se usan con UN solo nombre, para que se agrupen bien en filtros, Resumen y tramos.
+   Para añadir una estación (o una forma nueva de escribirla) basta con una línea. */
+var ESTACIONES_DEF=[
+  // [nombre completo, nombre corto, palabras que la reconocen (sin acentos, en mayúsculas), códigos]
+  ['Madrid-Puerta de Atocha-Almudena Grandes','Madrid Atocha',/\bATOCHA\b|\bALMUDENA\b|\bPTA\b.*\bATO|\bPUERTA DE A/],
+  ['Madrid-Chamartín-Clara Campoamor','Madrid Chamartín',/\bCHAMARTIN\b|\bCLARA CAMPOAMOR\b|\bCHAMART/],
+  ['Madrid','Madrid',/^MADRID$/],
+  ['Barcelona-Sants','Barcelona',/\bSANTS\b|^BARCELONA\b/,['BSN']],
+  ['Zaragoza-Delicias','Zaragoza',/\bZARAGOZA\b|\bDELICIAS\b/],
+  ['Sevilla-Santa Justa','Sevilla',/\bSEVILLA\b|\bSANTA JUSTA\b/],
+  ['Córdoba-Julio Anguita','Córdoba',/\bCORDOBA\b|\bJULIO ANGUITA\b/],
+  ['Málaga-María Zambrano','Málaga',/\bMALAGA\b|\bMARIA ZAMBRANO\b/],
+  ['València-Joaquín Sorolla','València',/\bVALENCIA\b|\bSOROLLA\b/,['VLN']],
+  ['Alicante','Alicante',/\bALICANTE\b|\bALACANT\b/,['ALC']],
+  ['Camp de Tarragona','Camp de Tarragona',/\bCAMP\b/],
+  ['Tarragona','Tarragona',/^TARRAGONA\b/],
+  ['Lleida-Pirineus','Lleida',/\bLLEIDA\b|\bLERIDA\b|\bPIRINEUS\b/],
+  ['Girona','Girona',/\bGIRONA\b|\bGERONA\b/,['GIR']],
+  ['Figueres-Vilafant','Figueres',/\bFIGUERES\b|\bFIGUERAS\b|\bVILAFANT\b/,['FVL']],
+  ['Guadalajara-Yebes','Guadalajara',/\bGUADALAJARA\b|\bYEBES\b/],
+  ['Calatayud','Calatayud',/\bCALATAYUD\b/],
+  ['Ciudad Real','Ciudad Real',/\bCIUDAD REAL\b/],
+  ['Puertollano','Puertollano',/\bPUERTOLLANO\b/],
+  ['Antequera-Santa Ana','Antequera',/\bANTEQUERA\b/],
+  ['Cuenca-Fernando Zóbel','Cuenca',/\bCUENCA\b/],
+  ['Albacete-Los Llanos','Albacete',/\bALBACETE\b/],
+  ['Segovia-Guiomar','Segovia',/\bSEGOVIA\b/],
+  ['Valladolid-Campo Grande','Valladolid',/\bVALLADOLID\b/],
+  ['León','León',/^LEON\b/],
+  ['Ourense','Ourense',/\bOURENSE\b|\bORENSE\b/],
+  ['Palencia','Palencia',/\bPALENCIA\b/],
+  ['Zamora','Zamora',/\bZAMORA\b/],
+  ['Huesca','Huesca',/\bHUESCA\b/],
+  ['Granada','Granada',/\bGRANADA\b/],
+  ['Murcia del Carmen','Murcia',/\bMURCIA\b/],
+  ['Elche','Elche',/\bELCHE\b|\bELX\b/],
+  ['Orihuela','Orihuela',/\bORIHUELA\b/],
+  ['Castelló','Castelló',/\bCASTELL(O|ON)\b/],
+  ['Toledo','Toledo',/\bTOLEDO\b/],
+  ['Santiago de Compostela','Santiago',/\bSANTIAGO\b/],
+  ['A Coruña','A Coruña',/\bCORUNA\b/],
+  ['Vigo','Vigo',/\bVIGO\b/],
+  ['Burgos','Burgos',/\bBURGOS\b/],
+  ['Vitoria-Gasteiz','Vitoria',/\bVITORIA\b|\bGASTEIZ\b/],
+  ['Bilbao','Bilbao',/\bBILBAO\b/],
+  ['Donostia-San Sebastián','San Sebastián',/\bDONOSTIA\b|\bSAN SEBASTIAN\b/],
+  ['Pamplona','Pamplona',/\bPAMPLONA\b|\bIRUNA\b/],
+  ['Logroño','Logroño',/\bLOGRONO\b/],
+  ['Salamanca','Salamanca',/\bSALAMANCA\b/],
+  ['Cádiz','Cádiz',/\bCADIZ\b/],
+  ['Huelva','Huelva',/\bHUELVA\b/],
+  ['Jaén','Jaén',/\bJAEN\b/],
+  ['Algeciras','Algeciras',/\bALGECIRAS\b/],
+  ['Badajoz','Badajoz',/\bBADAJOZ\b/],
+  ['Cáceres','Cáceres',/\bCACERES\b/],
+  ['Villena','Villena',/\bVILLENA\b/],
+  ['Requena-Utiel','Requena-Utiel',/\bREQUENA\b|\bUTIEL\b/]
+];
+var _estCache={};
+function estacion(s){
+  s=(s||'').trim(); if(!s) return {nombre:'',corto:'?'};
+  if(_estCache[s]) return _estCache[s];
+  var n=s.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[.\-_/,·]+/g,' ').replace(/\s+/g,' ').trim(), r=null;
+  for(var i=0;i<ESTACIONES_DEF.length&&!r;i++){ var e=ESTACIONES_DEF[i];
+    if((e[3]&&e[3].indexOf(n)>-1)||e[2].test(n)) r={nombre:e[0], corto:e[1]}; }
+  if(!r){ var t=capital(s); r={nombre:t, corto:t.split(/[- ]/)[0]}; } // desconocida: tal cual
+  return (_estCache[s]=r);
 }
-function estCorto(s){ var n=estNombre(s); if(!n) return '?'; var p=n.split(/[- ]/)[0]; return capital(p); }
+function estNombre(s){ return estacion(s).nombre; }
+function estCorto(s){ return estacion(s).corto; }
 function tipoComida(t, opcion){
   t=(t||'').toLowerCase().trim();
   if(!t) return /CUMPLE/i.test(opcion||'')?'cum':'otr';
@@ -437,9 +520,32 @@ function prepararImagen(img){
     if(cuadrado||linea) borrar.push(k);
   });
   borrar.forEach(function(k){ for(var y=k.y0-1;y<=k.y1+1;y++) for(var x=k.x0-1;x<=k.x1+1;x++) if(x>=0&&y>=0&&x<W&&y<H) bin[y*W+x]=0; });
+  // Cuadraditos pegados a una letra (no salen como pieza suelta): se buscan por su contorno
+  // (borde de arriba, abajo, izquierda y derecha, y por dentro casi vacío).
+  var minL=Math.round(5*esc), maxL=Math.round(16*esc);
+  for(var y=0;y<H-minL;y++){ var x=0;
+    while(x<W){ if(!bin[y*W+x]){ x++; continue; } var xa=x; while(x<W&&bin[y*W+x]) x++; var L=x-xa;
+      if(L<minL||L>maxL) continue;
+      for(var hh=L-2;hh<=L+2;hh++){ var yb=y+hh-1; if(yb>=H) break;
+        var bb=0,l=0,r=0,yy,xx; for(xx=xa;xx<x;xx++) if(bin[yb*W+xx]) bb++; if(bb<0.85*L) continue;
+        for(yy=y;yy<=yb;yy++){ if(bin[yy*W+xa]) l++; if(bin[yy*W+x-1]) r++; } if(l<0.85*hh||r<0.85*hh) continue;
+        var den=0,ar=0; for(yy=y+2;yy<=yb-2;yy++) for(xx=xa+2;xx<=x-3;xx++){ ar++; if(bin[yy*W+xx]) den++; } if(ar&&den>0.35*ar) continue;
+        // borde FINO (el de un ⊟ es de 1 píxel; una O o una D en negrita tienen el trazo grueso):
+        // justo por dentro del borde tiene que estar casi todo en blanco
+        var g=Math.max(2,Math.round(1.6*esc)), dent=0, tot=0;
+        for(yy=y+g;yy<=yb-g;yy++){ tot+=2; if(bin[yy*W+xa+g]) dent++; if(bin[yy*W+x-1-g]) dent++; }
+        for(xx=xa+g;xx<=x-1-g;xx++){ tot+=2; if(bin[(y+g)*W+xx]) dent++; if(bin[(yb-g)*W+xx]) dent++; }
+        if(!tot||dent>0.3*tot) continue;
+        // por FUERA de los cuatro lados, blanco (una letra redonda se sale por los lados)
+        var fu=0, ft=0;
+        for(yy=y;yy<=yb;yy++){ ft+=2; if(xa-1<0||!bin[yy*W+xa-1]) fu++; if(x>=W||!bin[yy*W+x]) fu++; }
+        for(xx=xa;xx<x;xx++){ ft+=2; if(y-1<0||!bin[(y-1)*W+xx]) fu++; if(yb+1>=H||!bin[(yb+1)*W+xx]) fu++; }
+        if(fu<0.75*ft) continue;
+        for(yy=y-1;yy<=yb+1;yy++) for(xx=xa-1;xx<=x;xx++) if(xx>=0&&yy>=0&&xx<W&&yy<H) bin[yy*W+xx]=0;
+        borrar.push(null); break; } } }
   for(i=0;i<n;i++){ var v2=bin[i]?0:255; d[i*4]=d[i*4+1]=d[i*4+2]=v2; d[i*4+3]=255; }
   cx.putImageData(id,0,0);
-  return {canvas:cv, gris:gris, escala:esc, borrados:borrar.length};
+  return {canvas:cv, gris:gris, original:img, escala:esc, borrados:borrar.length};
 }
 
 // Lectura de una CAPTURA del MOL (imagen) → filas con coche, asiento y celdas por columna.
@@ -458,7 +564,7 @@ function arreglarAsiento(t){
 }
 function arreglarCoche(t){ t=(t||'').replace(/[OoQD]/g,'0').replace(/[Ss]/g,'5').replace(/[Il|i]/g,'1').replace(/\D/g,''); return t.length&&t.length<=3?t:''; }
 
-async function ocrTabla(worker, canvas, gris){
+async function ocrTabla(worker, canvas, gris, original, esc){
   await worker.setParameters({tessedit_pageseg_mode:'6', preserve_interword_spaces:'1', tessedit_char_whitelist:''});
   var r=(await worker.recognize(canvas)).data;
   var lineas=r.lines.map(function(l){ return {txt:l.text.trim(), conf:l.confidence, w:l.words.map(function(w){return {s:w.text, x0:w.bbox.x0, x1:w.bbox.x1, y0:w.bbox.y0, y1:w.bbox.y1, c:w.confidence};})}; });
@@ -479,16 +585,30 @@ async function ocrTabla(worker, canvas, gris){
   // + lo leído en la pasada general = tres votos por casilla.
   var yTop=Math.min.apply(null,okF.map(function(f){return Math.min(f.resto[0].y0,f.resto[1].y0)}))-8;
   var yBot=Math.max.apply(null,okF.map(function(f){return Math.max(f.resto[0].y1,f.resto[1].y1)}))+8;
-  async function franja(x0,x1,lista,psm,img){
+  // Franja de una columna, ampliada desde la imagen ORIGINAL (como con lupa) para que las
+  // letras midan ~48 px: así se distingue mejor un 8 de un 6 o una B de un 8.
+  var altos=okF.map(function(f){return f.resto[1].y1-f.resto[1].y0}).sort(function(a,b){return a-b});
+  var lupa=Math.max(1, Math.min(4, 48/(altos[Math.floor(altos.length/2)]||24)));
+  async function franja(x0,x1,lista,psm,modo){
+    var k=esc*lupa, sw=Math.round((x1-x0)/esc*k), sh=Math.round((yBot-yTop)/esc*k);
+    var c=document.createElement('canvas'); c.width=sw; c.height=sh; var cx=c.getContext('2d'); cx.imageSmoothingQuality='high';
+    cx.fillStyle='#fff'; cx.fillRect(0,0,sw,sh);
+    cx.drawImage(original, x0/esc, yTop/esc, (x1-x0)/esc, (yBot-yTop)/esc, 0, 0, sw, sh);
+    var id=cx.getImageData(0,0,sw,sh), d=id.data, n=sw*sh, g=new Uint8Array(n), hist=new Array(256).fill(0), i;
+    for(i=0;i<n;i++){ var v=(d[i*4]*299+d[i*4+1]*587+d[i*4+2]*114)/1000|0; g[i]=v; hist[v]++; }
+    if(modo==='bin'){ var sum=0; for(i=0;i<256;i++) sum+=i*hist[i]; var sB=0,wB=0,max=0,th=128;
+      for(i=0;i<256;i++){ wB+=hist[i]; if(!wB) continue; var wF=n-wB; if(!wF) break; sB+=i*hist[i]; var mB=sB/wB, mF=(sum-sB)/wF, bb=wB*wF*(mB-mF)*(mB-mF); if(bb>max){max=bb;th=i;} }
+      for(i=0;i<n;i++) g[i]=g[i]<th?0:255; }
+    for(i=0;i<n;i++){ d[i*4]=d[i*4+1]=d[i*4+2]=g[i]; d[i*4+3]=255; } cx.putImageData(id,0,0);
     await worker.setParameters({tessedit_pageseg_mode:psm, tessedit_char_whitelist:lista});
-    var d=(await worker.recognize(img||canvas,{rectangle:{left:Math.round(x0), top:Math.round(yTop), width:Math.round(x1-x0), height:Math.round(yBot-yTop)}})).data;
-    var piezas=psm==='11'?d.words:d.lines; // en modo 11 (texto suelto) cada palabra va por su cuenta
-    return piezas.map(function(l){ return {y:(l.bbox.y0+l.bbox.y1)/2, t:l.text.trim()}; });
+    var dd=(await worker.recognize(c)).data;
+    var piezas=psm==='11'?dd.words:dd.lines; // en modo 11 (texto suelto) cada palabra va por su cuenta
+    return piezas.map(function(l){ return {y:yTop+(l.bbox.y0+l.bbox.y1)/2/lupa, t:l.text.trim()}; });
   }
   function enFila(lin, f){ var c=(Math.min(f.resto[0].y0,f.resto[1].y0)+Math.max(f.resto[0].y1,f.resto[1].y1))/2, alto=f.resto[1].y1-f.resto[1].y0, m=null, d=1e9;
     lin.forEach(function(l){ var dd=Math.abs(l.y-c); if(dd<d){ d=dd; m=l; } }); return m&&d<=alto*0.7?m.t:''; }
-  var c6=await franja(cocheX0,cocheX1,'0123456789','6'), c4=await franja(cocheX0,cocheX1,'0123456789','11',gris);
-  var a6=await franja(asiX0,asiX1,'0123456789ABCDEF','6'), a4=await franja(asiX0,asiX1,'0123456789ABCDEF','11',gris);
+  var c6=await franja(cocheX0,cocheX1,'0123456789','6','bin'), c4=await franja(cocheX0,cocheX1,'0123456789','11','gris');
+  var a6=await franja(asiX0,asiX1,'0123456789ABCDEF','6','bin'), a4=await franja(asiX0,asiX1,'0123456789ABCDEF','11','gris');
   filas.forEach(function(f){
     if(f.resto.length<2){ f.mal=true; return; }
     var cc=[arreglarCoche(f.resto[0].s), arreglarCoche(enFila(c6,f)), arreglarCoche(enFila(c4,f))];
@@ -526,7 +646,7 @@ function columnasImagen(t, ancho){
   var inicios=[]; filas.forEach(function(f){ f.celdas.forEach(function(c){ inicios.push(c.x0); }); }); inicios.sort(function(a,b){return a-b});
   var grupos=[]; inicios.forEach(function(x){ var g=grupos[grupos.length-1]; if(g&&x-g.ult<=tol){ g.xs.push(x); g.ult=x; } else grupos.push({xs:[x],ult:x}); });
   var cols=grupos.filter(function(g){return g.xs.length>=Math.max(2,filas.length*0.3)}).map(function(g){return {x:g.xs[0]};});
-  filas.forEach(function(f){ f.porCol={}; f.celdas.forEach(function(c){ var k=-1; cols.forEach(function(col,i){ if(col.x<=c.x0+tol) k=i; }); if(k<0) k=0; f.porCol[k]=(f.porCol[k]?f.porCol[k]+' ':'')+c.s; }); });
+  filas.forEach(function(f){ f.porCol={}; f.celdasW.forEach(function(c){ var k=-1; cols.forEach(function(col,i){ if(col.x<=c.x0+tol) k=i; }); if(k<0) k=0; f.porCol[k]=(f.porCol[k]?f.porCol[k]+' ':'')+c.s; }); });
   // etiquetas: 1) por lo que contienen (lo más fiable)
   function vals(i){ return filas.map(function(f){return limpiarCelda(f.porCol[i])}).filter(Boolean); }
   function mayoria(i,re){ var v=vals(i); return v.length&&v.filter(function(x){return re.test(x)}).length>=v.length*0.6; }
@@ -553,6 +673,33 @@ function columnasImagen(t, ancho){
     else if(antes.indexOf('cumple')>-1&&!usada('nombre')) col.k='nombre'; });
   return {cols:cols, filas:filas};
 }
+// Vocabulario del MOL: lo leído de una imagen se ajusta a la palabra conocida más parecida.
+var VOC_TIPO=['Desayuno','Aperitivo','Almuerzo','Comida','Merienda','Cena','Cortesía','Box Caliente','Box Clásico','Box del Norte','Box Frío','Cumpleaños'];
+var VOC_MENU=['Menú sin preferencia','Menú sin posibilidad de elección','Menú último minuto','Menú Cortesía','Desayuno frío','Desayuno caliente','De la granja','Del molino','Sin elección','Especial'];
+var VOC_EST=['MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES','MADRID-CHAMARTÍN-CLARA CAMPOAMOR','BARCELONA-SANTS','ZARAGOZA DELICIAS','CAMP DE TARRAGONA','LLEIDA-PIRINEUS','GIRONA','FIGUERES-VILAFANT',
+  'SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','MÁLAGA-MARÍA ZAMBRANO','VALÈNCIA-JOAQUÍN SOROLLA','ALICANTE-TERMINAL','GUADALAJARA-YEBES','CALATAYUD','CIUDAD REAL','PUERTOLLANO',
+  'ANTEQUERA-SANTA ANA','CUENCA-FERNANDO ZÓBEL','ALBACETE-LOS LLANOS','SEGOVIA-GUIOMAR','VALLADOLID-CAMPO GRANDE','OURENSE','LEÓN','PALENCIA','ZAMORA','HUESCA','GRANADA','MURCIA DEL CARMEN','ELCHE AV','ORIHUELA','CASTELLÓ','TOLEDO'];
+function sinAcento(s){ return (s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function distancia(a,b){ var m=a.length,n=b.length,d=[],i,j; for(i=0;i<=m;i++){ d[i]=[i]; } for(j=0;j<=n;j++) d[0][j]=j;
+  for(i=1;i<=m;i++) for(j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[m][n]; }
+function ajustar(t, voc, prefijo){
+  var u=sinAcento(t).replace(/\s+/g,' ').trim(); if(u.length<3) return t;
+  var mejor=null, sim=0;
+  voc.forEach(function(v){ var c=sinAcento(v); if(prefijo&&u.length<c.length) c=c.slice(0,u.length);
+    var s=1-distancia(u,c)/Math.max(u.length,c.length); if(s>sim){ sim=s; mejor=v; } });
+  return sim>=0.72?mejor:t;
+}
+// Las filas de la tabla van ordenadas por asiento dentro de cada coche: un asiento que rompe
+// ese orden (p. ej. "01D" entre "09A" y "11A") casi seguro está mal leído → se marca.
+function revisarOrden(filas){
+  function clave(r){ return r.fila*10+(r.letra.charCodeAt(0)-64); }
+  var i=0; while(i<filas.length){ var j=i; while(j<filas.length&&filas[j].coche===filas[i].coche) j++;
+    var g=filas.slice(i,j).filter(function(r){return r.fila>0&&r.letra}); 
+    if(g.length>=4){ var n=g.length, lon=[], prev=[], k, q, mejor=0, fin=-1;
+      for(k=0;k<n;k++){ lon[k]=1; prev[k]=-1; for(q=0;q<k;q++) if(clave(g[q])<=clave(g[k])&&lon[q]+1>lon[k]){ lon[k]=lon[q]+1; prev[k]=q; } if(lon[k]>mejor){ mejor=lon[k]; fin=k; } }
+      if(mejor>=n*0.7){ var en={}; for(k=fin;k>=0;k=prev[k]) en[k]=1; g.forEach(function(r,k){ if(!en[k]&&!r.aviso) r.aviso='Asiento fuera de orden en la imagen: compruébalo'; }); } }
+    i=j; }
+}
 async function procesarImagen(file){
   var err=document.getElementById('pdf-err'); err.textContent='';
   try{
@@ -560,15 +707,21 @@ async function procesarImagen(file){
     var img=new Image(), url=URL.createObjectURL(file); img.src=url; await img.decode(); URL.revokeObjectURL(url);
     barra(15); var pr=prepararImagen(img);
     var w=await lectorOCR(); barra(25);
-    var t=await ocrTabla(w, pr.canvas, pr.gris); barra(85);
+    var t=await ocrTabla(w, pr.canvas, pr.gris, pr.original, pr.escala); barra(85);
     var c=columnasImagen(t, pr.canvas.width), filas=[];
     c.filas.forEach(function(f){
       var celda={fecha:f.fecha, coche:f.coche||'', asiento:f.asiento||''};
       c.cols.forEach(function(col,i){ if(col.k&&f.porCol[i]) celda[col.k]=limpiarCelda(f.porCol[i]); });
+      if(celda.tipo) celda.tipo=ajustar(celda.tipo, VOC_TIPO);
+      if(celda.menu) celda.menu=ajustar(celda.menu, VOC_MENU);
+      if(celda.origen) celda.origen=ajustar(celda.origen, VOC_EST, true);
+      if(celda.destino) celda.destino=ajustar(celda.destino, VOC_EST, true);
+      if(celda.nombre&&/bl[a4]nc[o0]/i.test(celda.nombre)) celda.nombre='';
       var r=deCeldas(celda, f.fecha+' '+(f.crudo||''));
       if(!r.aviso&&f.dudoso) r.aviso='Asiento dudoso en la imagen: compruébalo';
       r.deImagen=true; filas.push(r);
     });
+    revisarOrden(filas);
     t.filas.filter(function(f){return f.mal}).forEach(function(f){ var r=deCeldas({fecha:f.fecha}, f.L.txt); r.deImagen=true; filas.push(r); });
     // nº de tren: "CDGO_TREN 3060" o similar, encima de la tabla
     var mt=null; t.lineas.some(function(L){ mt=L.txt.match(/TREN\D{0,6}(\d{3,5})\b/i); return mt; });
@@ -736,7 +889,8 @@ function mostrarComprobacion(){
   document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
 }
 function confirmarCarga(){
-  servidos={}; subio={}; CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null};
+  if(COMPARTIDO){ if(!confirm('Estás compartiendo otro MOL. Si cargas este, se deja de compartir. ¿Seguir?')) return; dejarCompartir(true); }
+  servidos={}; subio={}; MARCAS_T={}; CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null};
   montar(LEIDO.filas.filter(function(r){return !r.aviso}));
   var tren=(LISTA.filter(function(r){return r.tren})[0]||{}).tren; if(tren) document.getElementById('i-num').value=tren;
   guardar();
@@ -757,6 +911,7 @@ function montar(lista){
   document.getElementById('pdf-estado').innerHTML='<div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--green2)">✅ Cargado: '+LISTA.length+' servicios · '+(LISTA[0]?LISTA[0].fecha:'')+'</div>'+
     '<div class="pdf-btns"><button onclick="borrarServicio()">🗑️ Borrar y empezar otro servicio</button></div>';
   document.getElementById('go').disabled=false;
+  pintarBotonCompartir();
 }
 /* Orden de las estaciones en el recorrido, sacado de los propios tramos
    (cada servicio va de una estación a otra posterior). */
@@ -792,8 +947,10 @@ function abrirMapa(){
 function setSube(sid, v){
   if(subio[sid]===v) delete subio[sid]; else subio[sid]=v;
   if(subio[sid]==='no') delete servidos[sid];
+  anotar(sid);
 }
-function toggleServido(sid){ servidos[sid]=!servidos[sid]; if(servidos[sid]) subio[sid]='si'; }
+function sinComprobar(sid){ delete subio[sid]; anotar(sid); }
+function toggleServido(sid){ servidos[sid]=!servidos[sid]; if(servidos[sid]) subio[sid]='si'; anotar(sid); }
 function clipsHTML(sid){
   var s=subio[sid];
   return '<div class="clips"><button class="clip'+(s==='si'?' si':'')+'" onclick="event.stopPropagation();setSube('+sid+',\'si\');refrescar()">🧍 Subió</button>'+
@@ -878,6 +1035,7 @@ function tocarAsiento(key){
   if(sv.length>1){ toast('Este asiento tiene '+sv.length+' servicios: márcalos en la ficha'); return ficha(key); }
   var sid=sv[0].sid, s=subio[sid], v=!s?'si':s==='si'?'no':null;
   if(v){ subio[sid]=v; if(v==='no') delete servidos[sid]; } else delete subio[sid];
+  anotar(sid);
   toast('Asiento '+key.split('-')[1]+': '+(v==='si'?'🧍 subió':v==='no'?'🚫 no subió · sin servicio':'❔ sin comprobar'));
   guardar();
   pintarMapa();
@@ -922,7 +1080,7 @@ function bloqueServicio(r, varios){
     '<div class="seg-t">📎 ¿Ha subido al tren?</div><div class="seg">'+
       '<button class="'+(su==='si'?'si':'')+'" onclick="setSube('+sid+',\'si\');refrescar()">🧍 Subió</button>'+
       '<button class="'+(su==='no'?'no':'')+'" onclick="setSube('+sid+',\'no\');refrescar()">🚫 No subió</button>'+
-      '<button class="'+(!su?'nc':'')+'" onclick="delete subio['+sid+'];refrescar()">❔ Sin comprobar</button></div>'+
+      '<button class="'+(!su?'nc':'')+'" onclick="sinComprobar('+sid+');refrescar()">❔ Sin comprobar</button></div>'+
     '<div class="kv">'+(textoMenu(r)?'<div><span>Menú</span><b>'+textoMenu(r)+'</b></div>':'')+
       (r.nombre?'<div><span>Nombre</span><b>'+r.nombre+'</b></div>':'')+
       '<div><span>Sube en</span><b>'+estNombre(r.origen)+'</b></div><div><span>Baja en</span><b>'+estNombre(r.destino)+'</b></div>'+
@@ -943,7 +1101,7 @@ function refrescar(){
   if(document.getElementById('p-resumen').classList.contains('on')) pintarResumen(); else pintarMapa();
   if(fichaAbierta&&document.getElementById('ov-asiento').classList.contains('on')) ficha(fichaAbierta);
 }
-function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; }
+function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; hoja=null; }
 /* ── Guardado en el móvil ──
    El servicio cargado (y lo marcado: servido, subió / no subió) se guarda
    en este móvil para no perderlo si se cierra la app. Lleva nombres de
@@ -953,7 +1111,8 @@ var CLAVE='trenturnosServiciosAbordo', CARGADO_EN=0;
 function guardar(){
   if(!cargado) return;
   try{ localStorage.setItem(CLAVE, JSON.stringify({v:1, lista:LISTA, servidos:servidos, subio:subio, tipo:tipo, serie:serie,
-    rama:document.getElementById('i-rama').value, num:document.getElementById('i-num').value, cargadoEn:CARGADO_EN})); }catch(e){}
+    rama:document.getElementById('i-rama').value, num:document.getElementById('i-num').value, cargadoEn:CARGADO_EN,
+    marcasT:MARCAS_T, compartido:COMPARTIDO, pend:PEND})); }catch(e){}
 }
 function caducado(d){ return !d.cargadoEn || Date.now()-d.cargadoEn > 2*86400000; }
 function restaurar(){
@@ -963,25 +1122,271 @@ function restaurar(){
   tipo=d.tipo||tipo; serie=d.serie||serie; pintarTipos();
   document.getElementById('i-rama').value=d.rama||''; document.getElementById('i-num').value=d.num||'';
   servidos=d.servidos||{}; subio=d.subio||{}; CARGADO_EN=d.cargadoEn;
+  MARCAS_T=d.marcasT||{}; PEND=d.pend||{};
+  if(d.compartido&&d.compartido.id&&d.compartido.token) COMPARTIDO=d.compartido;
   montar(d.lista.map(limpiarFila));
   abrirMapa();
+  if(COMPARTIDO) iniciarSync();
 }
-function borrarServicio(){
-  if(!confirm('¿Borrar el servicio cargado y lo que has marcado?')) return;
+async function borrarServicio(){
+  if(!confirm('¿Borrar el servicio cargado y lo que has marcado?'+(COMPARTIDO&&COMPARTIDO.rol==='emisor'?' También se deja de compartir.':''))) return;
+  if(COMPARTIDO) await dejarCompartir(true);
   try{ localStorage.removeItem(CLAVE); }catch(e){}
   location.reload();
 }
 
 /* ── Enlace con la app (este módulo va dentro de un marco) ── */
-function cambiarPerfil(){ try{ parent.__svCambiarPerfil(); }catch(e){} }
+// Abierto desde el Calendario (botón 🍽️): 📅 vuelve al Calendario sin cambiar de perfil.
+var DESDE_CAL=false;
+function cambiarPerfil(){ try{ if(DESDE_CAL) parent.__svOcultar(); else parent.__svCambiarPerfil(); }catch(e){} }
+window.svModo=function(desdeCal){
+  DESDE_CAL=!!desdeCal;
+  var b=document.getElementById('perfil-btn');
+  b.textContent=DESDE_CAL?'📅':'🔁'; b.title=DESDE_CAL?'Volver al Calendario':'Cambiar de perfil';
+};
+// Cada vez que la app enseña Servicios.
+window.svAlMostrar=function(desdeCal){ svModo(desdeCal); comprobarRecibidos(); };
 // Botón "atrás" del móvil: la app pregunta aquí primero. true = ya lo he gestionado.
 window.svAtras=function(){
   if(document.getElementById('ov-asiento').classList.contains('on')){ cerrar(); return true; }
   if(document.getElementById('p-check').classList.contains('on')){ goP('tren'); return true; }
   var inicio=cargado?'mapa':'tren';
   if(!document.getElementById('p-'+inicio).classList.contains('on')){ goP(inicio); return true; }
+  if(DESDE_CAL){ cambiarPerfil(); return true; }
   return false;
 };
+
+/* ── 📤 Compartir el MOL con un compañero ──
+   El móvil de la empresa sube el MOL y lo comparte con la matrícula de un
+   compañero: a él le llega un aviso y lo abre con un código de 4 cifras.
+   Lo que marca cada uno (servido, subió / no subió) se ve en los dos móviles.
+   Pasa por Supabase con las funciones sv_* (version-url/supabase-servicios-compartidos.sql):
+   se borra solo a las 24 h o antes con "Dejar de compartir". Los nombres de
+   clientes solo se envían si se elige. Sin conexión, todo sigue funcionando en el móvil. */
+var CLAVE_MAT='trenturnosServiciosMatricula';
+var COMPARTIDO=null;   // {id, token, rol:'emisor'|'receptor', con, pin, sync, estado}
+var MARCAS_T={}, PEND={}, hoja=null, RECIBIDOS=[], ABRIENDO=null, svTimer=null, svEnvio=null, svOcupado=false;
+function sb(){ try{ return parent.sbAdmin||null; }catch(e){ return null; } }
+function propia(o,k){ return Object.prototype.hasOwnProperty.call(o,k); }
+function matValida(m){ return /^[0-9A-Za-z]{3,12}$/.test(m||''); }
+function matApp(){ try{ return String(parent.AJ&&parent.AJ.matricula||'').trim(); }catch(e){ return ''; } }
+function miMatricula(){ var m=''; try{ m=localStorage.getItem(CLAVE_MAT)||''; }catch(e){} return (m||matApp()).trim(); }
+function valor(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
+function errorTexto(e){
+  var m=String(e&&(e.message||e.details)||e||'');
+  if(/código incorrecto/i.test(m)) return 'Código incorrecto';
+  if(/demasiados intentos/i.test(m)) return 'Demasiados intentos: pídele que lo comparta otra vez';
+  if(/no existe|caducado/i.test(m)) return 'Ya no está disponible (caducó o se dejó de compartir)';
+  if(/sv_\w+|function|schema cache/i.test(m)) return 'Falta activar "Compartir MOL" en el servidor';
+  return 'Sin conexión. Inténtalo de nuevo';
+}
+async function rpc(nombre, args){
+  var s=sb(); if(!s) throw new Error('sin servidor');
+  var r=await s.rpc(nombre, args); if(r.error) throw r.error; return r.data;
+}
+function pintarBotonCompartir(){
+  var b=document.getElementById('comp-btn');
+  b.style.display=(cargado||COMPARTIDO)?'':'none';
+  b.classList.toggle('on', !!COMPARTIDO);
+}
+// Cada cambio en un servicio queda anotado con su hora; si se comparte, se envía.
+function anotar(sid){
+  var t=Date.now(); MARCAS_T[sid]=t;
+  if(!COMPARTIDO||!COMPARTIDO.sync) return;
+  PEND[sid]={s:!!servidos[sid], u:subio[sid]||null, t:t};
+  clearTimeout(svEnvio); svEnvio=setTimeout(sincronizar, 1200);
+}
+// Lo que llega del otro móvil: para cada servicio gana el cambio más reciente.
+function aplicarMarcas(m){
+  if(!m||typeof m!=='object') return false;
+  var hay={}, cambio=false; LISTA.forEach(function(r){ hay[r.sid]=1; });
+  Object.keys(m).forEach(function(k){
+    var v=m[k], sid=parseInt(k,10);
+    if(!v||typeof v!=='object'||isNaN(sid)||!hay[sid]||PEND[sid]) return;
+    var t=+v.t||0; if(t<=(MARCAS_T[sid]||0)) return;
+    MARCAS_T[sid]=t;
+    if(v.s===true) servidos[sid]=true; else delete servidos[sid];
+    if(v.u==='si'||v.u==='no') subio[sid]=v.u; else delete subio[sid];
+    cambio=true;
+  });
+  if(cambio&&cargado) refrescar();
+  return cambio;
+}
+function iniciarSync(){
+  pintarBotonCompartir();
+  if(svTimer) return;
+  svTimer=setInterval(function(){ if(!document.hidden) sincronizar(); }, 8000);
+  sincronizar();
+}
+async function sincronizar(){
+  var c=COMPARTIDO; if(!c||svOcupado||!sb()) return;
+  svOcupado=true;
+  try{
+    var envio=PEND;
+    if(c.sync&&Object.keys(envio).length){
+      PEND={};
+      try{ aplicarMarcas(await rpc('sv_marcar',{p_id:c.id, p_token:c.token, p_cambios:envio})); }
+      catch(e){ Object.keys(envio).forEach(function(k){ if(!PEND[k]) PEND[k]=envio[k]; }); if(!/no existe|caducado/i.test(e&&e.message||'')) throw e; }
+    }
+    var e=((await rpc('sv_estado',{p_id:c.id, p_token:c.token}))||[])[0];
+    if(COMPARTIDO!==c) return;
+    if(!e){ terminado(c); return; }
+    if(c.estado!==e.estado){
+      c.estado=e.estado; guardar();
+      if(c.rol==='emisor'&&e.estado==='aceptado') toast('✅ '+c.con+' ya tiene el MOL abierto');
+      if(c.rol==='emisor'&&e.estado==='rechazado'){ toast(c.con+' ha rechazado el MOL'); dejarCompartir(true); return; }
+      if(hoja==='compartir') pintarCompartir();
+    }
+    if(c.sync) aplicarMarcas(e.marcas);
+  }catch(err){ /* sin conexión: se reintenta en la próxima vuelta */ }
+  finally{ svOcupado=false; }
+}
+function terminado(c){
+  COMPARTIDO=null; PEND={}; clearInterval(svTimer); svTimer=null; guardar(); pintarBotonCompartir();
+  if(hoja==='compartir') pintarCompartir();
+  toast(c.rol==='emisor'?'Ya no se comparte el MOL':'Ya no se comparte el MOL · lo marcado sigue aquí');
+}
+// Dejar de compartir: quien lo compartió lo borra del servidor; quien lo recibió solo deja de sincronizar.
+async function dejarCompartir(callado){
+  var c=COMPARTIDO; if(!c) return;
+  if(!callado&&!confirm(c.rol==='emisor'?'¿Dejar de compartir? '+c.con+' ya no verá este MOL actualizado.':'¿Dejar de usar el MOL compartido? Lo que tienes se queda en tu móvil, pero ya no se sincroniza.')) return;
+  COMPARTIDO=null; PEND={}; clearInterval(svTimer); svTimer=null; guardar(); pintarBotonCompartir();
+  if(c.rol==='emisor'){ try{ await rpc('sv_retirar',{p_id:c.id, p_token:c.token}); }catch(e){} }
+  if(hoja==='compartir') pintarCompartir();
+  if(!callado) toast('Se ha dejado de compartir');
+}
+
+/* Ventana "Compartir MOL" (según el estado: formulario, código para el compañero o recibido) */
+function abrirCompartir(){ hoja='compartir'; fichaAbierta=null; pintarCompartir(); document.getElementById('ov-asiento').classList.add('on'); }
+function opcion(id, on, titulo, sub){
+  return '<div class="cp-opt"><div class="txt">'+titulo+'<small>'+sub+'</small></div><button class="tgl'+(on?' on':'')+'" id="'+id+'" onclick="this.classList.toggle(\'on\')" aria-label="'+titulo+'"></button></div>';
+}
+function cabHoja(ico, tit, sub){
+  return '<div class="sh-handle"></div><div class="sh-hdr"><div class="sh-ico">'+ico+'</div><div style="flex:1"><div class="sh-tit">'+tit+'</div><div class="sh-sub">'+sub+'</div></div><button class="sh-close" onclick="cerrar()">✕</button></div>';
+}
+function textoTren(){ return 'Tren '+(limpio(valor('i-num'))||'—')+' · '+LISTA.length+' servicios'; }
+function pintarCompartir(){
+  var c=COMPARTIDO, h;
+  if(c&&c.rol==='emisor'){
+    var ok=c.estado==='aceptado';
+    h=cabHoja('📤','Compartiendo el MOL', textoTren())+'<div class="sh-body" style="overflow-y:auto">'+
+      '<div class="cp-est'+(ok?' ok':'')+'">'+(ok?'✅ '+c.con+' lo tiene abierto'+(c.sync?' · lo que marquéis se ve en los dos móviles':''):'⏳ Esperando a que '+c.con+' lo abra')+'</div>'+
+      (ok?'':'<div class="seg-t" style="text-align:center">🔑 Código para tu compañero</div><div class="cp-pin">'+String(c.pin).split('').map(function(d){return '<span>'+d+'</span>'}).join('')+'</div>'+
+        '<div class="nota" style="margin:0 0 6px">Le llega un aviso en su app. Dile este código para abrirlo.</div>')+
+      '<div class="nota">Se borra solo a las 24 h.'+(c.nombres?'':' Sin nombres de clientes.')+'</div></div>'+
+      '<div class="mfoot"><button class="m-sec" style="flex:1" onclick="dejarCompartir()">🛑 Dejar de compartir</button><button class="m-ok" onclick="cerrar()">Cerrar</button></div>';
+  } else if(c){
+    h=cabHoja('📨','MOL compartido', 'De la matrícula '+c.con)+'<div class="sh-body">'+
+      '<div class="cp-est ok">✅ Abierto · '+(c.sync?'lo que marquéis se ve en los dos móviles':'sin sincronizar lo marcado')+'</div>'+
+      '<div class="nota">Se borra del servidor a las 24 h; en tu móvil, a los 2 días.</div></div>'+
+      '<div class="mfoot"><button class="m-sec" style="flex:1" onclick="dejarCompartir()">Dejar de sincronizar</button><button class="m-ok" onclick="cerrar()">Cerrar</button></div>';
+  } else {
+    h=cabHoja('📤','Compartir MOL', textoTren())+'<div class="sh-body" style="overflow-y:auto">'+
+      '<div class="row2"><div><div class="f-lbl">Tu matrícula</div><input class="inp" id="cp-de" inputmode="numeric" maxlength="12" value="'+limpio(miMatricula()).replace(/"/g,'')+'"></div>'+
+      '<div><div class="f-lbl">Matrícula del compañero</div><input class="inp" id="cp-para" inputmode="numeric" maxlength="12" placeholder="Ej. 4179742"></div></div>'+
+      opcion('cp-nom', false, '👤 Incluir nombres de clientes', 'Apagado: ve asiento, comida y estaciones, sin nombres')+
+      opcion('cp-sync', true, '🔄 Ver lo que marca cada uno', 'Servido y subió / no subió, en los dos móviles')+
+      '<div class="err" id="cp-err"></div>'+
+      '<div class="nota">Le llega un aviso y lo abre con un código de 4 cifras. Se borra solo a las 24 h.</div></div>'+
+      '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok" id="cp-ok" onclick="compartir()">📤 Compartir</button></div>';
+  }
+  document.getElementById('sh-asiento').innerHTML=h;
+}
+async function compartir(){
+  var de=valor('cp-de'), para=valor('cp-para'), err=document.getElementById('cp-err');
+  if(!matValida(de)){ err.textContent='Pon tu matrícula'; return; }
+  if(!matValida(para)){ err.textContent='Pon la matrícula del compañero'; return; }
+  if(de===para){ err.textContent='Pon la matrícula de otra persona'; return; }
+  if(!sb()){ err.textContent='Sin conexión con el servidor'; return; }
+  try{ localStorage.setItem(CLAVE_MAT, de); }catch(e){}
+  var nombres=document.getElementById('cp-nom').classList.contains('on'), sync=document.getElementById('cp-sync').classList.contains('on');
+  var pin=String(crypto.getRandomValues(new Uint32Array(1))[0]%10000); while(pin.length<4) pin='0'+pin;
+  var lista=LISTA.map(function(r){ var o=Object.assign({}, r); delete o.txt; if(!nombres) delete o.nombre; return o; });
+  var num=valor('i-num'), btn=document.getElementById('cp-ok');
+  btn.disabled=true; btn.textContent='Compartiendo…';
+  try{
+    var d=((await rpc('sv_compartir',{p_de:de, p_para:para, p_pin:pin, p_tren:num, p_fecha:(LISTA[0]&&LISTA[0].fecha)||'',
+      p_resumen:LISTA.length+' servicios · '+valor('i-ruta'), p_sincronizar:sync,
+      p_datos:{v:1, lista:lista, servidos:servidos, subio:subio, marcasT:MARCAS_T, tipo:tipo, serie:serie, rama:valor('i-rama'), num:num}}))||[])[0];
+    if(!d||!d.id) throw new Error('sin respuesta');
+    COMPARTIDO={id:d.id, token:d.token, rol:'emisor', con:para, pin:pin, sync:sync, nombres:nombres, estado:'pendiente'};
+    PEND={}; guardar(); iniciarSync(); pintarCompartir();
+    try{ parent._crearEventoPush(para, '📨 Te comparten un MOL', 'Matrícula '+de+' · Tren '+(num||'—')+' · Ábrelo en Servicios'); }catch(e){}
+  }catch(e){ btn.disabled=false; btn.textContent='📤 Compartir'; err.textContent=errorTexto(e); }
+}
+
+/* Recibir: avisos para mi matrícula y abrir con el código */
+async function comprobarRecibidos(){
+  var el=document.getElementById('sv-recibidos'), m=miMatricula();
+  if(!matValida(m)||!sb()){ RECIBIDOS=[]; el.innerHTML=''; return; }
+  try{ RECIBIDOS=(await rpc('sv_pendientes',{p_matricula:m}))||[]; }catch(e){ RECIBIDOS=[]; }
+  RECIBIDOS.forEach(function(r){ r.para=m; });
+  el.innerHTML=RECIBIDOS.length?'<div class="card" style="border-color:rgba(217,119,6,.5)"><div class="card-t">📨 Te han compartido un MOL</div>'+
+    RECIBIDOS.map(function(r,i){ return '<div class="rc-row"><div class="txt">Tren '+(limpio(r.tren)||'—')+' · de '+limpio(r.de_matricula)+'<small>'+limpio(r.fecha)+' · '+limpio(r.resumen)+'</small></div>'+
+      '<button class="chip sel" onclick="svAbrirCompartido(RECIBIDOS['+i+'])">Abrir</button></div>'; }).join('')+'</div>':'';
+}
+window.svAbrirCompartido=function(item){
+  if(!item||!item.id) return;
+  ABRIENDO={id:String(item.id), de:limpio(item.de_matricula), tren:limpio(item.tren), para:String(item.para||miMatricula())};
+  hoja='pin'; fichaAbierta=null;
+  document.getElementById('sh-asiento').innerHTML=cabHoja('📨','MOL de la matrícula '+ABRIENDO.de, 'Tren '+(ABRIENDO.tren||'—'))+'<div class="sh-body">'+
+    '<div class="f-lbl" style="text-align:center;margin-bottom:8px">Pídele el código de 4 cifras que le sale en su móvil</div>'+
+    '<input class="inp cp-in" id="cp-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="····">'+
+    (cargado?'<div class="nota" style="color:var(--nar2)">⚠️ Sustituye al servicio que tienes cargado ahora.</div>':'')+
+    '<div class="err" id="cp-err" style="text-align:center"></div></div>'+
+    '<div class="mfoot"><button class="m-sec" onclick="rechazarCompartido()">Rechazar</button><button class="m-ok" id="cp-ok" onclick="abrirConCodigo()">Abrir MOL</button></div>';
+  document.getElementById('ov-asiento').classList.add('on');
+  setTimeout(function(){ var i=document.getElementById('cp-pin'); if(i) i.focus(); }, 300);
+};
+async function abrirConCodigo(){
+  var a=ABRIENDO, pin=valor('cp-pin'), err=document.getElementById('cp-err'), btn=document.getElementById('cp-ok');
+  if(!/^\d{4}$/.test(pin)){ err.textContent='El código tiene 4 cifras'; return; }
+  btn.disabled=true;
+  try{
+    var d=((await rpc('sv_abrir',{p_id:a.id, p_matricula:a.para, p_pin:pin}))||[])[0];
+    if(!d) throw new Error('código incorrecto');
+    if(COMPARTIDO) await dejarCompartir(true);
+    recibirDatos(d.datos, d.sincronizar?d.marcas:null);
+    COMPARTIDO={id:a.id, token:d.token, rol:'receptor', con:limpio(d.de_matricula), sync:!!d.sincronizar, estado:'aceptado'};
+    try{ localStorage.setItem(CLAVE_MAT, a.para); }catch(e){}
+    guardar(); cerrar(); abrirMapa(); iniciarSync(); comprobarRecibidos();
+    toast('📨 MOL abierto · Tren '+(valor('i-num')||'—'));
+  }catch(e){ btn.disabled=false; err.textContent=errorTexto(e); }
+}
+async function rechazarCompartido(){
+  var a=ABRIENDO; if(!a) return;
+  try{ await rpc('sv_rechazar',{p_id:a.id, p_matricula:a.para}); }catch(e){}
+  cerrar(); comprobarRecibidos();
+  try{ parent.__svComprobarCompartidos(); }catch(e){}
+}
+// Lo recibido viene de otro móvil: se revisa campo a campo antes de usarlo.
+function filaSegura(r){
+  if(!r||typeof r!=='object') return null;
+  var o={};
+  Object.keys(r).forEach(function(k){ var v=r[k];
+    if(typeof v==='string') o[k]=limpio(v).slice(0,200); else if(typeof v==='number'||typeof v==='boolean') o[k]=v; });
+  o.sid=parseInt(o.sid,10); o.coche=parseInt(o.coche,10); o.fila=parseInt(o.fila,10);
+  if(isNaN(o.sid)||isNaN(o.coche)||isNaN(o.fila)||!/^[A-Z]$/.test(o.letra||'')) return null;
+  if(!propia(COMIDAS,o.k)) o.k='otr';
+  delete o.aviso;
+  return limpiarFila(o);
+}
+function recibirDatos(d, marcas){
+  var l=(d&&Array.isArray(d.lista)?d.lista:[]).map(filaSegura).filter(Boolean);
+  if(!l.length) throw new Error('vacío');
+  if(propia(TIPOS,d.tipo)){ tipo=d.tipo; serie=TIPOS[tipo].indexOf(d.serie)>-1?d.serie:TIPOS[tipo][0]; }
+  pintarTipos();
+  document.getElementById('i-rama').value=String(d.rama||'').slice(0,20);
+  document.getElementById('i-num').value=String(d.num||'').slice(0,10);
+  servidos={}; subio={}; MARCAS_T={}; PEND={};
+  var hay={}; l.forEach(function(r){ hay[r.sid]=1; });
+  Object.keys(d.servidos||{}).forEach(function(k){ if(hay[k]&&d.servidos[k]===true) servidos[k]=true; });
+  Object.keys(d.subio||{}).forEach(function(k){ var v=d.subio[k]; if(hay[k]&&(v==='si'||v==='no')) subio[k]=v; });
+  Object.keys(d.marcasT||{}).forEach(function(k){ if(hay[k]) MARCAS_T[k]=+d.marcasT[k]||0; });
+  CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null}; filtro=null;
+  montar(l);
+  aplicarMarcas(marcas);
+}
 
 pintarTipos();
 restaurar();
@@ -1012,6 +1417,11 @@ window.elegirEstetica=function(k){ try{ parent.elegirEstetica(k); }catch(e){} };
 window.nvElegir=function(k){ try{ parent.nvElegir(k); }catch(e){} };
 try{ if(parent!==window && parent.__svSyncTema) parent.__svSyncTema(); }catch(e){}
 if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
+// Al abrirse por primera vez: desde dónde se abrió y si hay un MOL compartido que abrir.
+try{ if(parent!==window){ svModo(parent.__svDesdeCal);
+  var pa=parent.__svPendienteAbrir; parent.__svPendienteAbrir=null; if(pa) svAbrirCompartido(pa); } }catch(e){}
+pintarBotonCompartir();
+comprobarRecibidos();
 </script>
 </body>
 </html>

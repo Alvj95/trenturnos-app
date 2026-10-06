@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maqueta Compartir MOL</title>
+<style>
+:root{--bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;--tx:#F8FAFC;--tx2:#94A3B8;--tx3:#475569;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;--blue:#2563EB;--blue2:#3B82F6;--green:#16A34A;--green2:#4ADE80;--red2:#FCA5A5;--nar2:#FB923C}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#04080f;color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font-family:inherit}
+main{max-width:900px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--tx2);margin:0 0 18px;font-size:13.5px}
+.pasos{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.paso{font-size:12px;font-weight:800;padding:6px 10px;border-radius:20px;background:var(--s2);border:1px solid var(--div);color:var(--tx2)}
+.paso.on{background:rgba(217,119,6,.18);border-color:var(--acc2);color:var(--acc3)}
+.moviles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.etq{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2);margin:0 0 8px 4px}
+.ph{position:relative;height:640px;border-radius:30px;border:2px solid #22324d;overflow:hidden;
+  background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E);display:flex;flex-direction:column}
+.hdr{padding:16px 16px 10px;border-bottom:1px solid var(--div);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.8px}
+.pill.sv{background:rgba(217,119,6,.15);color:var(--acc3);border:1px solid rgba(217,119,6,.35)}
+.pill.tr{background:rgba(37,99,235,.15);color:var(--blue2);border:1px solid rgba(37,99,235,.3)}
+.hsub{font-size:10.5px;color:var(--tx2);margin-top:5px;font-weight:600}
+.hbtns{display:flex;gap:5px}
+.hbtn{position:relative;width:32px;height:32px;border-radius:9px;background:var(--s2);border:none;color:var(--tx2);font-size:14px;cursor:pointer}
+.hbtn.sv{background:linear-gradient(135deg,#3A2A0C,#241A08);border:1px solid #D97706}
+.badge{position:absolute;top:-5px;right:-5px;background:#DC2626;color:#fff;font-size:9px;font-weight:900;border-radius:10px;padding:1px 5px}
+.body{flex:1;overflow-y:auto;padding:12px 12px 70px;scrollbar-width:none}
+.card{background:rgba(13,27,46,.88);border:1px solid var(--div);border-radius:14px;padding:12px;margin-bottom:10px}
+.card-t{font-size:9.5px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin-bottom:8px}
+.big{font-size:14px;font-weight:800}
+.muted{color:var(--tx2);font-size:11.5px;font-weight:600}
+.btn{width:100%;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer}
+.btn.amb{background:var(--acc);color:#fff;box-shadow:0 4px 14px rgba(217,119,6,.35)}
+.btn.sec{background:var(--s2);border:1px solid var(--div);color:var(--tx)}
+.btn.ok{background:var(--green);color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.seat{height:26px;border-radius:7px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;background:var(--s2);color:var(--tx3);border:1px solid var(--div)}
+.seat.a{background:#D97706;color:#fff;border:none}.seat.b{background:#16A34A;color:#fff;border:none}.seat.c{background:#0891B2;color:#fff;border:none}
+.seat.done{opacity:.5}
+.bnav{position:absolute;left:0;right:0;bottom:0;height:56px;background:var(--s1);border-top:1px solid var(--div);display:flex;align-items:center}
+.bni{flex:1;text-align:center;font-size:9px;font-weight:700;color:var(--tx2)}
+.bni.on{color:var(--nar2)}
+.bni div{font-size:16px}
+.aviso{display:flex;gap:10px;align-items:flex-start;background:rgba(217,119,6,.14);border:1.5px solid rgba(217,119,6,.6);border-radius:14px;padding:11px;margin-bottom:10px}
+.aviso .ico{font-size:22px}
+.aviso b{color:var(--acc3)}
+.aviso .acc{display:flex;gap:6px;margin-top:8px}
+.aviso .acc button{flex:1;padding:8px;border-radius:10px;font-weight:800;font-size:12px;border:none;cursor:pointer}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px;text-align:center;color:var(--tx2)}
+.cal div{padding:7px 0;border-radius:8px}
+.cal .hoy{border:1.5px solid var(--nar2);color:#fff;font-weight:800}
+.ov{position:absolute;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:5}
+.ov.on{display:flex}
+.sh{background:var(--s1);width:100%;border-radius:22px 22px 0 0;padding:10px 14px 16px;border-top:1px solid var(--div)}
+.grab{width:34px;height:3px;background:var(--div);border-radius:2px;margin:0 auto 10px}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:10px;color:var(--tx);padding:10px 11px;font:700 14px system-ui,sans-serif;letter-spacing:1px}
+.lbl{font-size:10.5px;font-weight:700;color:var(--tx2);margin:10px 0 4px}
+.tgl{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--tx2);font-weight:600}
+.sw{width:40px;height:22px;border-radius:20px;background:var(--s3);border:1px solid var(--div);position:relative;flex:none;cursor:pointer}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--tx2);transition:left .15s}
+.sw.on{background:var(--acc)}.sw.on::after{left:20px;background:#fff}
+.est{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:8px 10px;border-radius:10px;background:var(--s2);border:1px solid var(--div);margin-top:8px}
+.verde{color:var(--green2)}
+.toast{position:absolute;left:50%;bottom:66px;transform:translateX(-50%);background:var(--s3);border:1px solid var(--div);padding:8px 12px;border-radius:10px;font-size:11.5px;font-weight:700;display:none;white-space:nowrap;z-index:9}
+.nota{margin-top:18px;background:var(--s1);border:1px solid var(--div);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--tx2)}
+.nota b{color:var(--tx)}
+.reset{margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>📤 Compartir MOL — maqueta</h1>
+<p class="sub">Simulación con dos móviles. No envía nada de verdad: es para ver cómo funcionaría. Sigue los pasos pulsando en los botones.</p>
+<div class="pasos" id="pasos"></div>
+
+<div class="moviles">
+  <!-- MÓVIL DE EMPRESA -->
+  <div>
+    <div class="etq">📱 Móvil de empresa (entra por Servicios)</div>
+    <div class="ph" id="m1">
+      <div class="hdr">
+        <div><span class="pill sv">🍽️ SERVICIOS · TREN 3060</span><div class="hsub">06/10/2026 · Barcelona → Madrid Atocha</div></div>
+        <div class="hbtns"><button class="hbtn" onclick="abrirCompartir()" title="Compartir MOL">📤</button><button class="hbtn">🔁</button></div>
+      </div>
+      <div class="body">
+        <div class="card">
+          <div class="card-t">✅ Servidos</div>
+          <div class="big"><span id="m1serv">3</span> <span class="muted">de 25 servicios</span></div>
+          <div class="mini" id="m1mini"></div>
+        </div>
+        <button class="btn amb" onclick="abrirCompartir()">📤 Compartir MOL con un compañero</button>
+        <div id="m1estado"></div>
+      </div>
+      <div class="bnav"><div class="bni"><div>🚆</div>TREN</div><div class="bni on"><div>💺</div>ASIENTOS</div><div class="bni"><div>📋</div>RESUMEN</div></div>
+      <!-- hoja compartir -->
+      <div class="ov" id="ov1" onclick="if(event.target===this) cerrar1()">
+        <div class="sh">
+          <div class="grab"></div>
+          <div class="big">📤 Compartir este MOL</div>
+          <div class="muted" style="margin-top:2px">Tren 3060 · 06/10 · 25 servicios</div>
+          <div class="lbl">Tu matrícula (solo la primera vez)</div>
+          <input class="inp" id="miMat" value="4179742" inputmode="numeric">
+          <div class="lbl">Matrícula del compañero</div>
+          <input class="inp" id="suMat" placeholder="Ej. 4180215" inputmode="numeric">
+          <div class="tgl"><div class="sw" id="swNom" onclick="this.classList.toggle('on')"></div><span>Incluir nombres de clientes <br><span style="font-size:10.5px;color:var(--tx3)">Por defecto no: solo coche, asiento, comida, menú y tramo</span></span></div>
+          <div class="tgl"><div class="sw on" id="swSync" onclick="this.classList.toggle('on')"></div><span>Ver en los dos móviles lo que se marca (servido / subió)</span></div>
+          <div class="muted" style="margin-top:10px">🕒 Se borra solo a las 24 h. No se envía el PDF ni la foto.</div>
+          <div class="row2" style="margin-top:12px"><button class="btn sec" onclick="cerrar1()">Cancelar</button><button class="btn amb" onclick="enviar()">Enviar</button></div>
+        </div>
+      </div>
+      <div class="toast" id="t1"></div>
+    </div>
+  </div>
+
+  <!-- MÓVIL DEL COMPAÑERO -->
+  <div>
+    <div class="etq">📱 Móvil del compañero (Tripulante)</div>
+    <div class="ph" id="m2">
+      <div class="hdr" id="m2hdr"></div>
+      <div class="body" id="m2body"></div>
+      <div class="bnav" id="m2nav"></div>
+      <div class="toast" id="t2"></div>
+    </div>
+  </div>
+</div>
+
+<button class="btn sec reset" onclick="reiniciar()">↺ Empezar de nuevo</button>
+
+<div class="nota">
+<b>Cómo funcionaría de verdad:</b><br>
+· Al pulsar <b>Enviar</b>, los datos ya leídos del MOL se guardan unas horas en vuestro servidor (Supabase), dirigidos a esa matrícula y con un código de un solo uso.<br>
+· El compañero ve el aviso al abrir la app (y como notificación, en la versión URL si la tiene activada; en la app de Android cuando conectemos las notificaciones).<br>
+· Al aceptar, entra en Servicios con el MOL cargado. Si está activado "Ver en los dos móviles", lo que marca uno (servido / subió) le aparece al otro.<br>
+· Se borra solo a las 24 h, o al pulsar "Dejar de compartir".
+</div>
+</main>
+
+<script>
+var PASOS=['1 · Empresa sube el MOL','2 · Compartir con la matrícula','3 · El compañero recibe el aviso','4 · Abre Servicios con el MOL'];
+var paso=0, enviado=false, aceptado=false, servidos=[0,1,2], sinc=true;
+var ASI=['05B','05C','06A','07A','07B','07C','08A','08B','08C','09A','10A','10B'];
+function pintarPasos(){ document.getElementById('pasos').innerHTML=PASOS.map(function(p,i){return '<span class="paso'+(i===paso?' on':'')+'">'+p+'</span>';}).join(''); }
+function mini(el, id){ document.getElementById(el).innerHTML=ASI.map(function(a,i){ var t=['a','b','c'][i%3]; return '<div class="seat '+t+(servidos.indexOf(i)>-1?' done':'')+'" onclick="marcar('+i+',\''+id+'\')">'+a+'</div>'; }).join(''); }
+function toast(id,t){ var e=document.getElementById(id); e.textContent=t; e.style.display='block'; clearTimeout(e._t); e._t=setTimeout(function(){e.style.display='none'},1800); }
+function marcar(i, quien){
+  if(quien==='m2'&&!aceptado) return;
+  var k=servidos.indexOf(i); if(k>-1) servidos.splice(k,1); else servidos.push(i);
+  document.getElementById('m1serv').textContent=servidos.length; mini('m1mini','m1'); if(aceptado) pintarM2();
+  if(enviado&&sinc) toast(quien==='m1'?'t2':'t1', (quien==='m1'?'Empresa':'Compañero')+' marcó '+ASI[i]+(k>-1?' pendiente':' servido'));
+}
+function abrirCompartir(){ document.getElementById('ov1').classList.add('on'); paso=1; pintarPasos(); setTimeout(function(){document.getElementById('suMat').focus()},50); }
+function cerrar1(){ document.getElementById('ov1').classList.remove('on'); }
+function enviar(){
+  var m=document.getElementById('suMat').value.trim();
+  if(!/^\d{6,8}$/.test(m)){ toast('t1','Escribe la matrícula del compañero'); return; }
+  sinc=document.getElementById('swSync').classList.contains('on');
+  enviado=true; cerrar1(); paso=2; pintarPasos();
+  document.getElementById('m1estado').innerHTML='<div class="est">📤 Compartido con <b>'+m+'</b> · <span class="verde">esperando que lo abra…</span></div>';
+  toast('t1','Solicitud enviada a '+m); pintarM2();
+}
+function aceptar(){
+  aceptado=true; paso=3; pintarPasos(); pintarM2();
+  document.getElementById('m1estado').innerHTML='<div class="est">📤 Compartido con <b>'+document.getElementById('suMat').value+'</b> · <span class="verde">✓ lo está viendo</span></div><button class="btn sec" style="margin-top:8px" onclick="reiniciar()">Dejar de compartir</button>';
+  toast('t1','Tu compañero ha abierto el MOL');
+}
+function rechazar(){ enviado=false; paso=1; pintarPasos(); pintarM2(); document.getElementById('m1estado').innerHTML='<div class="est">❌ El compañero lo ha rechazado</div>'; }
+function pintarM2(){
+  var hdr=document.getElementById('m2hdr'), body=document.getElementById('m2body'), nav=document.getElementById('m2nav');
+  if(!aceptado){
+    hdr.innerHTML='<div><span class="pill tr">🚆 TRIPULANTE · 4180215</span></div><div class="hbtns"><button class="hbtn sv" onclick="'+(enviado?'aceptar()':'')+'">🍽️'+(enviado?'<span class="badge">1</span>':'')+'</button><button class="hbtn">📖</button><button class="hbtn">💬</button><button class="hbtn">🧑‍💼</button></div>';
+    body.innerHTML=(enviado?'<div class="aviso"><div class="ico">📨</div><div style="flex:1"><div><b>4179742</b> te comparte el MOL</div><div class="muted">Tren 3060 · 06/10/2026 · 25 servicios</div><div class="acc"><button style="background:var(--acc);color:#fff" onclick="aceptar()">Ver en Servicios</button><button style="background:var(--s2);color:var(--tx);border:1px solid var(--div)" onclick="rechazar()">Rechazar</button></div></div></div>':'')+
+      '<div style="font-size:14px;font-weight:700;color:var(--tx2);margin:2px 2px 10px">Hola, Marta, buenas tardes</div>'+
+      '<div class="card"><div class="card-t">Octubre 2026</div><div class="cal">'+['L','M','X','J','V','S','D'].map(function(d){return '<div style="font-weight:800">'+d+'</div>'}).join('')+
+      '<div></div><div></div><div></div>'+Array.from({length:31},function(_,i){return '<div class="'+(i===5?'hoy':'')+'">'+(i+1)+'</div>'}).join('')+'</div></div>';
+    nav.innerHTML='<div class="bni on"><div>📅</div>CALENDARIO</div><div class="bni"><div>🗂️</div>HORARIO</div><div class="bni"><div>👥</div>COMPAÑ.</div><div class="bni"><div>⚙️</div>AJUSTES</div>';
+  } else {
+    hdr.innerHTML='<div><span class="pill sv">🍽️ SERVICIOS · TREN 3060</span><div class="hsub">📨 Compartido por 4179742</div></div><div class="hbtns"><button class="hbtn" onclick="volverCal()" title="Volver al calendario">📅</button></div>';
+    body.innerHTML='<div class="card"><div class="card-t">✅ Servidos'+(sinc?' · en los dos móviles':'')+'</div><div class="big">'+servidos.length+' <span class="muted">de 25 servicios</span></div><div class="mini" id="m2mini"></div></div>'+
+      '<div class="muted" style="padding:0 4px">Toca un asiento para marcarlo servido'+(sinc?': también se verá en el móvil de empresa.':'.')+'</div>';
+    nav.innerHTML='<div class="bni"><div>🚆</div>TREN</div><div class="bni on"><div>💺</div>ASIENTOS</div><div class="bni"><div>📋</div>RESUMEN</div>';
+    mini('m2mini','m2');
+  }
+}
+function volverCal(){ aceptado=false; enviado=false; pintarM2(); enviado=true; aceptado=true; toast('t2','📅 De vuelta al calendario (el MOL sigue en 🍽️)');
+  var hdr=document.getElementById('m2hdr'); hdr.innerHTML='<div><span class="pill tr">🚆 TRIPULANTE · 4180215</span></div><div class="hbtns"><button class="hbtn sv" onclick="aceptar()">🍽️</button><button class="hbtn">📖</button><button class="hbtn">💬</button><button class="hbtn">🧑‍💼</button></div>';
+  document.getElementById('m2body').querySelector('.aviso')&&document.getElementById('m2body').querySelector('.aviso').remove(); }
+function reiniciar(){ paso=0; enviado=false; aceptado=false; servidos=[0,1,2]; document.getElementById('m1estado').innerHTML=''; document.getElementById('suMat').value=''; document.getElementById('m1serv').textContent=3; pintarPasos(); mini('m1mini','m1'); pintarM2(); }
+reiniciar();
+</script>
+</body>
+</html>

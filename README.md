@@ -34,6 +34,8 @@ El tema solo actúa entre sus fechas (`HW_DESDE` / `HW_HASTA` dentro del archivo
 Cuando termine la temporada, borra el archivo y su línea `<script>`: el HTML principal no se toca.
 Servicios a bordo recibe solo el tema activo (Halloween o Navidad) sin tocar su código.
 
+En las dos versiones, el botón 🍽️ del Calendario abre Servicios sin cambiar de perfil. **Compartir MOL** (📤) lo manda a la matrícula de un compañero, que lo abre con un código de 4 cifras; lo marcado se sincroniza entre los dos móviles. Necesita `version-url/supabase-servicios-compartidos.sql` ejecutado una vez en Supabase.
+
 ## Archivos
 
 | Archivo | Qué es |
