@@ -25,10 +25,13 @@ bloque = '''<!-- SERVICIOS:INICIO — generado por servicios/incrustar.py; no ed
 <script>
 var SERVICIOS_HTML = ''' + texto + ''';
 // Se carga la primera vez que se abre Servicios (no antes: no pesa en el arranque).
-window.__svMostrar = function(){
+// desdeCal: abierto con el botón 🍽️ del Calendario (sin cambiar de perfil; 📅 vuelve).
+window.__svMostrar = function(desdeCal){
   var s = document.getElementById('servicios-screen'), f = document.getElementById('servicios-frame');
   if(!s || !f) return;
+  window.__svDesdeCal = desdeCal === true;
   if(!f.getAttribute('srcdoc')) f.setAttribute('srcdoc', SERVICIOS_HTML);
+  else { try{ var w = f.contentWindow; if(w && w.svAlMostrar) w.svAlMostrar(window.__svDesdeCal); }catch(e){} }
   s.style.display = 'block';
   window.__svSyncTema();
 };
@@ -82,6 +85,43 @@ window.__svTema = function(){
   }
   return t;
 };
+// 📨 MOL compartido: aviso en el Calendario + punto rojo en 🍽️ cuando un compañero
+// comparte un MOL con mi matrícula. Si falta el botón o el aviso, no hace nada.
+window.__svAvisos = [];
+window.__svComprobarCompartidos = async function(){
+  var caja = document.getElementById('sv-aviso'), badge = document.getElementById('hbtn-servicios-badge');
+  var mat = (typeof AJ !== 'undefined' && AJ && AJ.matricula) ? String(AJ.matricula).trim() : '';
+  if(!caja || typeof sbAdmin === 'undefined' || !sbAdmin || !mat) return;
+  var lista = [];
+  try{ var r = await sbAdmin.rpc('sv_pendientes', { p_matricula: mat }); if(!r.error) lista = r.data || []; }catch(e){ return; }
+  window.__svAvisos = lista;
+  if(badge) badge.style.display = lista.length ? 'block' : 'none';
+  var t = function(x){ var d = document.createElement('div'); d.textContent = x == null ? '' : String(x); return d.innerHTML; };
+  caja.innerHTML = lista.map(function(a, i){
+    return '<div class="sv-aviso-item"><span class="sv-aviso-ico">📨</span><div class="sv-aviso-txt"><b>'+t(a.de_matricula)+' te comparte el MOL</b><small>Tren '+(t(a.tren)||'—')+(a.fecha ? ' · '+t(a.fecha) : '')+'</small></div>'+
+      '<button class="sv-aviso-ver" onclick="__svAbrirCompartido('+i+')">Ver</button><button class="sv-aviso-no" onclick="__svRechazarCompartido('+i+')" title="Rechazar">✕</button></div>';
+  }).join('');
+  caja.style.display = lista.length ? 'block' : 'none';
+};
+window.__svAbrirCompartido = function(i){
+  var a = window.__svAvisos[i]; if(!a) return;
+  a.para = String(AJ.matricula).trim();
+  window.__svPendienteAbrir = a;
+  window.__svMostrar(true);
+  try{ var w = document.getElementById('servicios-frame').contentWindow;
+    if(w && w.svAbrirCompartido && window.__svPendienteAbrir){ window.__svPendienteAbrir = null; w.svAbrirCompartido(a); } }catch(e){}
+};
+window.__svRechazarCompartido = async function(i){
+  var a = window.__svAvisos[i]; if(!a || !confirm('¿Rechazar el MOL de '+a.de_matricula+'?')) return;
+  try{ await sbAdmin.rpc('sv_rechazar', { p_id: a.id, p_matricula: String(AJ.matricula).trim() }); }catch(e){}
+  window.__svComprobarCompartidos();
+};
+(function(){
+  function mirar(){ if(!document.hidden) window.__svComprobarCompartidos(); }
+  setTimeout(mirar, 4000);
+  setInterval(mirar, 60000);
+  document.addEventListener('visibilitychange', mirar);
+})();
 window.__svSyncTema = function(){
   try{ var w = document.getElementById('servicios-frame').contentWindow; if(w && w.svAplicarTema) w.svAplicarTema(window.__svTema()); }catch(e){}
 };

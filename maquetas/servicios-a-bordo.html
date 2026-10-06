@@ -210,6 +210,20 @@ button{font-family:inherit}
 .est3 b{display:block;font-size:20px;color:var(--tx)}
 .ck-row.warn{background:rgba(249,115,22,.1);border-radius:10px;padding:9px 6px;border:1px solid rgba(249,115,22,.4)}
 .ck-row .why{color:var(--nar2);font-weight:800;font-size:11px}
+/* 📤 Compartir MOL */
+#comp-btn.on{background:rgba(217,119,6,.22);box-shadow:inset 0 0 0 1px var(--acc2)}
+.cp-opt{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin-top:8px}
+.cp-opt .txt{flex:1;font-size:12.5px;font-weight:700}
+.cp-opt .txt small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600;margin-top:2px}
+.cp-pin{display:flex;justify-content:center;gap:8px;margin:6px 0 10px}
+.cp-pin span{width:50px;height:60px;border-radius:12px;background:var(--s2);border:1.5px solid var(--acc2);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;color:var(--acc3)}
+.cp-est{border-radius:12px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:10px;background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.4);color:var(--acc3)}
+.cp-est.ok{background:rgba(22,163,74,.12);border-color:rgba(74,222,128,.45);color:var(--green2)}
+.cp-in{text-align:center;font-size:26px;letter-spacing:12px;font-weight:900;height:58px}
+.rc-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--div)}
+.rc-row:first-of-type{border-top:0}
+.rc-row .txt{flex:1;font-size:12.5px;font-weight:700}
+.rc-row .txt small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -226,7 +240,8 @@ button{font-family:inherit}
       <div class="hdr-btns">
         <button class="hbtn" title="Subir PDF" onclick="goP('tren')">📄</button>
         <button class="hbtn" id="tema-btn" title="Estética de temporada" onclick="temaPanel()"></button>
-        <button class="hbtn" title="Cambiar de perfil" onclick="cambiarPerfil()">🔁</button>
+        <button class="hbtn" id="comp-btn" title="Compartir MOL" onclick="abrirCompartir()" style="display:none">📤</button>
+        <button class="hbtn" id="perfil-btn" title="Cambiar de perfil" onclick="cambiarPerfil()">🔁</button>
       </div>
     </div>
   </div>
@@ -236,6 +251,7 @@ button{font-family:inherit}
     <!-- TREN -->
     <div class="panel on" id="p-tren">
       <div class="saludo" id="saludo">¿En qué tren vas hoy? 👋</div>
+      <div id="sv-recibidos"></div>
 
       <div class="card">
         <div class="card-t">🚆 Tipo de tren</div>
@@ -873,7 +889,8 @@ function mostrarComprobacion(){
   document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
 }
 function confirmarCarga(){
-  servidos={}; subio={}; CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null};
+  if(COMPARTIDO){ if(!confirm('Estás compartiendo otro MOL. Si cargas este, se deja de compartir. ¿Seguir?')) return; dejarCompartir(true); }
+  servidos={}; subio={}; MARCAS_T={}; CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null};
   montar(LEIDO.filas.filter(function(r){return !r.aviso}));
   var tren=(LISTA.filter(function(r){return r.tren})[0]||{}).tren; if(tren) document.getElementById('i-num').value=tren;
   guardar();
@@ -894,6 +911,7 @@ function montar(lista){
   document.getElementById('pdf-estado').innerHTML='<div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--green2)">✅ Cargado: '+LISTA.length+' servicios · '+(LISTA[0]?LISTA[0].fecha:'')+'</div>'+
     '<div class="pdf-btns"><button onclick="borrarServicio()">🗑️ Borrar y empezar otro servicio</button></div>';
   document.getElementById('go').disabled=false;
+  pintarBotonCompartir();
 }
 /* Orden de las estaciones en el recorrido, sacado de los propios tramos
    (cada servicio va de una estación a otra posterior). */
@@ -929,8 +947,10 @@ function abrirMapa(){
 function setSube(sid, v){
   if(subio[sid]===v) delete subio[sid]; else subio[sid]=v;
   if(subio[sid]==='no') delete servidos[sid];
+  anotar(sid);
 }
-function toggleServido(sid){ servidos[sid]=!servidos[sid]; if(servidos[sid]) subio[sid]='si'; }
+function sinComprobar(sid){ delete subio[sid]; anotar(sid); }
+function toggleServido(sid){ servidos[sid]=!servidos[sid]; if(servidos[sid]) subio[sid]='si'; anotar(sid); }
 function clipsHTML(sid){
   var s=subio[sid];
   return '<div class="clips"><button class="clip'+(s==='si'?' si':'')+'" onclick="event.stopPropagation();setSube('+sid+',\'si\');refrescar()">🧍 Subió</button>'+
@@ -1015,6 +1035,7 @@ function tocarAsiento(key){
   if(sv.length>1){ toast('Este asiento tiene '+sv.length+' servicios: márcalos en la ficha'); return ficha(key); }
   var sid=sv[0].sid, s=subio[sid], v=!s?'si':s==='si'?'no':null;
   if(v){ subio[sid]=v; if(v==='no') delete servidos[sid]; } else delete subio[sid];
+  anotar(sid);
   toast('Asiento '+key.split('-')[1]+': '+(v==='si'?'🧍 subió':v==='no'?'🚫 no subió · sin servicio':'❔ sin comprobar'));
   guardar();
   pintarMapa();
@@ -1059,7 +1080,7 @@ function bloqueServicio(r, varios){
     '<div class="seg-t">📎 ¿Ha subido al tren?</div><div class="seg">'+
       '<button class="'+(su==='si'?'si':'')+'" onclick="setSube('+sid+',\'si\');refrescar()">🧍 Subió</button>'+
       '<button class="'+(su==='no'?'no':'')+'" onclick="setSube('+sid+',\'no\');refrescar()">🚫 No subió</button>'+
-      '<button class="'+(!su?'nc':'')+'" onclick="delete subio['+sid+'];refrescar()">❔ Sin comprobar</button></div>'+
+      '<button class="'+(!su?'nc':'')+'" onclick="sinComprobar('+sid+');refrescar()">❔ Sin comprobar</button></div>'+
     '<div class="kv">'+(textoMenu(r)?'<div><span>Menú</span><b>'+textoMenu(r)+'</b></div>':'')+
       (r.nombre?'<div><span>Nombre</span><b>'+r.nombre+'</b></div>':'')+
       '<div><span>Sube en</span><b>'+estNombre(r.origen)+'</b></div><div><span>Baja en</span><b>'+estNombre(r.destino)+'</b></div>'+
@@ -1080,7 +1101,7 @@ function refrescar(){
   if(document.getElementById('p-resumen').classList.contains('on')) pintarResumen(); else pintarMapa();
   if(fichaAbierta&&document.getElementById('ov-asiento').classList.contains('on')) ficha(fichaAbierta);
 }
-function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; }
+function cerrar(){ document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; hoja=null; }
 /* ── Guardado en el móvil ──
    El servicio cargado (y lo marcado: servido, subió / no subió) se guarda
    en este móvil para no perderlo si se cierra la app. Lleva nombres de
@@ -1090,7 +1111,8 @@ var CLAVE='trenturnosServiciosAbordo', CARGADO_EN=0;
 function guardar(){
   if(!cargado) return;
   try{ localStorage.setItem(CLAVE, JSON.stringify({v:1, lista:LISTA, servidos:servidos, subio:subio, tipo:tipo, serie:serie,
-    rama:document.getElementById('i-rama').value, num:document.getElementById('i-num').value, cargadoEn:CARGADO_EN})); }catch(e){}
+    rama:document.getElementById('i-rama').value, num:document.getElementById('i-num').value, cargadoEn:CARGADO_EN,
+    marcasT:MARCAS_T, compartido:COMPARTIDO, pend:PEND})); }catch(e){}
 }
 function caducado(d){ return !d.cargadoEn || Date.now()-d.cargadoEn > 2*86400000; }
 function restaurar(){
@@ -1100,25 +1122,271 @@ function restaurar(){
   tipo=d.tipo||tipo; serie=d.serie||serie; pintarTipos();
   document.getElementById('i-rama').value=d.rama||''; document.getElementById('i-num').value=d.num||'';
   servidos=d.servidos||{}; subio=d.subio||{}; CARGADO_EN=d.cargadoEn;
+  MARCAS_T=d.marcasT||{}; PEND=d.pend||{};
+  if(d.compartido&&d.compartido.id&&d.compartido.token) COMPARTIDO=d.compartido;
   montar(d.lista.map(limpiarFila));
   abrirMapa();
+  if(COMPARTIDO) iniciarSync();
 }
-function borrarServicio(){
-  if(!confirm('¿Borrar el servicio cargado y lo que has marcado?')) return;
+async function borrarServicio(){
+  if(!confirm('¿Borrar el servicio cargado y lo que has marcado?'+(COMPARTIDO&&COMPARTIDO.rol==='emisor'?' También se deja de compartir.':''))) return;
+  if(COMPARTIDO) await dejarCompartir(true);
   try{ localStorage.removeItem(CLAVE); }catch(e){}
   location.reload();
 }
 
 /* ── Enlace con la app (este módulo va dentro de un marco) ── */
-function cambiarPerfil(){ try{ parent.__svCambiarPerfil(); }catch(e){} }
+// Abierto desde el Calendario (botón 🍽️): 📅 vuelve al Calendario sin cambiar de perfil.
+var DESDE_CAL=false;
+function cambiarPerfil(){ try{ if(DESDE_CAL) parent.__svOcultar(); else parent.__svCambiarPerfil(); }catch(e){} }
+window.svModo=function(desdeCal){
+  DESDE_CAL=!!desdeCal;
+  var b=document.getElementById('perfil-btn');
+  b.textContent=DESDE_CAL?'📅':'🔁'; b.title=DESDE_CAL?'Volver al Calendario':'Cambiar de perfil';
+};
+// Cada vez que la app enseña Servicios.
+window.svAlMostrar=function(desdeCal){ svModo(desdeCal); comprobarRecibidos(); };
 // Botón "atrás" del móvil: la app pregunta aquí primero. true = ya lo he gestionado.
 window.svAtras=function(){
   if(document.getElementById('ov-asiento').classList.contains('on')){ cerrar(); return true; }
   if(document.getElementById('p-check').classList.contains('on')){ goP('tren'); return true; }
   var inicio=cargado?'mapa':'tren';
   if(!document.getElementById('p-'+inicio).classList.contains('on')){ goP(inicio); return true; }
+  if(DESDE_CAL){ cambiarPerfil(); return true; }
   return false;
 };
+
+/* ── 📤 Compartir el MOL con un compañero ──
+   El móvil de la empresa sube el MOL y lo comparte con la matrícula de un
+   compañero: a él le llega un aviso y lo abre con un código de 4 cifras.
+   Lo que marca cada uno (servido, subió / no subió) se ve en los dos móviles.
+   Pasa por Supabase con las funciones sv_* (version-url/supabase-servicios-compartidos.sql):
+   se borra solo a las 24 h o antes con "Dejar de compartir". Los nombres de
+   clientes solo se envían si se elige. Sin conexión, todo sigue funcionando en el móvil. */
+var CLAVE_MAT='trenturnosServiciosMatricula';
+var COMPARTIDO=null;   // {id, token, rol:'emisor'|'receptor', con, pin, sync, estado}
+var MARCAS_T={}, PEND={}, hoja=null, RECIBIDOS=[], ABRIENDO=null, svTimer=null, svEnvio=null, svOcupado=false;
+function sb(){ try{ return parent.sbAdmin||null; }catch(e){ return null; } }
+function propia(o,k){ return Object.prototype.hasOwnProperty.call(o,k); }
+function matValida(m){ return /^[0-9A-Za-z]{3,12}$/.test(m||''); }
+function matApp(){ try{ return String(parent.AJ&&parent.AJ.matricula||'').trim(); }catch(e){ return ''; } }
+function miMatricula(){ var m=''; try{ m=localStorage.getItem(CLAVE_MAT)||''; }catch(e){} return (m||matApp()).trim(); }
+function valor(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
+function errorTexto(e){
+  var m=String(e&&(e.message||e.details)||e||'');
+  if(/código incorrecto/i.test(m)) return 'Código incorrecto';
+  if(/demasiados intentos/i.test(m)) return 'Demasiados intentos: pídele que lo comparta otra vez';
+  if(/no existe|caducado/i.test(m)) return 'Ya no está disponible (caducó o se dejó de compartir)';
+  if(/sv_\w+|function|schema cache/i.test(m)) return 'Falta activar "Compartir MOL" en el servidor';
+  return 'Sin conexión. Inténtalo de nuevo';
+}
+async function rpc(nombre, args){
+  var s=sb(); if(!s) throw new Error('sin servidor');
+  var r=await s.rpc(nombre, args); if(r.error) throw r.error; return r.data;
+}
+function pintarBotonCompartir(){
+  var b=document.getElementById('comp-btn');
+  b.style.display=(cargado||COMPARTIDO)?'':'none';
+  b.classList.toggle('on', !!COMPARTIDO);
+}
+// Cada cambio en un servicio queda anotado con su hora; si se comparte, se envía.
+function anotar(sid){
+  var t=Date.now(); MARCAS_T[sid]=t;
+  if(!COMPARTIDO||!COMPARTIDO.sync) return;
+  PEND[sid]={s:!!servidos[sid], u:subio[sid]||null, t:t};
+  clearTimeout(svEnvio); svEnvio=setTimeout(sincronizar, 1200);
+}
+// Lo que llega del otro móvil: para cada servicio gana el cambio más reciente.
+function aplicarMarcas(m){
+  if(!m||typeof m!=='object') return false;
+  var hay={}, cambio=false; LISTA.forEach(function(r){ hay[r.sid]=1; });
+  Object.keys(m).forEach(function(k){
+    var v=m[k], sid=parseInt(k,10);
+    if(!v||typeof v!=='object'||isNaN(sid)||!hay[sid]||PEND[sid]) return;
+    var t=+v.t||0; if(t<=(MARCAS_T[sid]||0)) return;
+    MARCAS_T[sid]=t;
+    if(v.s===true) servidos[sid]=true; else delete servidos[sid];
+    if(v.u==='si'||v.u==='no') subio[sid]=v.u; else delete subio[sid];
+    cambio=true;
+  });
+  if(cambio&&cargado) refrescar();
+  return cambio;
+}
+function iniciarSync(){
+  pintarBotonCompartir();
+  if(svTimer) return;
+  svTimer=setInterval(function(){ if(!document.hidden) sincronizar(); }, 8000);
+  sincronizar();
+}
+async function sincronizar(){
+  var c=COMPARTIDO; if(!c||svOcupado||!sb()) return;
+  svOcupado=true;
+  try{
+    var envio=PEND;
+    if(c.sync&&Object.keys(envio).length){
+      PEND={};
+      try{ aplicarMarcas(await rpc('sv_marcar',{p_id:c.id, p_token:c.token, p_cambios:envio})); }
+      catch(e){ Object.keys(envio).forEach(function(k){ if(!PEND[k]) PEND[k]=envio[k]; }); if(!/no existe|caducado/i.test(e&&e.message||'')) throw e; }
+    }
+    var e=((await rpc('sv_estado',{p_id:c.id, p_token:c.token}))||[])[0];
+    if(COMPARTIDO!==c) return;
+    if(!e){ terminado(c); return; }
+    if(c.estado!==e.estado){
+      c.estado=e.estado; guardar();
+      if(c.rol==='emisor'&&e.estado==='aceptado') toast('✅ '+c.con+' ya tiene el MOL abierto');
+      if(c.rol==='emisor'&&e.estado==='rechazado'){ toast(c.con+' ha rechazado el MOL'); dejarCompartir(true); return; }
+      if(hoja==='compartir') pintarCompartir();
+    }
+    if(c.sync) aplicarMarcas(e.marcas);
+  }catch(err){ /* sin conexión: se reintenta en la próxima vuelta */ }
+  finally{ svOcupado=false; }
+}
+function terminado(c){
+  COMPARTIDO=null; PEND={}; clearInterval(svTimer); svTimer=null; guardar(); pintarBotonCompartir();
+  if(hoja==='compartir') pintarCompartir();
+  toast(c.rol==='emisor'?'Ya no se comparte el MOL':'Ya no se comparte el MOL · lo marcado sigue aquí');
+}
+// Dejar de compartir: quien lo compartió lo borra del servidor; quien lo recibió solo deja de sincronizar.
+async function dejarCompartir(callado){
+  var c=COMPARTIDO; if(!c) return;
+  if(!callado&&!confirm(c.rol==='emisor'?'¿Dejar de compartir? '+c.con+' ya no verá este MOL actualizado.':'¿Dejar de usar el MOL compartido? Lo que tienes se queda en tu móvil, pero ya no se sincroniza.')) return;
+  COMPARTIDO=null; PEND={}; clearInterval(svTimer); svTimer=null; guardar(); pintarBotonCompartir();
+  if(c.rol==='emisor'){ try{ await rpc('sv_retirar',{p_id:c.id, p_token:c.token}); }catch(e){} }
+  if(hoja==='compartir') pintarCompartir();
+  if(!callado) toast('Se ha dejado de compartir');
+}
+
+/* Ventana "Compartir MOL" (según el estado: formulario, código para el compañero o recibido) */
+function abrirCompartir(){ hoja='compartir'; fichaAbierta=null; pintarCompartir(); document.getElementById('ov-asiento').classList.add('on'); }
+function opcion(id, on, titulo, sub){
+  return '<div class="cp-opt"><div class="txt">'+titulo+'<small>'+sub+'</small></div><button class="tgl'+(on?' on':'')+'" id="'+id+'" onclick="this.classList.toggle(\'on\')" aria-label="'+titulo+'"></button></div>';
+}
+function cabHoja(ico, tit, sub){
+  return '<div class="sh-handle"></div><div class="sh-hdr"><div class="sh-ico">'+ico+'</div><div style="flex:1"><div class="sh-tit">'+tit+'</div><div class="sh-sub">'+sub+'</div></div><button class="sh-close" onclick="cerrar()">✕</button></div>';
+}
+function textoTren(){ return 'Tren '+(limpio(valor('i-num'))||'—')+' · '+LISTA.length+' servicios'; }
+function pintarCompartir(){
+  var c=COMPARTIDO, h;
+  if(c&&c.rol==='emisor'){
+    var ok=c.estado==='aceptado';
+    h=cabHoja('📤','Compartiendo el MOL', textoTren())+'<div class="sh-body" style="overflow-y:auto">'+
+      '<div class="cp-est'+(ok?' ok':'')+'">'+(ok?'✅ '+c.con+' lo tiene abierto'+(c.sync?' · lo que marquéis se ve en los dos móviles':''):'⏳ Esperando a que '+c.con+' lo abra')+'</div>'+
+      (ok?'':'<div class="seg-t" style="text-align:center">🔑 Código para tu compañero</div><div class="cp-pin">'+String(c.pin).split('').map(function(d){return '<span>'+d+'</span>'}).join('')+'</div>'+
+        '<div class="nota" style="margin:0 0 6px">Le llega un aviso en su app. Dile este código para abrirlo.</div>')+
+      '<div class="nota">Se borra solo a las 24 h.'+(c.nombres?'':' Sin nombres de clientes.')+'</div></div>'+
+      '<div class="mfoot"><button class="m-sec" style="flex:1" onclick="dejarCompartir()">🛑 Dejar de compartir</button><button class="m-ok" onclick="cerrar()">Cerrar</button></div>';
+  } else if(c){
+    h=cabHoja('📨','MOL compartido', 'De la matrícula '+c.con)+'<div class="sh-body">'+
+      '<div class="cp-est ok">✅ Abierto · '+(c.sync?'lo que marquéis se ve en los dos móviles':'sin sincronizar lo marcado')+'</div>'+
+      '<div class="nota">Se borra del servidor a las 24 h; en tu móvil, a los 2 días.</div></div>'+
+      '<div class="mfoot"><button class="m-sec" style="flex:1" onclick="dejarCompartir()">Dejar de sincronizar</button><button class="m-ok" onclick="cerrar()">Cerrar</button></div>';
+  } else {
+    h=cabHoja('📤','Compartir MOL', textoTren())+'<div class="sh-body" style="overflow-y:auto">'+
+      '<div class="row2"><div><div class="f-lbl">Tu matrícula</div><input class="inp" id="cp-de" inputmode="numeric" maxlength="12" value="'+limpio(miMatricula()).replace(/"/g,'')+'"></div>'+
+      '<div><div class="f-lbl">Matrícula del compañero</div><input class="inp" id="cp-para" inputmode="numeric" maxlength="12" placeholder="Ej. 4179742"></div></div>'+
+      opcion('cp-nom', false, '👤 Incluir nombres de clientes', 'Apagado: ve asiento, comida y estaciones, sin nombres')+
+      opcion('cp-sync', true, '🔄 Ver lo que marca cada uno', 'Servido y subió / no subió, en los dos móviles')+
+      '<div class="err" id="cp-err"></div>'+
+      '<div class="nota">Le llega un aviso y lo abre con un código de 4 cifras. Se borra solo a las 24 h.</div></div>'+
+      '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok" id="cp-ok" onclick="compartir()">📤 Compartir</button></div>';
+  }
+  document.getElementById('sh-asiento').innerHTML=h;
+}
+async function compartir(){
+  var de=valor('cp-de'), para=valor('cp-para'), err=document.getElementById('cp-err');
+  if(!matValida(de)){ err.textContent='Pon tu matrícula'; return; }
+  if(!matValida(para)){ err.textContent='Pon la matrícula del compañero'; return; }
+  if(de===para){ err.textContent='Pon la matrícula de otra persona'; return; }
+  if(!sb()){ err.textContent='Sin conexión con el servidor'; return; }
+  try{ localStorage.setItem(CLAVE_MAT, de); }catch(e){}
+  var nombres=document.getElementById('cp-nom').classList.contains('on'), sync=document.getElementById('cp-sync').classList.contains('on');
+  var pin=String(crypto.getRandomValues(new Uint32Array(1))[0]%10000); while(pin.length<4) pin='0'+pin;
+  var lista=LISTA.map(function(r){ var o=Object.assign({}, r); delete o.txt; if(!nombres) delete o.nombre; return o; });
+  var num=valor('i-num'), btn=document.getElementById('cp-ok');
+  btn.disabled=true; btn.textContent='Compartiendo…';
+  try{
+    var d=((await rpc('sv_compartir',{p_de:de, p_para:para, p_pin:pin, p_tren:num, p_fecha:(LISTA[0]&&LISTA[0].fecha)||'',
+      p_resumen:LISTA.length+' servicios · '+valor('i-ruta'), p_sincronizar:sync,
+      p_datos:{v:1, lista:lista, servidos:servidos, subio:subio, marcasT:MARCAS_T, tipo:tipo, serie:serie, rama:valor('i-rama'), num:num}}))||[])[0];
+    if(!d||!d.id) throw new Error('sin respuesta');
+    COMPARTIDO={id:d.id, token:d.token, rol:'emisor', con:para, pin:pin, sync:sync, nombres:nombres, estado:'pendiente'};
+    PEND={}; guardar(); iniciarSync(); pintarCompartir();
+    try{ parent._crearEventoPush(para, '📨 Te comparten un MOL', 'Matrícula '+de+' · Tren '+(num||'—')+' · Ábrelo en Servicios'); }catch(e){}
+  }catch(e){ btn.disabled=false; btn.textContent='📤 Compartir'; err.textContent=errorTexto(e); }
+}
+
+/* Recibir: avisos para mi matrícula y abrir con el código */
+async function comprobarRecibidos(){
+  var el=document.getElementById('sv-recibidos'), m=miMatricula();
+  if(!matValida(m)||!sb()){ RECIBIDOS=[]; el.innerHTML=''; return; }
+  try{ RECIBIDOS=(await rpc('sv_pendientes',{p_matricula:m}))||[]; }catch(e){ RECIBIDOS=[]; }
+  RECIBIDOS.forEach(function(r){ r.para=m; });
+  el.innerHTML=RECIBIDOS.length?'<div class="card" style="border-color:rgba(217,119,6,.5)"><div class="card-t">📨 Te han compartido un MOL</div>'+
+    RECIBIDOS.map(function(r,i){ return '<div class="rc-row"><div class="txt">Tren '+(limpio(r.tren)||'—')+' · de '+limpio(r.de_matricula)+'<small>'+limpio(r.fecha)+' · '+limpio(r.resumen)+'</small></div>'+
+      '<button class="chip sel" onclick="svAbrirCompartido(RECIBIDOS['+i+'])">Abrir</button></div>'; }).join('')+'</div>':'';
+}
+window.svAbrirCompartido=function(item){
+  if(!item||!item.id) return;
+  ABRIENDO={id:String(item.id), de:limpio(item.de_matricula), tren:limpio(item.tren), para:String(item.para||miMatricula())};
+  hoja='pin'; fichaAbierta=null;
+  document.getElementById('sh-asiento').innerHTML=cabHoja('📨','MOL de la matrícula '+ABRIENDO.de, 'Tren '+(ABRIENDO.tren||'—'))+'<div class="sh-body">'+
+    '<div class="f-lbl" style="text-align:center;margin-bottom:8px">Pídele el código de 4 cifras que le sale en su móvil</div>'+
+    '<input class="inp cp-in" id="cp-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="····">'+
+    (cargado?'<div class="nota" style="color:var(--nar2)">⚠️ Sustituye al servicio que tienes cargado ahora.</div>':'')+
+    '<div class="err" id="cp-err" style="text-align:center"></div></div>'+
+    '<div class="mfoot"><button class="m-sec" onclick="rechazarCompartido()">Rechazar</button><button class="m-ok" id="cp-ok" onclick="abrirConCodigo()">Abrir MOL</button></div>';
+  document.getElementById('ov-asiento').classList.add('on');
+  setTimeout(function(){ var i=document.getElementById('cp-pin'); if(i) i.focus(); }, 300);
+};
+async function abrirConCodigo(){
+  var a=ABRIENDO, pin=valor('cp-pin'), err=document.getElementById('cp-err'), btn=document.getElementById('cp-ok');
+  if(!/^\d{4}$/.test(pin)){ err.textContent='El código tiene 4 cifras'; return; }
+  btn.disabled=true;
+  try{
+    var d=((await rpc('sv_abrir',{p_id:a.id, p_matricula:a.para, p_pin:pin}))||[])[0];
+    if(!d) throw new Error('no existe');
+    if(COMPARTIDO) await dejarCompartir(true);
+    recibirDatos(d.datos, d.sincronizar?d.marcas:null);
+    COMPARTIDO={id:a.id, token:d.token, rol:'receptor', con:limpio(d.de_matricula), sync:!!d.sincronizar, estado:'aceptado'};
+    try{ localStorage.setItem(CLAVE_MAT, a.para); }catch(e){}
+    guardar(); cerrar(); abrirMapa(); iniciarSync(); comprobarRecibidos();
+    toast('📨 MOL abierto · Tren '+(valor('i-num')||'—'));
+  }catch(e){ btn.disabled=false; err.textContent=errorTexto(e); }
+}
+async function rechazarCompartido(){
+  var a=ABRIENDO; if(!a) return;
+  try{ await rpc('sv_rechazar',{p_id:a.id, p_matricula:a.para}); }catch(e){}
+  cerrar(); comprobarRecibidos();
+  try{ parent.__svComprobarCompartidos(); }catch(e){}
+}
+// Lo recibido viene de otro móvil: se revisa campo a campo antes de usarlo.
+function filaSegura(r){
+  if(!r||typeof r!=='object') return null;
+  var o={};
+  Object.keys(r).forEach(function(k){ var v=r[k];
+    if(typeof v==='string') o[k]=limpio(v).slice(0,200); else if(typeof v==='number'||typeof v==='boolean') o[k]=v; });
+  o.sid=parseInt(o.sid,10); o.coche=parseInt(o.coche,10); o.fila=parseInt(o.fila,10);
+  if(isNaN(o.sid)||isNaN(o.coche)||isNaN(o.fila)||!/^[A-Z]$/.test(o.letra||'')) return null;
+  if(!propia(COMIDAS,o.k)) o.k='otr';
+  delete o.aviso;
+  return limpiarFila(o);
+}
+function recibirDatos(d, marcas){
+  var l=(d&&Array.isArray(d.lista)?d.lista:[]).map(filaSegura).filter(Boolean);
+  if(!l.length) throw new Error('vacío');
+  if(propia(TIPOS,d.tipo)){ tipo=d.tipo; serie=TIPOS[tipo].indexOf(d.serie)>-1?d.serie:TIPOS[tipo][0]; }
+  pintarTipos();
+  document.getElementById('i-rama').value=String(d.rama||'').slice(0,20);
+  document.getElementById('i-num').value=String(d.num||'').slice(0,10);
+  servidos={}; subio={}; MARCAS_T={}; PEND={};
+  var hay={}; l.forEach(function(r){ hay[r.sid]=1; });
+  Object.keys(d.servidos||{}).forEach(function(k){ if(hay[k]&&d.servidos[k]===true) servidos[k]=true; });
+  Object.keys(d.subio||{}).forEach(function(k){ var v=d.subio[k]; if(hay[k]&&(v==='si'||v==='no')) subio[k]=v; });
+  Object.keys(d.marcasT||{}).forEach(function(k){ if(hay[k]) MARCAS_T[k]=+d.marcasT[k]||0; });
+  CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null}; filtro=null;
+  montar(l);
+  aplicarMarcas(marcas);
+}
 
 pintarTipos();
 restaurar();
@@ -1149,6 +1417,11 @@ window.elegirEstetica=function(k){ try{ parent.elegirEstetica(k); }catch(e){} };
 window.nvElegir=function(k){ try{ parent.nvElegir(k); }catch(e){} };
 try{ if(parent!==window && parent.__svSyncTema) parent.__svSyncTema(); }catch(e){}
 if(!EJEMPLO_PDF_B64) document.getElementById('btn-ejemplo').style.display='none';
+// Al abrirse por primera vez: desde dónde se abrió y si hay un MOL compartido que abrir.
+try{ if(parent!==window){ svModo(parent.__svDesdeCal);
+  var pa=parent.__svPendienteAbrir; parent.__svPendienteAbrir=null; if(pa) svAbrirCompartido(pa); } }catch(e){}
+pintarBotonCompartir();
+comprobarRecibidos();
 </script>
 </body>
 </html>
