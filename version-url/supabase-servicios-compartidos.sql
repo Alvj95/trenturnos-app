@@ -93,7 +93,8 @@ begin
     return;
   end if;
   if r.token_receptor is null then
-    r.token_receptor := encode(gen_random_bytes(24),'hex');
+    -- gen_random_uuid() viene de serie (gen_random_bytes, en Supabase, no se ve desde aquí)
+    r.token_receptor := replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-','');
     update servicios_compartidos set token_receptor = r.token_receptor, estado = 'aceptado' where servicios_compartidos.id = p_id;
   end if;
   return query select r.datos, r.marcas, r.token_receptor, r.de_matricula, r.tren, r.fecha, r.sincronizar;
