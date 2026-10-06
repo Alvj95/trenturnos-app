@@ -24,7 +24,7 @@ Cada push compila un APK nuevo con GitHub Actions (`.github/workflows/android.ym
    <script src="tema-halloween.js"></script>
    ```
    (la segunda solo mientras haya un tema de temporada; ver abajo).
-3. Si cambias el convenio, sustituye `www/convenio-data.js` (tiene que llamarse exactamente así).
+3. Vuelve a incrustar Servicios: `python3 servicios/incrustar.py www/index.html`.
 4. Haz push: GitHub Actions genera el APK nuevo.
 
 ## Temas de temporada (Halloween, Navidad…)
@@ -32,13 +32,14 @@ Cada push compila un APK nuevo con GitHub Actions (`.github/workflows/android.ym
 Cada tema vive en su propio archivo (`www/tema-halloween.js`) y `index.html` solo lo carga con una línea.
 El tema solo actúa entre sus fechas (`HW_DESDE` / `HW_HASTA` dentro del archivo); fuera de ellas no añade nada.
 Cuando termine la temporada, borra el archivo y su línea `<script>`: el HTML principal no se toca.
+Servicios a bordo recibe solo el tema activo (Halloween o Navidad) sin tocar su código.
 
 ## Archivos
 
 | Archivo | Qué es |
 | --- | --- |
 | `www/index.html` | Tu app (sin cambios salvo la línea de `native-bridge.js`) |
-| `www/convenio-data.js` | Texto del Convenio Colectivo |
+| `servicios/servicios.html` | **Servicios a bordo** (fuente). Se incrusta en `www/index.html` y en `version-url/index.html` con `python3 servicios/incrustar.py [archivo]`; no editar a mano el bloque `SERVICIOS:INICIO/FIN` |
 | `www/tema-halloween.js` | Tema de Halloween (del 1 de octubre al 5 de noviembre): app, pantalla de inicio y Portal de Interventor |
 | `www/tema-navidad.js` | Tema de Navidad (del 1 de diciembre al 6 de enero). **Preparado pero aún no conectado**: para activarlo, añade `<script src="tema-navidad.js"></script>` debajo de la línea del tema de Halloween en `index.html` |
 | `www/native-bridge.js` | Hace que en Android funcionen *Compartir*, las descargas (Excel) y las notificaciones. En la web no hace nada |
