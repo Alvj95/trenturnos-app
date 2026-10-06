@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapas de asientos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* MAQUETA — mapas de asientos por tipo de tren y serie (Servicios a bordo).
+   Sin implementar en la app. Datos: guía de mapas AVE + letras de los MOL reales. */
+:root{
+  --bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;
+  --nar2:#FB923C;--green:#16A34A;--green2:#4ADE80;--red2:#FCA5A5;
+  --tx:#F8FAFC;--tx2:#94A3B8;--tx3:#475569;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;
+  --pref:#7C3AED;--pref2:#C4B5FD;--tur:#0EA5E9;--tur2:#7DD3FC;--caf:#64748B;
+  --m-des:#D97706;--m-ape:#0891B2;--m-alm:#16A34A;--m-cen:#7C3AED;--m-cor:#0EA5E9;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#04080f;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center}
+button{font-family:inherit}
+.ph{width:100%;max-width:480px;min-height:100vh;background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E);padding-bottom:30px}
+.hdr{padding:16px 18px 12px;border-bottom:1px solid var(--div)}
+.pill{display:inline-flex;gap:4px;padding:3px 10px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.8px;background:rgba(217,119,6,.15);color:var(--acc3);border:1px solid rgba(217,119,6,.35)}
+.sub{font-size:11px;color:var(--tx2);margin-top:6px;font-weight:600}
+.wrap{padding:14px 16px}
+.card{background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:16px;padding:14px;margin-bottom:12px}
+.ct{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.chip small{display:block;font-size:9.5px;font-weight:600;color:var(--tx2);margin-top:1px}
+.chip.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:10px;color:var(--tx);padding:10px 11px;font:600 13px Inter,sans-serif}
+/* Composición */
+.comp{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px 0 6px}
+.comp::-webkit-scrollbar{display:none}
+.car{flex:none;width:44px;height:58px;border-radius:9px;border:1.5px solid var(--div);background:var(--s1);color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;padding:0}
+.car .n{font-weight:900;font-size:14px}
+.car .c{font-size:8px;font-weight:800;letter-spacing:.3px}
+.car.pref{border-color:rgba(124,58,237,.7)} .car.pref .c{color:var(--pref2)}
+.car.tur{border-color:rgba(14,165,233,.6)} .car.tur .c{color:var(--tur2)}
+.car.caf{border-style:dashed;cursor:default} .car.caf .c{color:var(--tx2)}
+.car.loco{width:34px;border-radius:18px 6px 6px 18px;cursor:default;font-size:15px}
+.car.loco.der{border-radius:6px 18px 18px 6px}
+.car.sel{background:rgba(217,119,6,.22);border-color:var(--acc2);box-shadow:0 0 0 2px rgba(245,158,11,.35)}
+.car .b{position:absolute;top:-6px;right:-5px;background:var(--acc);color:#fff;font-size:9px;font-weight:900;border-radius:9px;padding:1px 5px}
+.car.extra{border-style:dotted}
+.leyc{display:flex;gap:12px;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:6px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:3px}
+/* Coche */
+.wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 10px 14px}
+.wt{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:6px;gap:8px}
+.wt b{color:var(--tx);font-size:14px}
+.tag{font-size:9px;font-weight:800;letter-spacing:.5px;border-radius:20px;padding:3px 8px;white-space:nowrap}
+.tag.pref{color:var(--pref2);background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.5)}
+.tag.tur{color:var(--tur2);background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.45)}
+.lado{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);font-weight:800;letter-spacing:.5px;margin:2px 4px 4px}
+.srow{display:grid;align-items:center;gap:5px;margin:5px 0}
+.num{font-size:9.5px;color:var(--tx3);text-align:center;font-weight:700}
+.pas{font-size:8px;color:var(--tx3);text-align:center;writing-mode:vertical-rl;letter-spacing:1px}
+.seat{height:36px;border-radius:10px 10px 6px 6px;border:1px solid var(--div);background:var(--s2);color:var(--tx2);font-size:10.5px;font-weight:800;position:relative;padding:0;cursor:pointer}
+.seat.has{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat.fuera{outline:2px dashed var(--nar2)}
+.extremo{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:700;margin:4px 0}
+.nota{font-size:11.5px;color:var(--tx2);line-height:1.5}
+.nota b{color:var(--tx)}
+.aviso{margin-top:10px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.4);border-radius:12px;padding:10px 12px;font-size:11.5px;color:#FED7AA;line-height:1.45}
+.q{counter-reset:q} .q div{margin:8px 0;padding-left:22px;position:relative}
+.q div::before{counter-increment:q;content:counter(q);position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.seg button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:8px 4px;font-size:11.5px;font-weight:800;cursor:pointer}
+.seg button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+</style>
+</head>
+<body>
+<div class="ph">
+  <div class="hdr">
+    <div class="pill">🧪 MAQUETA · MAPAS DE ASIENTOS</div>
+    <div class="sub">Servicios a bordo · el plano cambia según el tren y la serie</div>
+  </div>
+  <div class="wrap">
+
+    <div class="card">
+      <div class="ct">🚆 Tipo de tren</div>
+      <div class="chips" id="c-tipo"></div>
+      <div class="ct" style="margin-top:14px">🔢 Serie</div>
+      <div class="chips" id="c-serie"></div>
+      <div class="ct" style="margin-top:14px">🏷️ Rama (nº de unidad)</div>
+      <input class="inp" id="rama" placeholder="Ej. 112-014 · solo informativo" oninput="pintar()">
+    </div>
+
+    <div class="card">
+      <div class="ct">🧪 Probar con un MOL real</div>
+      <div class="seg" id="c-mol"></div>
+      <div class="nota" id="mol-info"></div>
+    </div>
+
+    <div class="card">
+      <div class="ct" id="comp-t">🚃 Composición</div>
+      <div class="comp" id="comp"></div>
+      <div class="leyc"><span><i class="dot" style="background:var(--pref)"></i>Preferente / Prémium</span><span><i class="dot" style="background:var(--tur)"></i>Turista / Estándar</span><span><i class="dot" style="background:var(--caf)"></i>Cafetería</span><span><i class="dot" style="background:var(--acc)"></i>Nº servicios del MOL</span></div>
+    </div>
+
+    <div class="wagon" id="wagon"></div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="ct">📘 De dónde sale cada dato</div>
+      <div class="nota" id="fuente"></div>
+      <div class="aviso"><b>Lo que no cuadra entre la guía y tus MOL:</b><br>
+        La guía dice Preferente <b>A │ C D</b> y Turista <b>A C │ D F</b>. En tus MOL salen <b>A, B, C</b> en los coches Prémium y <b>A, B, C, D</b> en los de Turista (nunca F).
+        La maqueta usa las letras de los MOL para que cada servicio caiga en su asiento. Si llega una letra o fila que no está en el plano, se añade sola y se marca con borde naranja: nunca se pierde un servicio.</div>
+    </div>
+
+    <div class="card">
+      <div class="ct">❓ Para dejarlo exacto</div>
+      <div class="nota q">
+        <div>¿En los coches Prémium (2+1), el asiento <b>solo</b> es la A y el par es B‑C? ¿O es A‑B el par y la C sola?</div>
+        <div>¿Cuántas <b>filas</b> tiene cada coche? En la maqueta: Preferente 14 y Turista 16–18 (provisional).</div>
+        <div>¿Qué serie eran los trenes 3060, 3070 y 3113? Así compruebo la composición con datos reales.</div>
+        <div>¿Alvia (S‑130, S‑730, S‑120) y Euromed también los necesitas? La guía no los trae.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+/* Plano de cada distribución. null = pasillo. Letras como salen en los MOL. */
+var DISTR={
+  '2+1':{letras:['A',null,'B','C'], txt:'2+1'},
+  '2+2':{letras:['A','B',null,'C','D'], txt:'2+2'},
+  '3+2':{letras:['A','B','C',null,'D','E'], txt:'3+2'}
+};
+var CLASE={pref:{n:'Preferente',c:'PREF'}, tur:{n:'Turista',c:'TUR'}, caf:{n:'Cafetería',c:'☕'}};
+function coches(def){ // 'pref:1-5,caf:6,tur:7-12' → [{n,clase}]
+  var out=[]; def.split(',').forEach(function(p){ var a=p.split(':'), r=a[1].split('-'), i=+r[0], f=+(r[1]||r[0]);
+    for(;i<=f;i++) out.push({n:i, clase:a[0]}); }); return out; }
+/* Catálogo: tipo → series. Composición y distribución sacadas de la guía. */
+var SERIES={
+  'S-100':{modelo:'Alstom', tractoras:true, comp:'pref:1,tur:2-5,caf:6,tur:7-9', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
+  'S-102':{modelo:'Talgo 350 «Pato»', tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
+  'S-112':{modelo:'Talgo 350 «Pato»', tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
+  'S-103':{modelo:'Siemens Velaro E', tractoras:false, comp:'tur:1-3,caf:4,pref:5-7,tur:8', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}},
+  'S-106':{modelo:'Talgo Avril', tractoras:true, comp:'pref:1-3,caf:4,tur:5-11', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
+  'S-106 Avlo':{modelo:'Talgo Avril', tractoras:true, comp:'tur:1-3,caf:4,tur:5-11', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
+  'S-112 Avlo':{modelo:'Talgo 350', tractoras:true, comp:'tur:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}}
+};
+var TIPOS={'AVE':['S-112','S-102','S-103','S-106','S-100'],'Avlo':['S-112 Avlo','S-106 Avlo'],'Alvia':[],'Euromed':[]};
+/* Servicios de prueba: coche-asiento de tus MOL reales (comida de ejemplo). */
+var MOLS={
+  '3113':'1-06A 1-06C 1-07A 1-09A 1-09B 1-09C 1-10A 1-10B 1-10C 1-11A 1-11B 1-11C 1-13A 2-06B 2-06C 2-07B 2-07C 2-08A 2-08B 2-10B 2-10C 2-13A 3-10A 3-10B 5-07B 5-08C 5-08D 6-08C 6-08D 6-10A 7-09A 7-09B 7-09C 7-09D 7-10A',
+  '3070':'1-06A 1-06B 1-06C 1-07A 1-07B 1-08A 1-08B 1-08C 1-09A 1-10C 1-11A 1-11B 1-11C 1-12A 1-12C 1-13A 1-13C 1-14A 1-14B 1-14C 2-06C 2-08A 2-11A'
+};
+var COMIDA=[['☕','var(--m-des)'],['🥨','var(--m-ape)'],['🍽️','var(--m-alm)'],['🌙','var(--m-cen)'],['🥤','var(--m-cor)']];
+var tipo='AVE', serie='S-112', mol='3113', coche=1;
+function servicios(){ var m={}; (MOLS[mol]||'').split(' ').forEach(function(s,i){ var p=s.split('-'); (m[p[0]]=m[p[0]]||{})[p[1]]=COMIDA[(i*7)%5]; }); return m; }
+function pintar(){
+  document.getElementById('c-tipo').innerHTML=Object.keys(TIPOS).map(function(t){
+    return '<button class="chip'+(t===tipo?' sel':'')+'" onclick="tipo=\''+t+'\';serie=TIPOS[tipo][0]||null;coche=1;pintar()">'+t+'</button>'; }).join('');
+  document.getElementById('c-serie').innerHTML=TIPOS[tipo].length?TIPOS[tipo].map(function(s){
+    return '<button class="chip'+(s===serie?' sel':'')+'" onclick="serie=\''+s+'\';coche=1;pintar()">'+s+'<small>'+SERIES[s].modelo+'</small></button>'; }).join('')
+    :'<div class="nota">La guía no trae planos de '+tipo+'. Hasta tenerlos se usa el plano genérico (2+2) con las letras del MOL.</div>';
+  document.getElementById('c-mol').innerHTML=Object.keys(MOLS).map(function(k){ return '<button class="'+(k===mol?'sel':'')+'" onclick="mol=\''+k+'\';pintar()">Tren '+k+'</button>'; }).join('');
+  var sv=servicios(), S=serie&&SERIES[serie];
+  var lista=S?coches(S.comp):[], hay={}; lista.forEach(function(c){ hay[c.n]=1; });
+  // Si el MOL trae servicios en un coche que la guía da como cafetería, manda el MOL.
+  lista.forEach(function(c){ if(c.clase==='caf'&&sv[c.n]){ c.clase='tur'; c.extra=true; c.eraCaf=true; } });
+  // Coches del MOL que no están en la composición: se añaden al final (no se pierde nada).
+  Object.keys(sv).map(Number).sort(function(a,b){return a-b}).forEach(function(n){ if(!hay[n]) lista.push({n:n, clase:'tur', extra:true}); });
+  var nSv=Object.keys(sv).reduce(function(a,k){ return a+Object.keys(sv[k]).length; },0);
+  document.getElementById('mol-info').innerHTML='Coloca los <b>'+nSv+'</b> asientos del MOL del tren '+mol+' (coches '+Object.keys(sv).join(', ')+') en el plano de la serie elegida.';
+  document.getElementById('comp-t').textContent='🚃 Composición'+(S?' · '+serie+' · '+lista.filter(function(c){return c.clase!=='caf'}).length+' coches de viajeros':'');
+  var h=S&&S.tractoras?'<div class="car loco">🚂</div>':'';
+  h+=lista.map(function(c){ var k=Object.keys(sv[c.n]||{}).length;
+    return '<button class="car '+c.clase+(c.n===coche?' sel':'')+(c.extra?' extra':'')+'"'+(c.clase==='caf'?'':' onclick="coche='+c.n+';pintar()"')+'><span class="n">'+c.n+'</span><span class="c">'+CLASE[c.clase].c+'</span>'+(k?'<span class="b">'+k+'</span>':'')+'</button>'; }).join('');
+  h+=S&&S.tractoras?'<div class="car loco der">🚂</div>':'';
+  document.getElementById('comp').innerHTML=h;
+  // Coche elegido
+  var cc=lista.filter(function(c){return c.n===coche})[0]||{n:coche,clase:'tur'};
+  var dk=S?(cc.clase==='pref'?S.pref:S.tur):'2+2', D=DISTR[dk], letras=D.letras.slice(), fuera={};
+  var ocup=sv[coche]||{}, maxF=S?S.filas[cc.clase==='pref'?'pref':'tur']:16;
+  Object.keys(ocup).forEach(function(a){ var f=parseInt(a,10), l=a.replace(/\d/g,'');
+    if(f>maxF){ maxF=f; fuera[a]=1; }
+    if(letras.indexOf(l)<0){ letras.push(l); fuera[a]=1; } });
+  var cols='18px '+letras.map(function(l){return l?'1fr':'14px'}).join(' ');
+  var w='<div class="wt"><span><b>Coche '+coche+'</b> · '+Object.keys(ocup).length+' servicios</span><span class="tag '+(cc.clase==='pref'?'pref':'tur')+'">'+CLASE[cc.clase==='pref'?'pref':'tur'].n.toUpperCase()+' · '+D.txt+'</span></div>';
+  w+='<div class="lado"><span>◀ VENTANA</span><span>VENTANA ▶</span></div>';
+  w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+letras.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
+  w+='<div class="extremo">— '+(cc.clase==='pref'?'Plataforma · acceso':'Plataforma · aseo')+' —</div>';
+  for(var f=1;f<=maxF;f++){
+    w+='<div class="srow" style="grid-template-columns:'+cols+'"><span class="num">'+f+'</span>';
+    letras.forEach(function(l,i){
+      if(!l){ w+=f===1?'<span class="pas" style="grid-row:span 1">PASILLO</span>':'<span></span>'; return; }
+      var a=(f<10?'0':'')+f+l, m=ocup[a];
+      w+='<button class="seat'+(m?' has':'')+(fuera[a]?' fuera':'')+'" style="'+(m?'background:'+m[1]:'')+'">'+a+(m?'<span class="e">'+m[0]+'</span>':'')+'</button>';
+    });
+    w+='</div>';
+  }
+  w+='<div class="extremo">— Plataforma —</div>';
+  document.getElementById('wagon').innerHTML=w;
+  document.getElementById('fuente').innerHTML=S?
+    '<b>De la guía:</b> composición ('+S.comp.replace(/pref/g,'Preferente').replace(/tur/g,'Turista').replace(/caf/g,'Cafetería').replace(/,/g,' · ')+'), tractoras '+(S.tractoras?'sí':'no')+', distribución Preferente '+S.pref+' y Turista '+S.tur+'.<br>'+
+    '<b>De tus MOL:</b> las letras de los asientos.<br><b>Provisional:</b> nº de filas por coche.'+(cc.eraCaf?'<br><b>Coche '+coche+':</b> la guía lo da como cafetería, pero el MOL trae servicios aquí: se muestra como coche de viajeros (borde punteado).':cc.extra?'<br><b>Coche '+coche+':</b> no está en la composición de la guía; se ha añadido porque viene en el MOL (borde punteado).':'')
+    :'Sin plano de la guía para '+tipo+'.';
+}
+pintar();
+</script>
+</body>
+</html>
