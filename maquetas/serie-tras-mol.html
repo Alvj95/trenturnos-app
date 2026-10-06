@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serie tras el MOL</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* MAQUETA — primero el MOL, después la serie y la rama. Sin implementar. */
+:root{
+  --bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;
+  --nar2:#FB923C;--green:#16A34A;--green2:#4ADE80;--red2:#FCA5A5;
+  --tx:#F8FAFC;--tx2:#94A3B8;--tx3:#475569;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;
+  --pref:#7C3AED;--pref2:#C4B5FD;--tur:#0EA5E9;--tur2:#7DD3FC;--caf:#64748B;
+  --m-des:#D97706;--m-ape:#0891B2;--m-alm:#16A34A;--m-cen:#7C3AED;--m-cor:#0EA5E9;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#04080f;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center}
+button{font-family:inherit}
+.ph{width:100%;max-width:480px;min-height:100vh;background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E);padding-bottom:30px}
+.hdr{padding:16px 18px 12px;border-bottom:1px solid var(--div)}
+.pill{display:inline-flex;gap:4px;padding:3px 10px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.8px;background:rgba(217,119,6,.15);color:var(--acc3);border:1px solid rgba(217,119,6,.35)}
+.sub{font-size:11px;color:var(--tx2);margin-top:6px;font-weight:600}
+.wrap{padding:14px 16px}
+.card{background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:16px;padding:14px;margin-bottom:12px}
+.ct{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.chip small{display:block;font-size:9.5px;font-weight:600;color:var(--tx2);margin-top:1px}
+.chip.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:10px;color:var(--tx);padding:10px 11px;font:600 13px Inter,sans-serif}
+/* Composición */
+.comp{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px 0 6px}
+.comp::-webkit-scrollbar{display:none}
+.car{flex:none;width:44px;height:58px;border-radius:9px;border:1.5px solid var(--div);background:var(--s1);color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;padding:0}
+.car .n{font-weight:900;font-size:14px}
+.car .c{font-size:8px;font-weight:800;letter-spacing:.3px}
+.car.pref{border-color:rgba(124,58,237,.7)} .car.pref .c{color:var(--pref2)}
+.car.tur{border-color:rgba(14,165,233,.6)} .car.tur .c{color:var(--tur2)}
+.car.caf{border-style:dashed;cursor:default} .car.caf .c{color:var(--tx2)}
+.car.loco{width:34px;border-radius:18px 6px 6px 18px;cursor:default;font-size:15px}
+.car.loco.der{border-radius:6px 18px 18px 6px}
+.car.sel{background:rgba(217,119,6,.22);border-color:var(--acc2);box-shadow:0 0 0 2px rgba(245,158,11,.35)}
+.car .b{position:absolute;top:-6px;right:-5px;background:var(--acc);color:#fff;font-size:9px;font-weight:900;border-radius:9px;padding:1px 5px}
+.car.extra{border-style:dotted}
+.leyc{display:flex;gap:12px;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:6px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:3px}
+/* Coche */
+.wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 10px 14px}
+.wt{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:6px;gap:8px}
+.wt b{color:var(--tx);font-size:14px}
+.tag{font-size:9px;font-weight:800;letter-spacing:.5px;border-radius:20px;padding:3px 8px;white-space:nowrap}
+.tag.pref{color:var(--pref2);background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.5)}
+.tag.tur{color:var(--tur2);background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.45)}
+.lado{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);font-weight:800;letter-spacing:.5px;margin:2px 4px 4px}
+.srow{display:grid;align-items:center;gap:5px;margin:5px 0}
+.num{font-size:9.5px;color:var(--tx3);text-align:center;font-weight:700}
+.pas{font-size:8px;color:var(--tx3);text-align:center;writing-mode:vertical-rl;letter-spacing:1px}
+.seat{height:36px;border-radius:10px 10px 6px 6px;border:1px solid var(--div);background:var(--s2);color:var(--tx2);font-size:10.5px;font-weight:800;position:relative;padding:0;cursor:pointer}
+.seat.has{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat.fuera{outline:2px dashed var(--nar2)}
+.extremo{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:700;margin:4px 0}
+.nota{font-size:11.5px;color:var(--tx2);line-height:1.5}
+.nota b{color:var(--tx)}
+.aviso{margin-top:10px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.4);border-radius:12px;padding:10px 12px;font-size:11.5px;color:#FED7AA;line-height:1.45}
+.q{counter-reset:q} .q div{margin:8px 0;padding-left:22px;position:relative}
+.q div::before{counter-increment:q;content:counter(q);position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.seg button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:8px 4px;font-size:11.5px;font-weight:800;cursor:pointer}
+.seg button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+
+.ph{position:relative}
+.paso{display:none}.paso.on{display:block}
+.pasos{display:flex;gap:6px;margin-top:10px}
+.pasos span{flex:1;height:4px;border-radius:3px;background:var(--div)}
+.pasos span.on{background:var(--acc2)}
+.pdf{border:1.5px dashed #33496a;border-radius:14px;padding:22px 16px;text-align:center;background:var(--s2)}
+.pdf .big{font-size:34px}.pdf b{display:block;margin:6px 0 4px;font-size:14px}.pdf span{font-size:11.5px;color:var(--tx2)}
+.btn{display:block;width:100%;height:46px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px}
+.btn.pri{background:var(--acc);color:#fff;box-shadow:0 4px 16px rgba(217,119,6,.4)}
+.btn.sec{background:var(--s2);color:var(--tx);border:1px solid var(--div);height:42px;font-size:13px}
+.btn.ok{background:var(--green);color:#fff}
+.leido{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.leido div{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:9px 10px;font-size:10px;color:var(--tx2);font-weight:700}
+.leido b{display:block;font-size:13.5px;color:var(--tx);margin-top:2px}
+.leido .del{font-size:9px;color:var(--green2);font-weight:800}
+.sug{display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.45);border-radius:12px;padding:9px 11px;font-size:11.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
+.encaja{margin-top:8px;font-size:11.5px;font-weight:700;border-radius:10px;padding:8px 10px}
+.encaja.si{background:rgba(22,163,74,.12);color:var(--green2);border:1px solid rgba(74,222,128,.4)}
+.encaja.no{background:rgba(249,115,22,.1);color:#FED7AA;border:1px solid rgba(249,115,22,.4)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mhdr .t{font-size:13px;font-weight:800}.mhdr .t small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
+.cambiar{background:var(--s2);border:1px solid var(--div);color:var(--acc3);font-weight:800;font-size:11.5px;border-radius:9px;padding:7px 10px;cursor:pointer}
+.seat.esp::after{content:"⤺";position:absolute;bottom:-6px;left:-4px;background:#334155;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px}
+.seat.mesa{box-shadow:inset 0 -3px 0 var(--acc2)}
+.nohay{height:36px}
+.oficial{display:inline-flex;gap:4px;font-size:9.5px;font-weight:800;color:var(--green2);background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.4);border-radius:20px;padding:2px 8px;margin-top:6px}
+.sent{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.sent button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:7px 4px;font-size:11px;font-weight:800;cursor:pointer}
+.sent button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.leyp{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:10px}
+.anota{font-size:10.5px;color:var(--tx3);text-align:center;margin-top:8px}
+.ck-row{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--div);font-size:12px}
+.ck-row:first-child{border-top:0}.ck-row b{font-size:13px}.ck-row span{color:var(--tx2);font-weight:600}
+</style>
+</head>
+<body>
+<div class="ph">
+  <div class="hdr">
+    <div class="pill" id="pill">🍽️ SERVICIOS · SUBE EL MOL</div>
+    <div class="sub" id="hsub">Maqueta · primero el MOL, después la serie</div>
+    <div class="pasos"><span id="s1" class="on"></span><span id="s2"></span><span id="s3"></span></div>
+  </div>
+  <div class="wrap">
+
+    <!-- PASO 1: solo subir el MOL -->
+    <div class="paso on" id="p1">
+      <div class="nota" style="font-size:15px;font-weight:800;color:var(--tx2);margin:2px 2px 12px">¿Qué servicio llevas hoy? 👋</div>
+      <div class="card">
+        <div class="pdf">
+          <div class="big">📄</div>
+          <b>Sube el MOL</b>
+          <span>PDF o captura. La app saca el tren, la fecha, el trayecto y los asientos.</span>
+          <button class="btn pri" onclick="subir()">📂 Elegir PDF o imagen</button>
+        </div>
+      </div>
+      <div class="anota">Ya no hay que rellenar tipo, serie, rama ni nº de tren antes de subirlo.<br>(En la maqueta, el botón simula subir el MOL real del tren 3113.)</div>
+    </div>
+
+    <!-- PASO 2: comprobación + ¿qué tren es? -->
+    <div class="paso" id="p2">
+      <div class="card">
+        <div class="ct">📄 Leído del MOL</div>
+        <div class="leido">
+          <div>Nº de tren<b>3113</b><span class="del">✓ del MOL</span></div>
+          <div>Fecha<b>05/07/2026</b><span class="del">✓ del MOL</span></div>
+          <div>Trayecto<b>Madrid → Barcelona</b><span class="del">✓ del MOL</span></div>
+          <div>Servicios<b>35 · coches 1, 2, 3, 5, 6, 7</b><span class="del">✓ del MOL</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">🚆 ¿Qué tren es?</div>
+        <div class="sug" id="sug"></div>
+        <div class="chips" id="c-tipo"></div>
+        <div class="ct" style="margin-top:12px">🔢 Serie</div>
+        <div class="chips" id="c-serie"></div>
+        <div class="ct" style="margin-top:12px">🏷️ Rama <span style="text-transform:none;letter-spacing:0;font-weight:600">(opcional)</span></div>
+        <input class="inp" id="rama" placeholder="Ej. 112-014">
+        <div class="ct" style="margin-top:14px" id="comp-t">🚃 Composición</div>
+        <div class="comp" id="comp"></div>
+        <div id="encaja"></div>
+      </div>
+
+      <div class="card">
+        <div class="ct">🔎 Filas leídas (como ahora)</div>
+        <div id="filas"></div>
+      </div>
+      <button class="btn ok" onclick="colocar()">✅ Colocar en el mapa</button>
+      <button class="btn sec" onclick="ir(1)">↩︎ Elegir otro MOL</button>
+    </div>
+
+    <!-- PASO 3: mapa con el plano de la serie -->
+    <div class="paso" id="p3">
+      <div class="card">
+        <div class="mhdr"><div class="t" id="m-t"></div><button class="cambiar" onclick="ir(2)">🔁 Cambiar serie</button></div>
+        <div class="comp" id="comp3" style="margin-top:10px"></div>
+      </div>
+      <div class="wagon" id="wagon"></div>
+      <button class="btn sec" style="margin-top:14px" onclick="reiniciar()">🧪 Volver a empezar la maqueta</button>
+      <div class="anota">La 2ª vez que subas un MOL del tren 3113, la app ya te propone la serie que elegiste.</div>
+    </div>
+
+  </div>
+</div>
+<script>
+var PLANOS;
+var DISTR={'2+1':['A',null,'B','C'],'2+2':['A','B',null,'C','D'],'3+2':['A','B','C',null,'D','E']};
+var CLASE={pref:{n:'Preferente',c:'PREF'},tur:{n:'Turista',c:'TUR'},caf:{n:'Cafetería',c:'☕'}};
+var SERIES={
+  'S-100':{modelo:'Alstom',tractoras:true,comp:'pref:1-3,caf:4,tur:5-8',pref:'2+1',tur:'2+2',filas:{pref:14,tur:16}},
+  'S-102':{modelo:'Talgo 350 «Pato»',tractoras:true,comp:'pref:1-5,caf:6,tur:7-12',pref:'2+1',tur:'2+2',filas:{pref:14,tur:16}},
+  'S-112':{modelo:'Talgo 350 «Pato»',tractoras:true,comp:'pref:1-5,caf:6,tur:7-12',pref:'2+1',tur:'2+2',filas:{pref:14,tur:16}},
+  'S-103':{modelo:'Siemens Velaro E',tractoras:false,comp:'pref:1-3,caf:4,tur:5-8',pref:'2+1',tur:'2+2',filas:{pref:14,tur:16}},
+  'S-106':{modelo:'Talgo Avril',tractoras:true,comp:'pref:1-2,tur:3-5,caf:6,tur:7-12',pref:'2+2',tur:'3+2',filas:{pref:14,tur:18}},
+  'S-106 Avlo':{modelo:'Talgo Avril',tractoras:true,comp:'tur:1-12',pref:'2+2',tur:'3+2',filas:{pref:14,tur:18}},
+  'S-112 Avlo':{modelo:'Talgo 350',tractoras:true,comp:'tur:1-5,caf:6,tur:7-12',pref:'2+1',tur:'2+2',filas:{pref:14,tur:16}}
+};
+/* Plano OFICIAL de Renfe de la S-103 (AVE Madrid–Barcelona): asientos exactos de cada coche,
+   orden de las columnas como en el plano, y asientos de espaldas / mesas según el sentido. */
+PLANOS={'S-103':{
+  1:{nombre:'Club', cols:['A',null,'B','C'], asientos:{A:'5-14',B:'5-14',C:'5-14'}},
+  2:{nombre:'Preferente', cols:['A',null,'B','C'], asientos:{A:'2-17',B:'1-17',C:'1-17'}},
+  3:{nombre:'Preferente', cols:['C','B',null,'A'], asientos:{A:'1-17',B:'1-18',C:'1-18'}},
+  5:{nombre:'Turista', cols:['A','B',null,'C','D'], asientos:{A:'1-16',B:'1-16',C:'1-16',D:'1-16'}, nota:'Plazas para silla de ruedas: 11H y 12H'},
+  6:{nombre:'Turista', cols:['A','B',null,'C','D'], asientos:{A:'2-18',B:'2-18',C:'1-18',D:'1-18'}},
+  7:{nombre:'Turista', cols:['A','B',null,'C','D'], asientos:{A:'1-19',B:'1-19',C:'2-18',D:'2-18'}},
+  8:{nombre:'Turista', cols:['A','B',null,'C','D'], asientos:{A:'1-15',B:'1-15',C:'1-12',D:'1-12,14-15'}},
+  espaldas:{ida:{1:'8A 8B 8C 14A 14B 14C',2:'17A 17B 17C',3:'16A 17A 18B 18C',5:'16A 16B 16C 16D',6:'18A 18B 18C 18D',7:'18A 18B 18C 18D 19A 19B',8:'12A 12B 12C 12D 15D'},
+            vuelta:{1:'5A 5B 5C 9A 9B 9C',2:'1B 1C 2A 2B 2C',3:'1A 1B 1C',5:'1A 1B 1C 1D 2A 2B 2C 2D',6:'1C 1D 2A 2B 2C 2D',7:'1A 1B 2A 2B 2C 2D',8:'1A 1B 1C 1D 2A 2B 2C 2D 14D'}},
+  mesas:{ida:{1:'7A 8A 7B 8B 7C 8C 13A 14A 13B 14B 13C 14C',2:'16A 17A 16B 17B 16C 17C',3:'15A 16A 17B 18B 17C 18C',5:'15A 16A 15B 16B 15C 16C 15D 16D',6:'17A 18A 17B 18B 17C 18C 17D 18D',7:'17A 18A 17B 18B 17C 18C 17D 18D',8:'11A 12A 11B 12B 11C 12C 11D 12D 14D 15D'},
+         vuelta:{1:'9A 10A 9B 10B 9C 10C 5A 6A 5B 6B 5C 6C',2:'2A 3A 2B 3B 2C 3C',3:'1A 2A 1B 2B 1C 2C',5:'2A 3A 2B 3B 2C 3C 2D 3D',6:'2A 3A 2B 3B 2C 3C 2D 3D',7:'2A 3A 2B 3B 2C 3C 2D 3D',8:'2A 3A 2B 3B 2C 3C 2D 3D 14D 15D'}}
+}};
+var sentido='ida'; // del MOL: Madrid → Barcelona = ida; al revés = vuelta
+function rango(t){ var o={}; t.split(',').forEach(function(r){ var a=r.split('-'), i=+a[0], f=+(a[1]||a[0]); for(;i<=f;i++) o[i]=1; }); return o; }
+function setDe(t){ var o={}; (t||'').split(' ').forEach(function(x){ if(x) o[x]=1; }); return o; }
+var TIPOS={'AVE':['S-112','S-102','S-103','S-106','S-100'],'Avlo':['S-112 Avlo','S-106 Avlo'],'Alvia':[],'Euromed':[]};
+var MOL='1-06A 1-06C 1-07A 1-09A 1-09B 1-09C 1-10A 1-10B 1-10C 1-11A 1-11B 1-11C 1-13A 2-06B 2-06C 2-07B 2-07C 2-08A 2-08B 2-10B 2-10C 2-13A 3-10A 3-10B 5-07B 5-08C 5-08D 6-08C 6-08D 6-10A 7-09A 7-09B 7-09C 7-09D 7-10A';
+var COMIDA=[['☕','var(--m-des)','Desayuno'],['🥨','var(--m-ape)','Aperitivo'],['🍽️','var(--m-alm)','Almuerzo'],['🌙','var(--m-cen)','Cena'],['🥤','var(--m-cor)','Cortesía']];
+var SV={}; MOL.split(' ').forEach(function(s,i){ var p=s.split('-'); (SV[p[0]]=SV[p[0]]||{})[p[1]]=COMIDA[(i*7)%5]; });
+var MEM='maquetaSerieTren'; // la app guardará: última serie y serie por nº de tren
+var tipo=null, serie=null, coche=1, sugerida=null;
+function mem(){ try{ return JSON.parse(localStorage.getItem(MEM)||'{}'); }catch(e){ return {}; } }
+function ir(n){ [1,2,3].forEach(function(i){ document.getElementById('p'+i).classList.toggle('on',i===n); document.getElementById('s'+i).classList.toggle('on',i<=n); });
+  document.getElementById('pill').textContent=n===1?'🍽️ SERVICIOS · SUBE EL MOL':n===2?'🍽️ SERVICIOS · COMPRUEBA':'🍽️ SERVICIOS · '+(tipo||'TREN').toUpperCase()+' 3113';
+  document.getElementById('hsub').textContent=n===3?(serie||'Plano genérico')+(val('rama')?' · rama '+val('rama'):'')+' · Madrid → Barcelona':'Maqueta · primero el MOL, después la serie';
+  if(n===2) pintarSerie(); if(n===3) pintarMapa(); scrollTo(0,0); }
+function val(id){ return document.getElementById(id).value.trim(); }
+function subir(){
+  var m=mem(), porTren=m.trenes&&m.trenes['3113'];
+  sugerida=porTren||m.ultima||null;
+  if(sugerida){ serie=sugerida.serie; tipo=sugerida.tipo; document.getElementById('rama').value=sugerida.rama||''; } else { serie=null; tipo='AVE'; }
+  document.getElementById('sug').style.display=sugerida?'flex':'none';
+  if(sugerida) document.getElementById('sug').innerHTML='💡 <span>'+(porTren?'La última vez, el tren 3113 fue':'Tu última serie fue')+' <b style="color:var(--tx)">'+sugerida.serie+'</b>'+(sugerida.rama?' · rama '+sugerida.rama:'')+'. Ya está elegida; cámbiala si hoy es otra.</span>';
+  document.getElementById('filas').innerHTML=MOL.split(' ').slice(0,6).map(function(s){ var p=s.split('-'), c=SV[p[0]][p[1]]; return '<div class="ck-row"><b>'+p[1]+'<br><span style="font-size:9.5px">Coche '+p[0]+'</span></b><span><b style="color:var(--tx)">'+c[0]+' '+c[2]+'</b><br>Madrid Atocha → Barcelona</span></div>'; }).join('')+'<div class="anota">… y 29 más</div>';
+  ir(2);
+}
+function coches(def){ var out=[]; def.split(',').forEach(function(p){ var a=p.split(':'), r=a[1].split('-'), i=+r[0], f=+(r[1]||r[0]); for(;i<=f;i++) out.push({n:i,clase:a[0]}); }); return out; }
+function lista(){ var S=serie&&SERIES[serie], l=S?coches(S.comp):[], hay={};
+  l.forEach(function(c){ hay[c.n]=1; if(c.clase==='caf'&&SV[c.n]){ c.clase='tur'; c.raro=true; } });
+  Object.keys(SV).map(Number).forEach(function(n){ if(!hay[n]) l.push({n:n,clase:'tur',raro:true}); });
+  if(!S) l=Object.keys(SV).map(function(n){ return {n:+n,clase:'tur'}; });
+  return l.sort(function(a,b){return a.n-b.n}); }
+function compHTML(clic){ var S=serie&&SERIES[serie], l=lista();
+  return (S&&S.tractoras?'<div class="car loco">🚂</div>':'')+l.map(function(c){ var k=Object.keys(SV[c.n]||{}).length;
+    return '<button class="car '+c.clase+(clic&&c.n===coche?' sel':'')+(c.raro?' extra':'')+'"'+(clic&&c.clase!=='caf'?' onclick="coche='+c.n+';pintarMapa()"':'')+'><span class="n">'+c.n+'</span><span class="c">'+CLASE[c.clase].c+'</span>'+(k?'<span class="b">'+k+'</span>':'')+'</button>'; }).join('')+(S&&S.tractoras?'<div class="car loco der">🚂</div>':''); }
+function pintarSerie(){
+  document.getElementById('c-tipo').innerHTML=Object.keys(TIPOS).map(function(t){ return '<button class="chip'+(t===tipo?' sel':'')+'" onclick="tipo=\''+t+'\';serie=TIPOS[tipo][0]||null;pintarSerie()">'+t+'</button>'; }).join('');
+  document.getElementById('c-serie').innerHTML=TIPOS[tipo].length?TIPOS[tipo].map(function(s){ return '<button class="chip'+(s===serie?' sel':'')+'" onclick="serie=\''+s+'\';pintarSerie()">'+s+'<small>'+SERIES[s].modelo+'</small></button>'; }).join('')+
+    '<button class="chip'+(!serie?' sel':'')+'" onclick="serie=null;pintarSerie()">No lo sé<small>plano genérico</small></button>'
+    :'<div class="nota">Aún no hay planos de '+tipo+': se usará el plano genérico.</div>';
+  document.getElementById('comp-t').textContent='🚃 Composición'+(serie?' · '+serie:' · genérica');
+  document.getElementById('comp').innerHTML=compHTML(false);
+  var raros=lista().filter(function(c){return c.raro}).map(function(c){return c.n});
+  document.getElementById('encaja').innerHTML=!serie?'<div class="encaja no">Sin serie: el mapa usa el plano genérico. Puedes elegirla después en el mapa.</div>':
+    raros.length?'<div class="encaja no">⚠️ El MOL trae servicios en el coche '+raros.join(', ')+', que en la '+serie+' no es de viajeros. ¿Seguro que es esta serie?</div>':
+    '<div class="encaja si">✅ Los coches del MOL encajan con la '+serie+'.</div>';
+}
+function colocar(){
+  var m=mem(), d={tipo:tipo, serie:serie, rama:val('rama')};
+  if(serie){ m.ultima=d; (m.trenes=m.trenes||{})['3113']=d; try{ localStorage.setItem(MEM, JSON.stringify(m)); }catch(e){} }
+  coche=+Object.keys(SV)[0]; ir(3);
+}
+function pintarMapa(){
+  document.getElementById('m-t').innerHTML='🚆 Tren 3113 · '+(serie||'plano genérico')+'<small>'+(serie?SERIES[serie].modelo:'Sin serie')+(val('rama')?' · rama '+val('rama'):'')+' · 35 servicios</small>';
+  document.getElementById('comp3').innerHTML=compHTML(true);
+  var S=serie&&SERIES[serie], cc=lista().filter(function(c){return c.n===coche})[0]||{clase:'tur'};
+  var PL=serie&&PLANOS[serie], pc=PL&&PL[coche];
+  document.getElementById('m-t').innerHTML+=PL?'<div class="oficial">✅ Plano oficial de Renfe</div><div class="sent"><button class="'+(sentido==='ida'?'sel':'')+'" onclick="sentido=\'ida\';pintarMapa()">Madrid → Barcelona</button><button class="'+(sentido==='vuelta'?'sel':'')+'" onclick="sentido=\'vuelta\';pintarMapa()">Barcelona → Madrid</button></div>':'';
+  if(pc) return pintarOficial(PL, pc, cc);
+  var dk=S?(cc.clase==='pref'?S.pref:S.tur):'2+2', letras=DISTR[dk].slice(), ocup=SV[coche]||{}, maxF=S?S.filas[cc.clase==='pref'?'pref':'tur']:10, fuera={};
+  Object.keys(ocup).forEach(function(a){ var f=parseInt(a,10), l=a.replace(/\d/g,''); if(f>maxF){maxF=f;fuera[a]=1;} if(letras.indexOf(l)<0){letras.push(l);fuera[a]=1;} });
+  var cols='18px '+letras.map(function(l){return l?'1fr':'14px'}).join(' ');
+  var w='<div class="wt"><span><b>Coche '+coche+'</b> · '+Object.keys(ocup).length+' servicios</span><span class="tag '+(cc.clase==='pref'?'pref':'tur')+'">'+CLASE[cc.clase==='pref'?'pref':'tur'].n.toUpperCase()+' · '+dk+'</span></div>';
+  w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+letras.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
+  for(var f=1;f<=maxF;f++){ w+='<div class="srow" style="grid-template-columns:'+cols+'"><span class="num">'+f+'</span>';
+    letras.forEach(function(l){ if(!l){ w+='<span></span>'; return; } var a=(f<10?'0':'')+f+l, m=ocup[a];
+      w+='<button class="seat'+(m?' has':'')+(fuera[a]?' fuera':'')+'" style="'+(m?'background:'+m[1]:'')+'">'+a+(m?'<span class="e">'+m[0]+'</span>':'')+'</button>'; });
+    w+='</div>'; }
+  document.getElementById('wagon').innerHTML=w;
+}
+function pintarOficial(PL, pc, cc){
+  var ocup=SV[coche]||{}, cols=pc.cols.slice(), filas={}, existe={}, fuera={}, maxF=0, minF=99;
+  Object.keys(pc.asientos).forEach(function(l){ var r=rango(pc.asientos[l]); Object.keys(r).forEach(function(f){ f=+f; existe[f+l]=1; maxF=Math.max(maxF,f); minF=Math.min(minF,f); }); });
+  Object.keys(ocup).forEach(function(a){ var f=parseInt(a,10), l=a.replace(/\d/g,''); if(!existe[f+l]){ fuera[a]=1; existe[f+l]=1; maxF=Math.max(maxF,f); minF=Math.min(minF,f); if(cols.indexOf(l)<0) cols.push(l); } });
+  var esp=setDe(PL.espaldas[sentido][coche]), mesa=setDe(PL.mesas[sentido][coche]);
+  var g='18px '+cols.map(function(l){return l?'1fr':'14px'}).join(' ');
+  var w='<div class="wt"><span><b>Coche '+coche+'</b> · '+Object.keys(ocup).length+' servicios</span><span class="tag '+(cc.clase==='pref'?'pref':'tur')+'">'+pc.nombre.toUpperCase()+' · '+(cols.filter(Boolean).length===3?'2+1':'2+2')+'</span></div>';
+  w+='<div class="srow" style="grid-template-columns:'+g+'"><span></span>'+cols.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
+  // En el plano oficial la fila 1 está del lado de Madrid y los números crecen hacia Barcelona.
+  w+='<div class="extremo">Lado Madrid'+(sentido==='vuelta'?' · ▲ sentido de la marcha':'')+'</div>';
+  for(var f=minF;f<=maxF;f++){ w+='<div class="srow" style="grid-template-columns:'+g+'"><span class="num">'+f+'</span>';
+    cols.forEach(function(l){ if(!l){ w+='<span></span>'; return; } var k=f+l, a=(f<10?'0':'')+f+l, m=ocup[a];
+      if(!existe[k]){ w+='<span class="nohay"></span>'; return; }
+      w+='<button class="seat'+(m?' has':'')+(fuera[a]?' fuera':'')+(esp[k]?' esp':'')+(mesa[k]?' mesa':'')+'" style="'+(m?'background:'+m[1]:'')+'">'+a+(m?'<span class="e">'+m[0]+'</span>':'')+'</button>'; });
+    w+='</div>'; }
+  w+='<div class="extremo">'+(sentido==='ida'?'▼ sentido de la marcha · ':'')+'Lado Barcelona</div>';
+  if(pc.nota) w+='<div class="extremo">♿ '+pc.nota+'</div>';
+  w+='<div class="leyp"><span>⤺ De espaldas a la marcha</span><span style="border-bottom:3px solid var(--acc2)">Con mesa</span><span>Huecos = no hay asiento</span></div>';
+  document.getElementById('wagon').innerHTML=w;
+}
+function reiniciar(){ document.getElementById('rama').value=''; ir(1); }
+</script>
+</body>
+</html>
