@@ -334,7 +334,6 @@ var COMIDAS = {
 var TIPOS = {'AVE':['S-112','S-103','S-102','S-100'],'Alvia':['S-130','S-730','S-120'],'Avlo':['S-112 Avlo'],'Euromed':['S-103']};
 var MODELO = {'112':'Talgo 350','103':'Siemens Velaro','102':'Talgo 350','100':'Alstom','130':'Talgo 250','730':'Talgo 250','120':'CAF'};
 /* Códigos de estación que salen en el MOL. Los que no estén aquí se muestran tal cual. */
-var EST_COD = {BSN:'Barcelona-Sants',VLN:'València-Joaquín Sorolla',ALC:'Alicante',FVL:'Figueres-Vilafant',GIR:'Girona'};
 var tipo='AVE', serie='S-112', filtro=null, coche=null, LISTA=[], ASIENTOS={}, COCHES=[], cargado=false;
 var servidos={}, subio={}, modoClip=false, verLista='todos', fichaAbierta=null, LEIDO=null;
 
@@ -342,18 +341,86 @@ function pad(n){ return (n<10?'0':'')+n; }
 // Todo lo que viene del PDF (o del nombre del archivo) se pinta con innerHTML: se quitan
 // "<" y ">" para que un texto raro nunca pueda meter código en la página.
 function limpio(s){ return String(s==null?'':s).replace(/</g,'‹').replace(/>/g,'›'); }
-function limpiarFila(r){ ['fecha','tren','txt','tipoTxt','menu','especial','origen','destino','opcion','nombre','letra'].forEach(function(k){ if(k in r) r[k]=limpio(r[k]); }); return r; }
+function limpiarFila(r){ ['fecha','tren','txt','tipoTxt','menu','especial','origen','destino','opcion','nombre','letra'].forEach(function(k){ if(k in r) r[k]=limpio(r[k]); });
+  // estaciones: un solo nombre para todas las formas de escribirla (ver catálogo)
+  if(r.origen){ if(!r.origenTxt) r.origenTxt=r.origen; r.origen=estNombre(r.origen); }
+  if(r.destino){ if(!r.destinoTxt) r.destinoTxt=r.destino; r.destino=estNombre(r.destino); }
+  return r; }
 function capital(s){ s=(s||'').trim(); return s&&s===s.toUpperCase()?s.charAt(0)+s.slice(1).toLowerCase():s; }
-var EST_LARGOS=['MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES','MADRID-CHAMARTÍN-CLARA CAMPOAMOR','BARCELONA-SANTS','SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA',
-  'MÁLAGA-MARÍA ZAMBRANO','ZARAGOZA-DELICIAS','VALÈNCIA-JOAQUÍN SOROLLA','ALICANTE-TERMINAL','CAMP DE TARRAGONA','GUADALAJARA-YEBES','ANTEQUERA-SANTA ANA'];
-function estNombre(s){
-  s=(s||'').trim(); if(EST_COD[s.toUpperCase()]) return EST_COD[s.toUpperCase()];
-  // El Excel corta los nombres largos: si coincide el principio con uno conocido, el nombre completo.
-  var u=s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  if(u.length>=14) for(var i=0;i<EST_LARGOS.length;i++){ var c=EST_LARGOS[i].normalize('NFD').replace(/[\u0300-\u036f]/g,''); if(c.indexOf(u.slice(0,Math.min(u.length-2,c.length)))===0) return capital(EST_LARGOS[i]).replace(/-(\w)/g,function(m,x){return '-'+x.toUpperCase();}).replace(/ (\w)/g,function(m,x){return ' '+x.toUpperCase();}).replace(/ De /g,' de '); }
-  return s;
+/* ── Catálogo de estaciones ──
+   Cada MOL escribe las estaciones a su manera: "MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES",
+   "MADRID-PUERTA DE ATOCHA- ALMUDENA G…" (cortado por el Excel), "Madrid Pta. Atocha",
+   "Zaragoza Delicias" / "ZARAGOZA-DELICIAS", o con código ("BSN"). Aquí se reconocen todas y
+   se usan con UN solo nombre, para que se agrupen bien en filtros, Resumen y tramos.
+   Para añadir una estación (o una forma nueva de escribirla) basta con una línea. */
+var ESTACIONES_DEF=[
+  // [nombre completo, nombre corto, palabras que la reconocen (sin acentos, en mayúsculas), códigos]
+  ['Madrid-Puerta de Atocha-Almudena Grandes','Madrid Atocha',/\bATOCHA\b|\bALMUDENA\b|\bPTA\b.*\bATO|\bPUERTA DE A/],
+  ['Madrid-Chamartín-Clara Campoamor','Madrid Chamartín',/\bCHAMARTIN\b|\bCLARA CAMPOAMOR\b|\bCHAMART/],
+  ['Madrid','Madrid',/^MADRID$/],
+  ['Barcelona-Sants','Barcelona',/\bSANTS\b|^BARCELONA\b/,['BSN']],
+  ['Zaragoza-Delicias','Zaragoza',/\bZARAGOZA\b|\bDELICIAS\b/],
+  ['Sevilla-Santa Justa','Sevilla',/\bSEVILLA\b|\bSANTA JUSTA\b/],
+  ['Córdoba-Julio Anguita','Córdoba',/\bCORDOBA\b|\bJULIO ANGUITA\b/],
+  ['Málaga-María Zambrano','Málaga',/\bMALAGA\b|\bMARIA ZAMBRANO\b/],
+  ['València-Joaquín Sorolla','València',/\bVALENCIA\b|\bSOROLLA\b/,['VLN']],
+  ['Alicante','Alicante',/\bALICANTE\b|\bALACANT\b/,['ALC']],
+  ['Camp de Tarragona','Camp de Tarragona',/\bCAMP\b/],
+  ['Tarragona','Tarragona',/^TARRAGONA\b/],
+  ['Lleida-Pirineus','Lleida',/\bLLEIDA\b|\bLERIDA\b|\bPIRINEUS\b/],
+  ['Girona','Girona',/\bGIRONA\b|\bGERONA\b/,['GIR']],
+  ['Figueres-Vilafant','Figueres',/\bFIGUERES\b|\bFIGUERAS\b|\bVILAFANT\b/,['FVL']],
+  ['Guadalajara-Yebes','Guadalajara',/\bGUADALAJARA\b|\bYEBES\b/],
+  ['Calatayud','Calatayud',/\bCALATAYUD\b/],
+  ['Ciudad Real','Ciudad Real',/\bCIUDAD REAL\b/],
+  ['Puertollano','Puertollano',/\bPUERTOLLANO\b/],
+  ['Antequera-Santa Ana','Antequera',/\bANTEQUERA\b/],
+  ['Cuenca-Fernando Zóbel','Cuenca',/\bCUENCA\b/],
+  ['Albacete-Los Llanos','Albacete',/\bALBACETE\b/],
+  ['Segovia-Guiomar','Segovia',/\bSEGOVIA\b/],
+  ['Valladolid-Campo Grande','Valladolid',/\bVALLADOLID\b/],
+  ['León','León',/^LEON\b/],
+  ['Ourense','Ourense',/\bOURENSE\b|\bORENSE\b/],
+  ['Palencia','Palencia',/\bPALENCIA\b/],
+  ['Zamora','Zamora',/\bZAMORA\b/],
+  ['Huesca','Huesca',/\bHUESCA\b/],
+  ['Granada','Granada',/\bGRANADA\b/],
+  ['Murcia del Carmen','Murcia',/\bMURCIA\b/],
+  ['Elche','Elche',/\bELCHE\b|\bELX\b/],
+  ['Orihuela','Orihuela',/\bORIHUELA\b/],
+  ['Castelló','Castelló',/\bCASTELL(O|ON)\b/],
+  ['Toledo','Toledo',/\bTOLEDO\b/],
+  ['Santiago de Compostela','Santiago',/\bSANTIAGO\b/],
+  ['A Coruña','A Coruña',/\bCORUNA\b/],
+  ['Vigo','Vigo',/\bVIGO\b/],
+  ['Burgos','Burgos',/\bBURGOS\b/],
+  ['Vitoria-Gasteiz','Vitoria',/\bVITORIA\b|\bGASTEIZ\b/],
+  ['Bilbao','Bilbao',/\bBILBAO\b/],
+  ['Donostia-San Sebastián','San Sebastián',/\bDONOSTIA\b|\bSAN SEBASTIAN\b/],
+  ['Pamplona','Pamplona',/\bPAMPLONA\b|\bIRUNA\b/],
+  ['Logroño','Logroño',/\bLOGRONO\b/],
+  ['Salamanca','Salamanca',/\bSALAMANCA\b/],
+  ['Cádiz','Cádiz',/\bCADIZ\b/],
+  ['Huelva','Huelva',/\bHUELVA\b/],
+  ['Jaén','Jaén',/\bJAEN\b/],
+  ['Algeciras','Algeciras',/\bALGECIRAS\b/],
+  ['Badajoz','Badajoz',/\bBADAJOZ\b/],
+  ['Cáceres','Cáceres',/\bCACERES\b/],
+  ['Villena','Villena',/\bVILLENA\b/],
+  ['Requena-Utiel','Requena-Utiel',/\bREQUENA\b|\bUTIEL\b/]
+];
+var _estCache={};
+function estacion(s){
+  s=(s||'').trim(); if(!s) return {nombre:'',corto:'?'};
+  if(_estCache[s]) return _estCache[s];
+  var n=s.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[.\-_/,·]+/g,' ').replace(/\s+/g,' ').trim(), r=null;
+  for(var i=0;i<ESTACIONES_DEF.length&&!r;i++){ var e=ESTACIONES_DEF[i];
+    if((e[3]&&e[3].indexOf(n)>-1)||e[2].test(n)) r={nombre:e[0], corto:e[1]}; }
+  if(!r){ var t=capital(s); r={nombre:t, corto:t.split(/[- ]/)[0]}; } // desconocida: tal cual
+  return (_estCache[s]=r);
 }
-function estCorto(s){ var n=estNombre(s); if(!n) return '?'; var p=n.split(/[- ]/)[0]; return capital(p); }
+function estNombre(s){ return estacion(s).nombre; }
+function estCorto(s){ return estacion(s).corto; }
 function tipoComida(t, opcion){
   t=(t||'').toLowerCase().trim();
   if(!t) return /CUMPLE/i.test(opcion||'')?'cum':'otr';
