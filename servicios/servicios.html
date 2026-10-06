@@ -1344,7 +1344,7 @@ async function abrirConCodigo(){
   btn.disabled=true;
   try{
     var d=((await rpc('sv_abrir',{p_id:a.id, p_matricula:a.para, p_pin:pin}))||[])[0];
-    if(!d) throw new Error('no existe');
+    if(!d) throw new Error('código incorrecto');
     if(COMPARTIDO) await dejarCompartir(true);
     recibirDatos(d.datos, d.sincronizar?d.marcas:null);
     COMPARTIDO={id:a.id, token:d.token, rol:'receptor', con:limpio(d.de_matricula), sync:!!d.sincronizar, estado:'aceptado'};

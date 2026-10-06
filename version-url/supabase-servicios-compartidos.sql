@@ -77,6 +77,7 @@ begin
 end $$;
 
 -- 3) Abrir con el código de 4 cifras: devuelve el MOL, lo marcado y un token para sincronizar.
+--    Código incorrecto: no devuelve nada (y suma un intento).
 create or replace function public.sv_abrir(p_id uuid, p_matricula text, p_pin text)
 returns table(datos jsonb, marcas jsonb, token text, de_matricula text, tren text, fecha text, sincronizar boolean)
 language plpgsql security definer set search_path = public as $$
@@ -87,8 +88,9 @@ begin
   if not found then raise exception 'no existe o ha caducado'; end if;
   if r.intentos >= 5 then raise exception 'demasiados intentos'; end if;
   if r.pin <> p_pin then
+    -- sin "raise": así el intento fallido queda contado. La app lo ve como "código incorrecto".
     update servicios_compartidos set intentos = intentos + 1 where servicios_compartidos.id = p_id;
-    raise exception 'código incorrecto';
+    return;
   end if;
   if r.token_receptor is null then
     r.token_receptor := encode(gen_random_bytes(24),'hex');
