@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cambiar de asiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* MAQUETA — primero el MOL, después la serie y la rama. Sin implementar. */
+:root{
+  --bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;
+  --nar2:#FB923C;--green:#16A34A;--green2:#4ADE80;--red2:#FCA5A5;
+  --tx:#F8FAFC;--tx2:#94A3B8;--tx3:#475569;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;
+  --pref:#7C3AED;--pref2:#C4B5FD;--tur:#0EA5E9;--tur2:#7DD3FC;--caf:#64748B;
+  --m-des:#D97706;--m-ape:#0891B2;--m-alm:#16A34A;--m-cen:#7C3AED;--m-cor:#0EA5E9;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#04080f;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center}
+button{font-family:inherit}
+.ph{width:100%;max-width:480px;min-height:100vh;background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E);padding-bottom:30px}
+.hdr{padding:16px 18px 12px;border-bottom:1px solid var(--div)}
+.pill{display:inline-flex;gap:4px;padding:3px 10px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.8px;background:rgba(217,119,6,.15);color:var(--acc3);border:1px solid rgba(217,119,6,.35)}
+.sub{font-size:11px;color:var(--tx2);margin-top:6px;font-weight:600}
+.wrap{padding:14px 16px}
+.card{background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:16px;padding:14px;margin-bottom:12px}
+.ct{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.chip small{display:block;font-size:9.5px;font-weight:600;color:var(--tx2);margin-top:1px}
+.chip.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:10px;color:var(--tx);padding:10px 11px;font:600 13px Inter,sans-serif}
+/* Composición */
+.comp{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px 0 6px}
+.comp::-webkit-scrollbar{display:none}
+.car{flex:none;width:44px;height:58px;border-radius:9px;border:1.5px solid var(--div);background:var(--s1);color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;padding:0}
+.car .n{font-weight:900;font-size:14px}
+.car .c{font-size:8px;font-weight:800;letter-spacing:.3px}
+.car.pref{border-color:rgba(124,58,237,.7)} .car.pref .c{color:var(--pref2)}
+.car.tur{border-color:rgba(14,165,233,.6)} .car.tur .c{color:var(--tur2)}
+.car.caf{border-style:dashed;cursor:default} .car.caf .c{color:var(--tx2)}
+.car.loco{width:34px;border-radius:18px 6px 6px 18px;cursor:default;font-size:15px}
+.car.loco.der{border-radius:6px 18px 18px 6px}
+.car.sel{background:rgba(217,119,6,.22);border-color:var(--acc2);box-shadow:0 0 0 2px rgba(245,158,11,.35)}
+.car .b{position:absolute;top:-6px;right:-5px;background:var(--acc);color:#fff;font-size:9px;font-weight:900;border-radius:9px;padding:1px 5px}
+.car.extra{border-style:dotted}
+.leyc{display:flex;gap:12px;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:6px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:3px}
+/* Coche */
+.wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 10px 14px}
+.wt{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:6px;gap:8px}
+.wt b{color:var(--tx);font-size:14px}
+.tag{font-size:9px;font-weight:800;letter-spacing:.5px;border-radius:20px;padding:3px 8px;white-space:nowrap}
+.tag.pref{color:var(--pref2);background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.5)}
+.tag.tur{color:var(--tur2);background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.45)}
+.lado{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);font-weight:800;letter-spacing:.5px;margin:2px 4px 4px}
+.srow{display:grid;align-items:center;gap:5px;margin:5px 0}
+.num{font-size:9.5px;color:var(--tx3);text-align:center;font-weight:700}
+.pas{font-size:8px;color:var(--tx3);text-align:center;writing-mode:vertical-rl;letter-spacing:1px}
+.seat{height:36px;border-radius:10px 10px 6px 6px;border:1px solid var(--div);background:var(--s2);color:var(--tx2);font-size:10.5px;font-weight:800;position:relative;padding:0;cursor:pointer}
+.seat.has{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat.fuera{outline:2px dashed var(--nar2)}
+.extremo{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:700;margin:4px 0}
+.nota{font-size:11.5px;color:var(--tx2);line-height:1.5}
+.nota b{color:var(--tx)}
+.aviso{margin-top:10px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.4);border-radius:12px;padding:10px 12px;font-size:11.5px;color:#FED7AA;line-height:1.45}
+.q{counter-reset:q} .q div{margin:8px 0;padding-left:22px;position:relative}
+.q div::before{counter-increment:q;content:counter(q);position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.seg button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:8px 4px;font-size:11.5px;font-weight:800;cursor:pointer}
+.seg button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+
+.ph{position:relative}
+.paso{display:none}.paso.on{display:block}
+.pasos{display:flex;gap:6px;margin-top:10px}
+.pasos span{flex:1;height:4px;border-radius:3px;background:var(--div)}
+.pasos span.on{background:var(--acc2)}
+.pdf{border:1.5px dashed #33496a;border-radius:14px;padding:22px 16px;text-align:center;background:var(--s2)}
+.pdf .big{font-size:34px}.pdf b{display:block;margin:6px 0 4px;font-size:14px}.pdf span{font-size:11.5px;color:var(--tx2)}
+.btn{display:block;width:100%;height:46px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px}
+.btn.pri{background:var(--acc);color:#fff;box-shadow:0 4px 16px rgba(217,119,6,.4)}
+.btn.sec{background:var(--s2);color:var(--tx);border:1px solid var(--div);height:42px;font-size:13px}
+.btn.ok{background:var(--green);color:#fff}
+.leido{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.leido div{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:9px 10px;font-size:10px;color:var(--tx2);font-weight:700}
+.leido b{display:block;font-size:13.5px;color:var(--tx);margin-top:2px}
+.leido .del{font-size:9px;color:var(--green2);font-weight:800}
+.sug{display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.45);border-radius:12px;padding:9px 11px;font-size:11.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
+.encaja{margin-top:8px;font-size:11.5px;font-weight:700;border-radius:10px;padding:8px 10px}
+.encaja.si{background:rgba(22,163,74,.12);color:var(--green2);border:1px solid rgba(74,222,128,.4)}
+.encaja.no{background:rgba(249,115,22,.1);color:#FED7AA;border:1px solid rgba(249,115,22,.4)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mhdr .t{font-size:13px;font-weight:800}.mhdr .t small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
+.cambiar{background:var(--s2);border:1px solid var(--div);color:var(--acc3);font-weight:800;font-size:11.5px;border-radius:9px;padding:7px 10px;cursor:pointer}
+.seat.esp::after{content:"⤺";position:absolute;bottom:-6px;left:-4px;background:#334155;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px}
+.seat.mesa{box-shadow:inset 0 -3px 0 var(--acc2)}
+.nohay{height:36px}
+.oficial{display:inline-flex;gap:4px;font-size:9.5px;font-weight:800;color:var(--green2);background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.4);border-radius:20px;padding:2px 8px;margin-top:6px}
+.sent{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.sent button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:7px 4px;font-size:11px;font-weight:800;cursor:pointer}
+.sent button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.leyp{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:10px}
+.anota{font-size:10.5px;color:var(--tx3);text-align:center;margin-top:8px}
+.ck-row{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--div);font-size:12px}
+.ck-row:first-child{border-top:0}.ck-row b{font-size:13px}.ck-row span{color:var(--tx2);font-weight:600}
+
+/* MAQUETA — mover un servicio a otro asiento. Sin implementar. */
+.cochesb{display:flex;gap:6px;margin:0 0 10px}
+.cochesb button{flex:1;border:1px solid var(--div);background:var(--s1);color:var(--tx);border-radius:12px;padding:6px 2px;font-weight:900;font-size:15px;cursor:pointer}
+.cochesb button small{display:block;font-size:9px;color:var(--tx2);font-weight:700}
+.cochesb button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18)}
+.seat .mv{position:absolute;bottom:-7px;left:-4px;background:#fff;color:#111;border-radius:8px;font-size:8.5px;font-weight:900;padding:0 4px;line-height:14px}
+.seat.ghost{border:1.5px dashed var(--tx3);color:var(--tx3)}
+.seat.ghost::after{content:"↪";position:absolute;top:-7px;right:-4px;font-size:11px;color:var(--tx2)}
+.seat.origen{outline:3px solid #fff;outline-offset:2px}
+.seat.libre{border-color:var(--green2);box-shadow:0 0 0 2px rgba(74,222,128,.35) inset;color:var(--green2)}
+.seat.ocupado{opacity:.9}
+.mover-bar{position:sticky;top:0;z-index:30;display:none;align-items:center;gap:10px;background:#7c2d12;border:1px solid var(--nar2);border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:12px;font-weight:700;color:#FED7AA}
+.mover-bar.on{display:flex}
+.mover-bar b{color:#fff}
+.mover-bar button{margin-left:auto;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.3);color:#fff;font-weight:800;border-radius:9px;padding:6px 10px;cursor:pointer}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center}
+.ov.on{display:flex}
+.sh{background:var(--s1);border-radius:22px 22px 0 0;width:100%;max-width:480px;padding:0 0 18px;animation:sup .25s}
+@keyframes sup{from{transform:translateY(100%)}to{transform:none}}
+.shh{display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px solid var(--div)}
+.shh b{flex:1;font-size:14px}.shh button{background:none;border:none;color:var(--tx2);font-size:18px;cursor:pointer}
+.shb{padding:14px 16px}
+.meal{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;margin-bottom:10px;color:#fff}
+.meal .e{font-size:28px}.meal b{display:block;font-size:16px}.meal span{font-size:11px;font-weight:600;opacity:.9}
+.kv{background:var(--s2);border:1px solid var(--div);border-radius:12px;margin-bottom:10px}
+.kv div{display:flex;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--div);font-size:12.5px}
+.kv div:first-child{border-top:0}.kv span{color:var(--tx2);font-weight:600}
+.btns{display:flex;gap:8px;padding:0 16px}
+.b2{flex:1;height:44px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;border:1px solid var(--div);background:var(--s2);color:var(--tx)}
+.b2.ok{background:var(--green);border:none;color:#fff}
+.b2.am{background:var(--acc);border:none;color:#fff}
+.movido{background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.4);color:var(--acc3);border-radius:10px;padding:8px 10px;font-size:11.5px;font-weight:700;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--s3);border:1px solid var(--div);color:var(--tx);font-size:12.5px;font-weight:700;padding:10px 14px;border-radius:12px;display:none;align-items:center;gap:10px;z-index:300}
+.toast button{background:none;border:none;color:var(--acc3);font-weight:900;cursor:pointer}
+.lista .r{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--div);font-size:12px}
+.lista .r:first-child{border-top:0}.lista b{min-width:64px}
+</style>
+</head>
+<body>
+<div class="ph">
+  <div class="hdr">
+    <div class="pill">🧪 MAQUETA · CAMBIAR DE ASIENTO</div>
+    <div class="sub">Tren 3113 · S-103 · Madrid → Barcelona</div>
+  </div>
+  <div class="wrap">
+    <div class="mover-bar" id="mbar"></div>
+    <div class="cochesb" id="cochesb"></div>
+    <div class="wagon" id="wagon"></div>
+    <div class="card" style="margin-top:12px">
+      <div class="ct">📋 Lista (como en Resumen)</div>
+      <div class="lista" id="lista"></div>
+    </div>
+    <div class="card">
+      <div class="ct">💡 Cómo funciona</div>
+      <div class="nota">1. Toca un asiento con servicio → en su ficha, <b>↔ Cambiar de asiento</b>.<br>
+      2. El mapa se pone en modo mover: los asientos <span style="color:var(--green2)">libres en verde</span>. Puedes cambiar de coche.<br>
+      3. Toca el nuevo asiento → confirma. Si ese asiento ya tiene servicio en el mismo tramo, te ofrece <b>intercambiarlos</b>.<br>
+      4. El servicio se mueve con lo marcado (servido, subió). En el nuevo asiento sale <b>«de 06A»</b> y el viejo queda en gris punteado. Se puede <b>deshacer</b> o devolverlo desde su ficha.<br>
+      5. Si compartes el MOL, el cambio también llega al otro móvil.</div>
+    </div>
+  </div>
+</div>
+<div class="ov" id="ov" onclick="cerrar()"><div class="sh" id="sh" onclick="event.stopPropagation()"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+var PLANO={1:{n:'Club',cols:['A',null,'B','C'],f:[5,14]},2:{n:'Preferente',cols:['A',null,'B','C'],f:[1,17]}};
+var C=[['☕','var(--m-des)','Desayuno'],['🥨','var(--m-ape)','Aperitivo'],['🍽️','var(--m-alm)','Almuerzo'],['🌙','var(--m-cen)','Cena'],['🥤','var(--m-cor)','Cortesía']];
+var SV=['1-06A','1-06C','1-07A','1-09A','1-09B','1-09C','1-10A','1-10B','1-10C','1-11A','1-11B','1-11C','1-13A','2-06B','2-06C','2-07B','2-07C','2-08A','2-08B','2-10B','2-10C','2-13A']
+  .map(function(s,i){ var p=s.split('-'); return {sid:i,coche:+p[0],asiento:p[1],orig:null,k:C[(i*7)%5],menu:i%4===0?'Sin gluten':'Estándar',servido:i===2}; });
+var coche=1, moviendo=null, ultimo=null;
+function en(c,a){ return SV.filter(function(r){return r.coche===c&&r.asiento===a})[0]; }
+function fant(c,a){ return SV.filter(function(r){return r.orig&&r.orig.coche===c&&r.orig.asiento===a})[0]; }
+function pintar(){
+  document.getElementById('cochesb').innerHTML=[1,2].map(function(c){ var n=SV.filter(function(r){return r.coche===c}).length;
+    return '<button class="'+(c===coche?'sel':'')+'" onclick="coche='+c+';pintar()">'+c+'<small>'+PLANO[c].n+' · '+n+' 🍽</small></button>'; }).join('');
+  var P=PLANO[coche], cols='18px '+P.cols.map(function(l){return l?'1fr':'14px'}).join(' ');
+  var w='<div class="wt"><span><b>Coche '+coche+'</b> · '+P.n+'</span><span class="tag pref">'+P.n.toUpperCase()+' · 2+1</span></div>';
+  w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+P.cols.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
+  for(var f=P.f[0];f<=P.f[1];f++){ w+='<div class="srow" style="grid-template-columns:'+cols+'"><span class="num">'+f+'</span>';
+    P.cols.forEach(function(l){ if(!l){ w+='<span></span>'; return; } var a=(f<10?'0':'')+f+l, r=en(coche,a), g=!r&&fant(coche,a), cls='seat', st='', ex='';
+      if(r){ cls+=' has'; st='background:'+r.k[1]; ex='<span class="e">'+r.k[0]+'</span>'+(r.orig?'<span class="mv">de '+(r.orig.coche!==coche?r.orig.coche+'-':'')+r.orig.asiento+'</span>':''); if(r.servido) cls+=' done'; }
+      else if(g) cls+=' ghost';
+      if(moviendo){ if(moviendo.coche===coche&&moviendo.asiento===a) cls+=' origen'; else if(!r) cls+=' libre'; else cls+=' ocupado'; }
+      w+='<button class="'+cls+'" style="'+st+'" onclick="tocar(\''+a+'\')">'+a+ex+'</button>'; });
+    w+='</div>'; }
+  document.getElementById('wagon').innerHTML=w;
+  var b=document.getElementById('mbar'); b.classList.toggle('on',!!moviendo);
+  if(moviendo) b.innerHTML='<span>↔ Moviendo <b>'+moviendo.k[0]+' '+moviendo.k[2]+'</b> de <b>'+moviendo.coche+'-'+moviendo.asiento+'</b>. Toca el nuevo asiento (puedes cambiar de coche).</span><button onclick="moviendo=null;pintar()">Cancelar</button>';
+  document.getElementById('lista').innerHTML=SV.slice().sort(function(x,y){return x.coche-y.coche||(x.asiento<y.asiento?-1:1)}).map(function(r){
+    return '<div class="r"><b>'+r.coche+'-'+r.asiento+'</b><span>'+r.k[0]+' '+r.k[2]+(r.orig?' · <span style="color:var(--acc3)">↪ antes '+r.orig.coche+'-'+r.orig.asiento+'</span>':'')+'</span></div>'; }).join('');
+}
+function tocar(a){
+  var r=en(coche,a);
+  if(moviendo){
+    if(moviendo.coche===coche&&moviendo.asiento===a){ moviendo=null; return pintar(); }
+    return confirmar(moviendo, coche, a, r);
+  }
+  if(r) return ficha(r);
+  var g=fant(coche,a); if(g) return toast('Aquí estaba '+g.k[2]+': se movió a '+g.coche+'-'+g.asiento);
+}
+function ficha(r){
+  document.getElementById('sh').innerHTML='<div class="shh"><span style="font-size:20px">💺</span><b>Asiento '+r.asiento+' · Coche '+r.coche+'</b><button onclick="cerrar()">✕</button></div><div class="shb">'+
+    (r.orig?'<div class="movido">↪ Se cambió de asiento: antes iba en el '+r.orig.coche+'-'+r.orig.asiento+'</div>':'')+
+    '<div class="meal" style="background:'+r.k[1]+'"><span class="e">'+r.k[0]+'</span><div><b>'+r.k[2]+'</b><span>'+(r.servido?'✅ Servido':'⏳ Pendiente de servir')+'</span></div></div>'+
+    '<div class="kv"><div><span>Menú</span><b>'+r.menu+'</b></div><div><span>Sube en</span><b>Madrid Atocha</b></div><div><span>Baja en</span><b>Barcelona-Sants</b></div></div></div>'+
+    '<div class="btns"><button class="b2 am" onclick="empezar('+r.sid+')">↔ Cambiar de asiento</button>'+(r.orig?'<button class="b2" onclick="devolver('+r.sid+')">↩ Volver a '+r.orig.asiento+'</button>':'<button class="b2 ok">✓ Marcar servido</button>')+'</div>';
+  document.getElementById('ov').classList.add('on');
+}
+function empezar(sid){ moviendo=SV[sid]; cerrar(); pintar(); toast('Toca el nuevo asiento'); }
+function confirmar(r, c, a, otro){
+  document.getElementById('sh').innerHTML='<div class="shh"><span style="font-size:20px">↔</span><b>'+(otro?'Intercambiar asientos':'Cambiar de asiento')+'</b><button onclick="cerrar()">✕</button></div><div class="shb">'+
+    '<div class="kv"><div><span>'+r.k[0]+' '+r.k[2]+'</span><b>'+r.coche+'-'+r.asiento+' → '+c+'-'+a+'</b></div>'+(otro?'<div><span>'+otro.k[0]+' '+otro.k[2]+'</span><b>'+c+'-'+a+' → '+r.coche+'-'+r.asiento+'</b></div>':'')+'</div>'+
+    '<div class="nota">'+(otro?'El '+a+' ya tiene servicio en el mismo tramo: se intercambian los dos.':'Se mueve con lo marcado (servido, subió / no subió).')+'</div></div>'+
+    '<div class="btns"><button class="b2" onclick="cerrar()">Cancelar</button><button class="b2 ok" onclick="mover('+r.sid+','+c+',\''+a+'\','+(otro?otro.sid:-1)+')">'+(otro?'⇄ Intercambiar':'✓ Mover a '+a)+'</button></div>';
+  document.getElementById('ov').classList.add('on');
+}
+function mover(sid,c,a,otroSid){
+  var r=SV[sid], o=otroSid>-1?SV[otroSid]:null, antes={coche:r.coche,asiento:r.asiento};
+  ultimo={r:sid, de:antes, o:otroSid, oDe:o?{coche:o.coche,asiento:o.asiento}:null, rOrig:r.orig, oOrig:o&&o.orig};
+  if(!r.orig) r.orig=antes; r.coche=c; r.asiento=a;
+  if(r.orig.coche===c&&r.orig.asiento===a) r.orig=null;
+  if(o){ if(!o.orig) o.orig={coche:c,asiento:a}; o.coche=antes.coche; o.asiento=antes.asiento; if(o.orig.coche===o.coche&&o.orig.asiento===o.asiento) o.orig=null; }
+  moviendo=null; cerrar(); coche=c; pintar();
+  toast((o?'⇄ Intercambiados ':'✓ Movido a ')+c+'-'+a, true);
+}
+function deshacer(){ if(!ultimo) return; var r=SV[ultimo.r]; r.coche=ultimo.de.coche; r.asiento=ultimo.de.asiento; r.orig=ultimo.rOrig;
+  if(ultimo.o>-1){ var o=SV[ultimo.o]; o.coche=ultimo.oDe.coche; o.asiento=ultimo.oDe.asiento; o.orig=ultimo.oOrig; }
+  coche=r.coche; ultimo=null; pintar(); toast('Deshecho'); }
+function devolver(sid){ var r=SV[sid], o=r.orig; if(en(o.coche,o.asiento)){ cerrar(); return toast('El '+o.asiento+' está ocupado ahora'); } mover(sid,o.coche,o.asiento,-1); }
+function cerrar(){ document.getElementById('ov').classList.remove('on'); }
+function toast(t, conDeshacer){ var el=document.getElementById('toast'); el.innerHTML='<span>'+t+'</span>'+(conDeshacer?'<button onclick="deshacer()">Deshacer</button>':''); el.style.display='flex';
+  clearTimeout(toast.t); toast.t=setTimeout(function(){ el.style.display='none'; }, conDeshacer?5000:1800); }
+pintar();
+</script>
+</body>
+</html>

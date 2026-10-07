@@ -152,4 +152,124 @@
     }).catch(function () {});
     window.Notification = NativeNotification;
   }
+
+  // ── Notificaciones push (Firebase) ──────────────────────────
+  // En el navegador los avisos llegan por Web Push; el WebView de Android no
+  // lo tiene. Aquí el móvil se registra en Firebase y guarda su "token" en
+  // Supabase con la matrícula (función registrar_token_fcm). La función
+  // enviar-fcm de Supabase manda cada aviso de eventos_push a esos móviles.
+  // La versión web no cambia: esto solo existe dentro de la app Android.
+  var Push = P.PushNotifications;
+  if (Push) {
+    var CANAL = 'trenturnos', tokenActual = null, escuchando = false;
+
+    function matricula() {
+      try { return (window.AJ && window.AJ.matricula) ? String(window.AJ.matricula).trim() : ''; } catch (e) { return ''; }
+    }
+    function pintarEstado(html) {
+      var el = document.getElementById('notifPushEstado');
+      if (el) el.innerHTML = html;
+    }
+    function guardarToken(token) {
+      tokenActual = token;
+      var mat = matricula(), sb = window.sbAdmin;
+      if (!mat) { pintarEstado('<span style="color:var(--nar3)">⚠️ Configura tu matrícula en Ajustes → Perfil primero.</span>'); return Promise.resolve(false); }
+      if (!sb) return Promise.resolve(false);
+      return sb.rpc('registrar_token_fcm', { p_matricula: mat, p_token: token }).then(function (r) {
+        if (r.error) {
+          pintarEstado('<span style="color:var(--nar3)">⚠️ Falta activar las notificaciones de Android en el servidor (' + (r.error.message || 'error') + ').</span>');
+          return false;
+        }
+        try { localStorage.setItem('trenturnosFcmMatricula', mat); } catch (e) {}
+        pintarEstado('<span style="color:var(--green2)">✅ Notificaciones activadas en este móvil.</span>');
+        return true;
+      }, function () { return false; });
+    }
+    function escuchar() {
+      if (escuchando) return; escuchando = true;
+      Push.addListener('registration', function (t) { if (t && t.value) guardarToken(t.value); });
+      Push.addListener('registrationError', function (e) {
+        pintarEstado('<span style="color:var(--nar3)">⚠️ No se pudo registrar el móvil: ' + ((e && e.error) || 'error') + '</span>');
+      });
+      // Con la app abierta Android no enseña el aviso: se muestra como notificación local
+      // y se revisa en el momento si hay un MOL compartido.
+      Push.addListener('pushNotificationReceived', function (n) {
+        if (LocalNotifications) LocalNotifications.schedule({ notifications: [{
+          id: (Date.now() % 2000000000), title: String(n.title || 'TrenTurnos'), body: String(n.body || ''), channelId: CANAL }] }).catch(function () {});
+        try { if (window.__svComprobarCompartidos) window.__svComprobarCompartidos(); } catch (e) {}
+      });
+      Push.addListener('pushNotificationActionPerformed', function () {
+        try { if (window.__svComprobarCompartidos) window.__svComprobarCompartidos(); } catch (e) {}
+      });
+    }
+    function crearCanal() {
+      var c = { id: CANAL, name: 'Avisos de TrenTurnos', description: 'Cambios de turno, MOL compartidos y avisos de la app', importance: 4, visibility: 1, vibration: true };
+      return Promise.all([
+        Push.createChannel(c).catch(function () {}),
+        LocalNotifications && LocalNotifications.createChannel ? LocalNotifications.createChannel(c).catch(function () {}) : null
+      ]);
+    }
+    // interactivo = lo ha pedido la persona (botón): se pide permiso si hace falta.
+    function activar(interactivo) {
+      escuchar();
+      return Push.checkPermissions().then(function (r) {
+        if (r.receive === 'granted') return 'granted';
+        if (!interactivo) return r.receive;
+        return Push.requestPermissions().then(function (q) { return q.receive; });
+      }).then(function (perm) {
+        if (perm !== 'granted') {
+          if (interactivo) pintarEstado('<span style="color:var(--nar3)">⚠️ No diste permiso. Puedes activarlo en Ajustes de Android → Apps → TrenTurnos → Notificaciones.</span>');
+          return false;
+        }
+        if (window.Notification) window.Notification.permission = 'granted';
+        return crearCanal().then(function () { return Push.register(); }).then(function () { return true; });
+      }).catch(function (e) {
+        if (interactivo) pintarEstado('<span style="color:var(--nar3)">⚠️ Error: ' + ((e && e.message) || e) + '</span>');
+        return false;
+      });
+    }
+
+    // Se sustituyen (solo en la app Android) los botones de Ajustes y del panel de admin.
+    function enganchar() {
+      window.activarNotificacionesPush = function () {
+        if (!matricula()) { pintarEstado('<span style="color:var(--nar3)">⚠️ Configura tu matrícula en Ajustes → Perfil primero.</span>'); return Promise.resolve(); }
+        pintarEstado('<span style="color:var(--tx3)">Activando...</span>');
+        return activar(true);
+      };
+      window.avisosAdminEstado = function () {
+        var el = document.getElementById('avisosAdminEstado'), btn = document.getElementById('avisosAdminBtnActivar');
+        if (!el) return;
+        Push.checkPermissions().then(function (r) {
+          var activo = r.receive === 'granted' && !!tokenActual, mat = matricula();
+          el.textContent = 'Notificaciones (app Android): ' + (activo ? '✅ activadas' : (r.receive === 'denied' ? '🚫 bloqueadas en Ajustes de Android' : '❌ sin activar')) +
+            '\nMatrícula de este móvil (Ajustes → Perfil): ' + (mat || '— sin poner —');
+          el.style.whiteSpace = 'pre-line';
+          el.classList.toggle('sin-archivo', !activo);
+          if (btn) btn.style.display = activo ? 'none' : '';
+        }).catch(function () {});
+      };
+      window.avisosAdminActivar = function () {
+        return window.activarNotificacionesPush().then(function () {
+          var msg = document.getElementById('avisosAdminMsg'), st = document.getElementById('notifPushEstado');
+          if (msg && st) msg.innerHTML = st.innerHTML;
+          setTimeout(window.avisosAdminEstado, 1500);
+        });
+      };
+      // Al abrir el panel de admin, su tarjeta de avisos muestra el estado de Android.
+      var abrirAdmin = window.abrirAccesoAdmin;
+      if (typeof abrirAdmin === 'function') {
+        window.abrirAccesoAdmin = function () { var r = abrirAdmin.apply(this, arguments); setTimeout(window.avisosAdminEstado, 120); return r; };
+      }
+      // Si ya dio permiso antes, al abrir la app se renueva el registro (el token puede cambiar)
+      // y, si cambió la matrícula en Ajustes, se vuelve a guardar con la nueva.
+      setTimeout(function () { if (matricula()) activar(false); }, 5000);
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden || !tokenActual) return;
+        var antes = ''; try { antes = localStorage.getItem('trenturnosFcmMatricula') || ''; } catch (e) {}
+        if (matricula() && matricula() !== antes) guardarToken(tokenActual);
+      });
+    }
+    if (document.readyState === 'complete') enganchar();
+    else window.addEventListener('load', function () { setTimeout(enganchar, 0); });
+  }
 })();

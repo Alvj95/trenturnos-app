@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "814884646944",
+    "project_id": "trenturnov5app",
+    "storage_bucket": "trenturnov5app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:814884646944:android:e01f188cbb6baee4d98c45",
+        "android_client_info": {
+          "package_name": "com.trenturnos.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT4KHAz5x-P5_VLFQXZCh0Xcxl0h50uJY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
