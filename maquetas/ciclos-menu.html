@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ciclos de menú</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* MAQUETA — primero el MOL, después la serie y la rama. Sin implementar. */
+:root{
+  --bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;
+  --nar2:#FB923C;--green:#16A34A;--green2:#4ADE80;--red2:#FCA5A5;
+  --tx:#F8FAFC;--tx2:#94A3B8;--tx3:#475569;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;
+  --pref:#7C3AED;--pref2:#C4B5FD;--tur:#0EA5E9;--tur2:#7DD3FC;--caf:#64748B;
+  --m-des:#D97706;--m-ape:#0891B2;--m-alm:#16A34A;--m-cen:#7C3AED;--m-cor:#0EA5E9;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#04080f;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center}
+button{font-family:inherit}
+.ph{width:100%;max-width:480px;min-height:100vh;background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E);padding-bottom:30px}
+.hdr{padding:16px 18px 12px;border-bottom:1px solid var(--div)}
+.pill{display:inline-flex;gap:4px;padding:3px 10px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.8px;background:rgba(217,119,6,.15);color:var(--acc3);border:1px solid rgba(217,119,6,.35)}
+.sub{font-size:11px;color:var(--tx2);margin-top:6px;font-weight:600}
+.wrap{padding:14px 16px}
+.card{background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:16px;padding:14px;margin-bottom:12px}
+.ct{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.chip small{display:block;font-size:9.5px;font-weight:600;color:var(--tx2);margin-top:1px}
+.chip.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:10px;color:var(--tx);padding:10px 11px;font:600 13px Inter,sans-serif}
+/* Composición */
+.comp{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px 0 6px}
+.comp::-webkit-scrollbar{display:none}
+.car{flex:none;width:44px;height:58px;border-radius:9px;border:1.5px solid var(--div);background:var(--s1);color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;padding:0}
+.car .n{font-weight:900;font-size:14px}
+.car .c{font-size:8px;font-weight:800;letter-spacing:.3px}
+.car.pref{border-color:rgba(124,58,237,.7)} .car.pref .c{color:var(--pref2)}
+.car.tur{border-color:rgba(14,165,233,.6)} .car.tur .c{color:var(--tur2)}
+.car.caf{border-style:dashed;cursor:default} .car.caf .c{color:var(--tx2)}
+.car.loco{width:34px;border-radius:18px 6px 6px 18px;cursor:default;font-size:15px}
+.car.loco.der{border-radius:6px 18px 18px 6px}
+.car.sel{background:rgba(217,119,6,.22);border-color:var(--acc2);box-shadow:0 0 0 2px rgba(245,158,11,.35)}
+.car .b{position:absolute;top:-6px;right:-5px;background:var(--acc);color:#fff;font-size:9px;font-weight:900;border-radius:9px;padding:1px 5px}
+.car.extra{border-style:dotted}
+.leyc{display:flex;gap:12px;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:6px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:3px}
+/* Coche */
+.wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 10px 14px}
+.wt{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:6px;gap:8px}
+.wt b{color:var(--tx);font-size:14px}
+.tag{font-size:9px;font-weight:800;letter-spacing:.5px;border-radius:20px;padding:3px 8px;white-space:nowrap}
+.tag.pref{color:var(--pref2);background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.5)}
+.tag.tur{color:var(--tur2);background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.45)}
+.lado{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);font-weight:800;letter-spacing:.5px;margin:2px 4px 4px}
+.srow{display:grid;align-items:center;gap:5px;margin:5px 0}
+.num{font-size:9.5px;color:var(--tx3);text-align:center;font-weight:700}
+.pas{font-size:8px;color:var(--tx3);text-align:center;writing-mode:vertical-rl;letter-spacing:1px}
+.seat{height:36px;border-radius:10px 10px 6px 6px;border:1px solid var(--div);background:var(--s2);color:var(--tx2);font-size:10.5px;font-weight:800;position:relative;padding:0;cursor:pointer}
+.seat.has{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat.fuera{outline:2px dashed var(--nar2)}
+.extremo{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:700;margin:4px 0}
+.nota{font-size:11.5px;color:var(--tx2);line-height:1.5}
+.nota b{color:var(--tx)}
+.aviso{margin-top:10px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.4);border-radius:12px;padding:10px 12px;font-size:11.5px;color:#FED7AA;line-height:1.45}
+.q{counter-reset:q} .q div{margin:8px 0;padding-left:22px;position:relative}
+.q div::before{counter-increment:q;content:counter(q);position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.seg button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:8px 4px;font-size:11.5px;font-weight:800;cursor:pointer}
+.seg button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+
+.ph{position:relative}
+.paso{display:none}.paso.on{display:block}
+.pasos{display:flex;gap:6px;margin-top:10px}
+.pasos span{flex:1;height:4px;border-radius:3px;background:var(--div)}
+.pasos span.on{background:var(--acc2)}
+.pdf{border:1.5px dashed #33496a;border-radius:14px;padding:22px 16px;text-align:center;background:var(--s2)}
+.pdf .big{font-size:34px}.pdf b{display:block;margin:6px 0 4px;font-size:14px}.pdf span{font-size:11.5px;color:var(--tx2)}
+.btn{display:block;width:100%;height:46px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px}
+.btn.pri{background:var(--acc);color:#fff;box-shadow:0 4px 16px rgba(217,119,6,.4)}
+.btn.sec{background:var(--s2);color:var(--tx);border:1px solid var(--div);height:42px;font-size:13px}
+.btn.ok{background:var(--green);color:#fff}
+.leido{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.leido div{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:9px 10px;font-size:10px;color:var(--tx2);font-weight:700}
+.leido b{display:block;font-size:13.5px;color:var(--tx);margin-top:2px}
+.leido .del{font-size:9px;color:var(--green2);font-weight:800}
+.sug{display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.45);border-radius:12px;padding:9px 11px;font-size:11.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
+.encaja{margin-top:8px;font-size:11.5px;font-weight:700;border-radius:10px;padding:8px 10px}
+.encaja.si{background:rgba(22,163,74,.12);color:var(--green2);border:1px solid rgba(74,222,128,.4)}
+.encaja.no{background:rgba(249,115,22,.1);color:#FED7AA;border:1px solid rgba(249,115,22,.4)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mhdr .t{font-size:13px;font-weight:800}.mhdr .t small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
+.cambiar{background:var(--s2);border:1px solid var(--div);color:var(--acc3);font-weight:800;font-size:11.5px;border-radius:9px;padding:7px 10px;cursor:pointer}
+.seat.esp::after{content:"⤺";position:absolute;bottom:-6px;left:-4px;background:#334155;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px}
+.seat.mesa{box-shadow:inset 0 -3px 0 var(--acc2)}
+.nohay{height:36px}
+.oficial{display:inline-flex;gap:4px;font-size:9.5px;font-weight:800;color:var(--green2);background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.4);border-radius:20px;padding:2px 8px;margin-top:6px}
+.sent{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.sent button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:7px 4px;font-size:11px;font-weight:800;cursor:pointer}
+.sent button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.leyp{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:10px}
+.anota{font-size:10.5px;color:var(--tx3);text-align:center;margin-top:8px}
+.ck-row{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--div);font-size:12px}
+.ck-row:first-child{border-top:0}.ck-row b{font-size:13px}.ck-row span{color:var(--tx2);font-weight:600}
+
+/* MAQUETA v2 — menú elegido con etiqueta (opción B). Sin implementar. */
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+.tabs button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:12px;padding:9px 4px;font-size:12.5px;font-weight:800;cursor:pointer}
+.tabs button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat .t{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:900;letter-spacing:.2px;background:#fff;color:#111;border-radius:6px;padding:0 5px;line-height:14px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.seat .t.esp{background:#FCA5A5;color:#450a0a}
+.srow{margin:8px 0}
+.cochesb{display:flex;gap:6px;margin:0 0 10px}
+.cochesb button{flex:1;border:1px solid var(--div);background:var(--s1);color:var(--tx);border-radius:12px;padding:6px 2px;font-weight:900;font-size:15px;cursor:pointer}
+.cochesb button small{display:block;font-size:9px;color:var(--tx2);font-weight:700}
+.cochesb button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18)}
+.big{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;color:#fff;margin-bottom:8px}
+.big .e{font-size:28px}.big b{display:block;font-size:16px}.big span{font-size:11px;font-weight:600;opacity:.9}
+.menu-card{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px}
+.menu-card .i{font-size:24px}.menu-card b{display:block;font-size:14px}.menu-card span{font-size:11px;color:var(--tx2);font-weight:600}
+.menu-card.esp{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
+.grp{border-top:1px solid var(--div);padding:10px 0}
+.grp:first-of-type{border-top:0}
+.grp-h{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;margin-bottom:6px}
+.grp-h .tot{margin-left:auto;font-size:16px;font-weight:900}
+.fila{display:flex;align-items:center;gap:8px;padding:4px 0 4px 6px;font-size:12.5px;font-weight:700;color:var(--tx2)}
+.fila .lb{background:#fff;color:#111;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px}
+.fila .lb.esp{background:#FCA5A5;color:#450a0a}
+.fila .lb.no{background:var(--s3);color:var(--tx2)}
+.fila .n{margin-left:auto;color:var(--tx);font-size:14px;font-weight:900}
+.fila .as{font-size:10.5px;color:var(--tx3);font-weight:600}
+.ley{display:grid;grid-template-columns:1fr;gap:8px;font-size:12px;color:var(--tx2);font-weight:600}
+.ley .g b{color:var(--tx);display:block;margin-bottom:3px}
+.ley .lb{display:inline-block;background:#fff;color:#111;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px;margin:2px 4px 2px 0}
+.ley .lb.esp{background:#FCA5A5;color:#450a0a}
+.pista{font-size:10.5px;color:var(--tx3);margin-top:3px}
+
+/* MAQUETA — ciclos de restauración (qué plato lleva cada menú). Sin implementar. */
+.tabs{grid-template-columns:1fr 1fr;}
+.var{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:0 0 12px}
+.var button{border:1px solid var(--div);background:var(--s1);color:var(--tx2);border-radius:10px;padding:7px 3px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.25}
+.var button small{display:block;font-size:9px;font-weight:600}
+.var button.sel{border-color:var(--green2);color:var(--green2);background:rgba(22,163,74,.12)}
+.cic{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cic button{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:12px;padding:9px 2px;font-size:13px;font-weight:900;cursor:pointer}
+.cic button small{display:block;font-size:9px;font-weight:700;color:var(--tx2)}
+.cic button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.det{display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.45);border-radius:12px;padding:9px 11px;font-size:11.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
+.det.no{background:rgba(217,119,6,.12);border-color:rgba(217,119,6,.4);color:var(--acc3)}
+.leido div{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:8px 10px;font-size:10px;color:var(--tx2);font-weight:700}
+.leido{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.leido b{display:block;font-size:13px;color:var(--tx);margin-top:2px}
+.ovw{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--div)}
+.ovw .fondo{padding:14px;opacity:.25;filter:blur(1px)}
+.ovw .hoja{position:absolute;left:0;right:0;bottom:0;background:var(--s1);border-radius:20px 20px 0 0;padding:14px;border-top:1px solid var(--div)}
+.plato{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin-top:8px}
+.plato .ttl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:6px}
+.plato .ttl .lb{background:#fff;color:#111;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px}
+.plato ul{margin:0;padding-left:18px;font-size:12px;color:var(--tx2);line-height:1.5}
+.plato ul b{color:var(--tx)}
+.plato .falta{font-size:11.5px;color:var(--acc3);font-weight:700}
+.prep{border-top:1px solid var(--div);padding:9px 0}
+.prep:first-of-type{border-top:0}
+.prep .r{display:flex;align-items:flex-start;gap:8px;font-size:12px;font-weight:700}
+.prep .r .lb{background:#fff;color:#111;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px;flex:none;margin-top:1px}
+.prep .r .lb.esp{background:#FCA5A5;color:#450a0a}
+.prep .r .lb.no{background:var(--s3);color:var(--tx2)}
+.prep .r .q{margin-left:auto;font-size:15px;font-weight:900}
+.prep .r .p{color:var(--tx2);font-weight:600;font-size:11.5px;line-height:1.35}
+.carta h4{margin:14px 0 6px;font-size:13px;color:var(--acc3)}
+.carta h4:first-child{margin-top:0}
+</style>
+</head>
+<body>
+<div class="ph">
+  <div class="hdr">
+    <div class="pill">🧪 MAQUETA · CICLOS DE MENÚ</div>
+    <div class="sub">Tren 3113 · Madrid → Barcelona · ejemplo</div>
+  </div>
+  <div class="wrap">
+    <div class="tabs" id="tabs"></div>
+    <div id="vista"></div>
+  </div>
+</div>
+<script>
+/* Cartas de los 4 ciclos (del documento «Renfe AVE Prémium · Ciclos de restauración»).
+   null = el documento no lo trae verificado → la app solo dice el tipo de menú. */
+var CICLOS={
+ 1:{des:{cal:'Tortilla de patatas, espinacas a la crema, calabaza y lomo asados',fri:'Salmón ahumado, zanahoria, queso Edam, jamón cocido y avellana',fyy:'Fruta + yogur griego natural'},
+    ape:{sal:'Sándwich de pavo con queso crema · Sándwich de lacón a la gallega · Pastel de mora y galleta',mix:'Bocadillo vegetal con atún + muffin de arándanos',fru:'Bol de fruta'},
+    alm:{car:'Ensalada de arroz integral con kale y pollo → Pollo estofado en salsa cremosa de setas, puré de patatas y queso',pes:'Ensalada de sémola, zanahoria, feta y pipas → Pastel de pescado con puré de apionabo y Emmental',pas:null}},
+ 2:{des:{cal:'Tortilla francesa con pavo y queso, patata rösti y judías salteadas',fri:'Lomo ibérico, pechuga de pollo, Emmental, queso crema con cebollino',fyy:'Fruta + yogur natural 0 %'},
+    ape:null,
+    alm:{car:'Ensalada de lentejas y quinoa → Estofado de ternera al vino rancio, puré de chirivías',pes:'Ensalada de sémola → Merluza a la plancha con gazpachuelo de coliflor',pas:'Cogollos con miel y mostaza → Rigatoni con salsa Norma'}},
+ 3:{des:{cal:'Tortilla de espinacas, bacón, tomate asado y berenjena al grill',fri:'Lacón, salchichón, queso tetilla, Emmental, membrillo y nueces',fyy:'Fruta de temporada + yogur natural 0 %'},
+    ape:{sal:'Sándwich de sobrasada con queso de cabra · Sándwich de cangrejo y lechuga · Pastel de fresa',mix:'Hot dog de atún con tomate + ensaimada',fru:'Fruta de temporada'},
+    alm:{car:'Empedrat de garbanzos con atún → Pastel de ternera guisada a la mostaza',pes:'Ensalada de pasta → Pastel de bacalao con puré de patatas',pas:'Ensalada verde con palmitos → Macarrón con tomate, salvia y parmesano'}},
+ 4:{des:null,
+    ape:{sal:'Sándwich de hummus y aceitunas · Sándwich de lacón y Edam · Pastel de yogur y frambuesa',mix:'Bocadillo de ensaladilla rusa + triángulo de chocolate',fru:'Fruta de temporada'},
+    alm:{car:'Ensalada de escarola, pera y queso azul → Pechuga de pollo al vermouth, bulgur y calabaza',pes:'Ensalada de quinoa y jengibre → Pastel de salmón con puré de apionabo',pas:'Ensalada verde con espárragos → Canelones de dos carnes'}}
+};
+var GRUPO={des:'des',ape:'ape',mer:'ape',alm:'alm',cen:'alm'};
+var MENUS={cal:['CALIENTE','🔥'],fri:['FRÍO','🧊'],fyy:['FRUTA Y YOGUR','🍓'],car:['CARNE','🍗'],pes:['PESCADO','🐟'],pas:['PASTA','🍝'],sal:['SALADO','🥨'],mix:['MIXTO','🧀'],fru:['FRUTA','🍎']};
+var COM={des:['☕','var(--m-des)','Desayuno'],ape:['🥨','var(--m-ape)','Aperitivo'],alm:['🍽️','var(--m-alm)','Almuerzo'],mer:['🧁','#db2777','Merienda'],cen:['🌙','var(--m-cen)','Cena']};
+// servicios de ejemplo: [asiento, comida, menú]
+var SV=[['1-06A','alm','car'],['1-06C','alm','pas'],['1-09C','alm','pes'],['1-11A','alm','car'],['1-11C','alm','pes'],['1-10A','alm',null],['1-09B','alm','esp'],
+  ['1-10B','des','cal'],['1-10C','des','fyy'],['2-06B','des','fri'],['2-06C','des','cal'],['1-09A','ape','sal'],['2-07B','ape','mix'],['1-13A','ape','fru']];
+var vista='preguntar', variante='A', ciclo=null, detectado=false, asiento='1-06A';
+function plato(com, m){ var c=ciclo&&CICLOS[ciclo], g=c&&c[GRUPO[com]]; return g?g[m]||null:null; }
+var TABS=[['preguntar','1 · Preguntar el ciclo'],['ficha','2 · Ficha del asiento'],['preparar','3 · Qué preparar'],['carta','4 · Carta del ciclo']];
+function pintar(){
+  document.getElementById('tabs').innerHTML=TABS.map(function(t){ return '<button class="'+(vista===t[0]?'sel':'')+'" onclick="vista=\''+t[0]+'\';pintar()">'+t[1]+'</button>'; }).join('');
+  var v=document.getElementById('vista');
+  v.innerHTML=vista==='preguntar'?preguntar():vista==='ficha'?ficha():vista==='preparar'?preparar():carta();
+}
+function chipsCiclo(){
+  return '<div class="cic">'+[1,2,3,4].map(function(n){ return '<button class="'+(ciclo===n?'sel':'')+'" onclick="ciclo='+n+';pintar()">'+n+'<small>Ciclo</small></button>'; }).join('')+
+    '<button class="'+(ciclo===0?'sel':'')+'" onclick="ciclo=0;pintar()">?<small>No lo sé</small></button></div>';
+}
+function detecto(){ return '<div style="display:flex;gap:6px;margin-bottom:10px"><button class="m-sec" style="flex:1;height:34px;font-size:11px" onclick="detectado=true;ciclo=3;pintar()">🧪 Simular MOL que dice «CICLO 3»</button><button class="m-sec" style="flex:1;height:34px;font-size:11px" onclick="detectado=false;ciclo=null;pintar()">🧪 MOL sin ciclo</button></div>'; }
+function preguntar(){
+  var h='<div class="var">'+[['A','A · En la comprobación','junto a la serie'],['B','B · Ventana aparte','al subir el MOL'],['C','C · Por semanas','la app lo calcula']].map(function(x){
+    return '<button class="'+(variante===x[0]?'sel':'')+'" onclick="variante=\''+x[0]+'\';pintar()">'+x[1]+'<small>'+x[2]+'</small></button>'; }).join('')+'</div>'+detecto();
+  var aviso=detectado?'<div class="det">✅ El MOL dice <b style="color:var(--tx)">CICLO 3</b> · ya está elegido</div>':'<div class="det no">🍴 El MOL no dice el ciclo. ¿Cuál es?</div>';
+  if(variante==='A'){
+    h+='<div class="card"><div class="ct">📄 Leído del MOL</div><div class="leido"><div>Nº de tren<b>3113</b></div><div>Fecha<b>05/07/2026</b></div></div></div>'+
+      '<div class="card"><div class="ct">🚆 ¿Qué tren es?</div><div class="nota" style="text-align:left;margin-bottom:10px">S-103 · rama 103-015 (como ahora)</div>'+
+      '<div class="ct" style="margin-top:6px">🍴 Ciclo de menú</div>'+aviso+chipsCiclo()+
+      '<div class="nota" style="text-align:left;margin-top:8px">Sirve para saber qué plato lleva cada menú. Si no lo sabes, sale solo «CARNE», «FRÍO»…</div></div>'+
+      '<button class="m-ok" style="width:100%;height:46px">✅ Colocar en el mapa</button>';
+  } else if(variante==='B'){
+    h+='<div class="ovw"><div class="fondo"><div class="card">He encontrado 35 servicios…</div><div class="card">🚆 S-103</div><div class="card">…</div><div class="card">…</div></div>'+
+      '<div class="hoja"><div style="font-size:15px;font-weight:900;margin-bottom:4px">🍴 ¿Qué ciclo de menú es?</div><div class="nota" style="text-align:left;margin-bottom:10px">Tren 3113 · 05/07/2026</div>'+aviso+chipsCiclo()+
+      '<button class="m-ok" style="width:100%;height:44px;margin-top:12px">Seguir</button></div></div><div style="height:250px"></div>';
+  } else {
+    h+='<div class="card"><div class="ct">🍴 Ciclo de menú</div><div class="det">📅 Esta semana (6–12 oct) toca <b style="color:var(--tx)">&nbsp;Ciclo 3</b></div>'+
+      '<div class="nota" style="text-align:left">La app cuenta las semanas desde la que le digas una vez («la semana del 6 de octubre es el ciclo 3») y sigue 1→2→3→4→1… sola. Si un MOL dice otro ciclo, manda el MOL.</div>'+
+      '<div class="ct" style="margin-top:12px">¿No es el ciclo 3 hoy? Cámbialo:</div>'+chipsCiclo()+'</div>';
+    if(ciclo===null) ciclo=3;
+  }
+  return h;
+}
+function ficha(){
+  var s=SV.filter(function(x){return x[0]===asiento})[0], c=COM[s[1]], m=s[2]&&MENUS[s[2]], p=m&&plato(s[1],s[2]);
+  var h='<div class="nota" style="text-align:left;margin-bottom:8px">Elige asiento: '+SV.filter(function(x){return x[2]&&x[2]!=='esp'}).map(function(x){ return '<button class="chip'+(x[0]===asiento?' sel':'')+'" style="padding:4px 8px;font-size:11px;margin:2px" onclick="asiento=\''+x[0]+'\';pintar()">'+x[0]+'</button>'; }).join('')+'</div>';
+  h+='<div class="nota" style="text-align:left;margin-bottom:8px">Ciclo elegido: '+chipsCiclo()+'</div>';
+  h+='<div class="card"><div class="ct">💺 Asiento '+asiento+'</div><div class="big" style="background:'+c[1]+'"><span class="e">'+c[0]+'</span><div><b>'+c[2]+'</b><span>Madrid Atocha → Barcelona</span></div></div>'+
+    '<div class="plato"><div class="ttl"><span class="lb">'+m[0]+'</span>'+m[1]+(ciclo?'<span style="margin-left:auto;font-size:11px;color:var(--tx2)">Ciclo '+ciclo+'</span>':'')+'</div>'+
+    (p?'<ul>'+p.split(' → ').map(function(x,i,a){ return '<li>'+(a.length>1?(i===0?'Primero: ':'Segundo: '):'')+'<b>'+x+'</b></li>'; }).join('')+'</ul>'
+      :'<div class="falta">'+(ciclo?'La carta del ciclo '+ciclo+' no trae este plato: solo se sabe que es '+m[0].toLowerCase()+'.':'Sin ciclo: solo se sabe que es '+m[0].toLowerCase()+'.')+'</div>')+'</div></div>';
+  return h;
+}
+function preparar(){
+  var h='<div class="nota" style="text-align:left;margin-bottom:8px">Ciclo elegido: '+chipsCiclo()+'</div><div class="card"><div class="ct">📋 Qué preparar'+(ciclo?' · Ciclo '+ciclo:'')+'</div>';
+  ['des','alm','ape'].forEach(function(k){
+    var l=SV.filter(function(s){return s[1]===k}), c=COM[k]; h+='<div class="prep"><div class="grp-h" style="display:flex;gap:8px;font-weight:800;font-size:13.5px;margin-bottom:6px">'+c[0]+' '+c[2]+'<span style="margin-left:auto">'+l.length+'</span></div>';
+    var n={}; l.forEach(function(s){ var key=s[2]||'-'; n[key]=(n[key]||0)+1; });
+    Object.keys(n).sort(function(a,b){return (a==='esp'?-1:0)-(b==='esp'?-1:0)||(a==='-')-(b==='-')}).forEach(function(key){
+      var m=MENUS[key], p=m&&plato(k,key);
+      h+='<div class="r" style="margin:6px 0"><span class="lb'+(key==='esp'?' esp':key==='-'?' no':'')+'">'+(key==='esp'?'SIN GLUTEN':key==='-'?'SIN ELECCIÓN':m[0])+'</span><span class="p">'+(p?p.split(' → ').pop():key==='esp'?'1-09B · dieta especial':'')+'</span><span class="q">'+n[key]+'</span></div>'; });
+    h+='</div>'; });
+  return h+'</div><div class="nota">Con ciclo: sale el plato principal al lado. Sin ciclo: igual que ahora, solo el tipo.</div>';
+}
+function carta(){
+  var c=ciclo&&CICLOS[ciclo];
+  var h='<div class="nota" style="text-align:left;margin-bottom:8px">Ciclo: '+chipsCiclo()+'</div>';
+  if(!c) return h+'<div class="card"><div class="nota">Elige un ciclo para ver su carta completa.</div></div>';
+  h+='<div class="card carta"><div class="ct">🍴 Carta del ciclo '+ciclo+'</div>';
+  [['des','☕ Desayuno'],['ape','🥨 Aperitivo y merienda'],['alm','🍽️ Almuerzo y cena']].forEach(function(g){
+    h+='<h4>'+g[1]+'</h4>';
+    var o=c[g[0]];
+    if(!o){ h+='<div class="falta" style="font-size:11.5px;color:var(--acc3);font-weight:700">No disponible en el documento: se mostrará solo el tipo de menú.</div>'; return; }
+    Object.keys(o).forEach(function(k){ h+='<div class="plato" style="margin-top:6px"><div class="ttl"><span class="lb">'+MENUS[k][0]+'</span>'+MENUS[k][1]+'</div>'+(o[k]?'<ul><li>'+o[k].split(' → ').join('</li><li>')+'</li></ul>':'<div class="falta">Plato no disponible en el documento.</div>')+'</div>'; });
+  });
+  return h+'</div>';
+}
+pintar();
+</script>
+</body>
+</html>
