@@ -238,6 +238,8 @@ button{font-family:inherit}
 .seat.esp .lb::after{content:"⤺";margin-left:2px;font-size:10px;opacity:.85}
 .seat.mesa{box-shadow:inset 0 -3px 0 var(--acc2)}
 .seat.has.mesa{box-shadow:inset 0 -3px 0 rgba(255,255,255,.75),0 2px 8px rgba(0,0,0,.35)}
+.girar{width:30px;height:26px;border-radius:8px;border:1px solid var(--div);background:var(--s2);color:var(--acc3);font-size:15px;font-weight:900;cursor:pointer;padding:0;line-height:1}
+.girar.on{background:rgba(217,119,6,.22);border-color:var(--acc2)}
 .lado{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:800;letter-spacing:.4px;margin:4px 0}
 /* 📤 Compartir MOL */
 #comp-btn.on{background:rgba(217,119,6,.22);box-shadow:inset 0 0 0 1px var(--acc2)}
@@ -387,7 +389,7 @@ var SERIES = {
     nombres:{1:'Club',2:'Preferente',3:'Preferente'},
     1:{cols:['A',null,'B','C'], asientos:{A:'5-14',B:'5-14',C:'5-14'}},
     2:{cols:['A',null,'B','C'], asientos:{A:'2-17',B:'1-17',C:'1-17'}},
-    3:{cols:['C','B',null,'A'], asientos:{A:'1-17',B:'1-18',C:'1-18'}},
+    3:{cols:['A',null,'B','C'], asientos:{A:'1-17',B:'1-18',C:'1-18'}},
     5:{cols:['A','B',null,'C','D'], asientos:{A:'1-16',B:'1-16',C:'1-16',D:'1-16'}, nota:'♿ Plazas para silla de ruedas: 11H y 12H'},
     6:{cols:['A','B',null,'C','D'], asientos:{A:'2-18',B:'2-18',C:'1-18',D:'1-18'}},
     7:{cols:['A','B',null,'C','D'], asientos:{A:'1-19',B:'1-19',C:'2-18',D:'2-18'}},
@@ -989,6 +991,10 @@ function planoCoche(c, enCoche){
   P.max=P.existe?Math.max.apply(null,fs):Math.max(10,Math.max.apply(null,enCoche.map(function(r){return r.fila}).concat([0])));
   return P;
 }
+/* ⇄ Ver el coche en espejo (A │ B C ↔ C B │ A). Solo cambia de qué lado se ve; se recuerda en el móvil. */
+var CLAVE_ESPEJO='trenturnosServiciosEspejo', ESPEJO=false;
+try{ ESPEJO=localStorage.getItem(CLAVE_ESPEJO)==='1'; }catch(e){}
+function girarVista(){ ESPEJO=!ESPEJO; try{ localStorage.setItem(CLAVE_ESPEJO, ESPEJO?'1':'0'); }catch(e){} pintarMapa(); }
 /* Memoria de la serie: la última elegida y la de cada nº de tren (se proponen la próxima vez). */
 var CLAVE_SERIE='trenturnosServiciosSerie';
 function memSerie(){ try{ return JSON.parse(localStorage.getItem(CLAVE_SERIE)||'{}')||{}; }catch(e){ return {}; } }
@@ -1162,11 +1168,12 @@ function pintarMapa(){
   document.getElementById('coches').innerHTML=COCHES.map(function(n){var k=cuenta(filtro,n);
     return '<button class="coche prem'+(n===coche?' sel':'')+'" onclick="coche='+n+';pintarMapa()"><div class="k">'+(k?k+' 🍽':'')+'</div><div class="n">'+n+'</div><div class="c">'+nServidos(n)+'/'+cuenta(null,n)+' ✓</div></button>';}).join('');
   var enCoche=lista(function(r){return r.coche===coche});
-  var P=planoCoche(coche, LISTA.filter(function(r){return r.coche===coche})), letras=P.cols;
+  var P=planoCoche(coche, LISTA.filter(function(r){return r.coche===coche})), letras=ESPEJO?P.cols.slice().reverse():P.cols;
   document.getElementById('plano-info').innerHTML='🚆 <b>'+(serie||'Sin serie')+'</b>'+(P.tipo==='oficial'?'<span class="of">✅ Plano oficial de Renfe</span>':P.tipo==='aprox'?'<span class="ap">Plano aproximado</span>':'<span class="ap">Plano genérico</span>')+
     '<button onclick="abrirSerie()">🔁 Cambiar serie</button>';
   var cols='20px '+letras.map(function(l){return l?'1fr':'16px'}).join(' ');
-  var w='<div class="wtit"><span><b>Coche '+coche+'</b> · '+enCoche.length+' servicio'+(enCoche.length===1?'':'s')+'</span><span class="tag">'+(P.tipo==='gen'?'SERVICIO A BORDO':limpio(P.nombre).toUpperCase()+' · '+P.distr)+'</span></div>';
+  var w='<div class="wtit"><span><b>Coche '+coche+'</b> · '+enCoche.length+' servicio'+(enCoche.length===1?'':'s')+'</span><span style="display:flex;align-items:center;gap:6px"><span class="tag">'+(P.tipo==='gen'?'SERVICIO A BORDO':limpio(P.nombre).toUpperCase()+' · '+P.distr)+'</span>'+
+    '<button class="girar'+(ESPEJO?' on':'')+'" onclick="girarVista()" title="Ver al revés (izquierda ↔ derecha)">⇄</button></span></div>';
   w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+letras.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
   // Plano oficial: la fila 1 está del lado de Madrid; los números crecen hacia Barcelona.
   if(P.tipo==='oficial') w+='<div class="lado">Lado Madrid'+(P.sentido==='vuelta'?' · ▲ sentido de la marcha':'')+'</div>';
