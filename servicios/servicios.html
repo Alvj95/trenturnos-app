@@ -238,6 +238,19 @@ button{font-family:inherit}
 .seat.esp .lb::after{content:"⤺";margin-left:2px;font-size:10px;opacity:.85}
 .seat.mesa{box-shadow:inset 0 -3px 0 var(--acc2)}
 .seat.has.mesa{box-shadow:inset 0 -3px 0 rgba(255,255,255,.75),0 2px 8px rgba(0,0,0,.35)}
+.mover-bar{display:flex;align-items:center;gap:10px;background:#7c2d12;border:1px solid var(--nar2);border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:12px;font-weight:700;color:#FED7AA;line-height:1.35}
+.mover-bar b{color:#fff}
+.mover-bar button{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.3);color:#fff;font-weight:800;border-radius:9px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.seat .mv{position:absolute;bottom:-6px;left:-4px;background:#fff;color:#111;border-radius:8px;font-size:8.5px;font-weight:900;padding:0 4px;line-height:14px;z-index:1}
+.seat.ghost{border:1.5px dashed var(--tx3);color:var(--tx3)}
+.seat.ghost::after{content:"↪";position:absolute;top:-7px;right:-4px;font-size:11px;color:var(--tx2)}
+.seat.origen{outline:3px solid #fff;outline-offset:2px}
+.seat.libre{border-color:var(--green2);box-shadow:inset 0 0 0 2px rgba(74,222,128,.35);color:var(--green2)}
+.movido{background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.4);color:var(--acc3);border-radius:10px;padding:8px 10px;font-size:11.5px;font-weight:700;margin:0 0 10px}
+.btn2{display:flex;gap:8px;margin:0 0 16px}
+.btn2 button{flex:1;height:40px;border-radius:10px;font-size:12.5px;font-weight:800;cursor:pointer;border:1px solid var(--div);background:var(--s2);color:var(--tx)}
+.btn2 .am{background:var(--acc);border-color:var(--acc);color:#fff}
+.toast button{background:none;border:none;color:var(--acc3);font-weight:900;font-size:12.5px;cursor:pointer;margin-left:10px}
 .girar{width:30px;height:26px;border-radius:8px;border:1px solid var(--div);background:var(--s2);color:var(--acc3);font-size:15px;font-weight:900;cursor:pointer;padding:0;line-height:1}
 .girar.on{background:rgba(217,119,6,.22);border-color:var(--acc2)}
 .lado{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:800;letter-spacing:.4px;margin:4px 0}
@@ -309,6 +322,7 @@ button{font-family:inherit}
     <!-- ASIENTOS -->
     <div class="panel" id="p-mapa">
       <div class="plano" id="plano-info"></div>
+      <div id="mover-bar"></div>
       <div id="est-mapa"></div>
       <div class="sum" id="sum"></div>
       <div class="coches" id="coches"></div>
@@ -1036,7 +1050,8 @@ function filaHTML(r, icono, onclick, extra){
   return '<div class="ck-row'+(r.aviso?' warn':'')+(onclick?' tap':'')+(onclick&&extra&&subio[r.sid]==='no'?' nosube':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span>'+icono+'</span>'+
     '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>Coche '+(r.coche||'?')+'</small></div>'+
     '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+'<b>'+m.e+' '+nombreTipo(r)+'</b>'+(textoMenu(r)?' · '+textoMenu(r)+esp:'')+'<br>'+
-    estCorto(r.origen)+' → '+estCorto(r.destino)+(r.nombre?' · '+r.nombre:'')+(r.cumple&&r.k!=='cum'?' · 🎂':'')+'</div>'+
+    estCorto(r.origen)+' → '+estCorto(r.destino)+(r.nombre?' · '+r.nombre:'')+(r.cumple&&r.k!=='cum'?' · 🎂':'')+
+    (r.orig?'<br><span style="color:var(--acc3)">↪ antes '+r.orig.coche+'-'+pad(r.orig.fila)+r.orig.letra+'</span>':'')+'</div>'+
     (extra?'<div class="clipwrap">'+extra+'</div>':'')+'</div>';
 }
 function mostrarComprobacion(){
@@ -1069,11 +1084,9 @@ function confirmarCarga(){
 }
 // Prepara mapa y listas a partir de los servicios (al cargar un PDF o al volver a abrir).
 function montar(lista){
-  LISTA=lista; ASIENTOS={};
-  LISTA.forEach(function(r){ (ASIENTOS[seatKey(r)]=ASIENTOS[seatKey(r)]||[]).push(r); });
-  COCHES=LISTA.map(function(r){return r.coche}).filter(function(c,i,a){return a.indexOf(c)===i}).sort(function(a,b){return a-b});
+  LISTA=lista;
   ordenarEstaciones();
-  Object.keys(ASIENTOS).forEach(function(k){ ASIENTOS[k].sort(function(a,b){return rangoEst(a.origen)-rangoEst(b.origen)}); });
+  reindexar();
   cargado=true;
   document.getElementById('i-ruta').value=rutaDelTren();
   var m=(LISTA[0]&&LISTA[0].fecha||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -1083,6 +1096,13 @@ function montar(lista){
     '<div class="pdf-btns"><button onclick="borrarServicio()">🗑️ Borrar y empezar otro servicio</button></div>';
   document.getElementById('go').disabled=false;
   pintarBotonCompartir();
+}
+// Asientos y coches a partir de la lista (al cargar y cada vez que alguien cambia de asiento).
+function reindexar(){
+  ASIENTOS={};
+  LISTA.forEach(function(r){ (ASIENTOS[seatKey(r)]=ASIENTOS[seatKey(r)]||[]).push(r); });
+  COCHES=LISTA.map(function(r){return r.coche}).filter(function(c,i,a){return a.indexOf(c)===i}).sort(function(a,b){return a-b});
+  Object.keys(ASIENTOS).forEach(function(k){ ASIENTOS[k].sort(function(a,b){return rangoEst(a.origen)-rangoEst(b.origen)}); });
 }
 /* Orden de las estaciones en el recorrido, sacado de los propios tramos
    (cada servicio va de una estación a otra posterior). */
@@ -1165,7 +1185,9 @@ function pintarMapa(){
   var usados=Object.keys(COMIDAS).filter(function(k){return cuenta(k)});
   document.getElementById('sum').innerHTML='<button class="chip'+(!filtro?' sel':'')+'" onclick="filtro=null;pintarMapa()">Todos · '+cuenta()+'</button>'+
     usados.map(function(k){var m=COMIDAS[k];return '<button class="chip'+(filtro===k?' sel':'')+'" onclick="filtro=\''+k+'\';pintarMapa()"><i class="dot" style="background:'+m.c+'"></i>'+m.n+' · '+cuenta(k)+'</button>';}).join('');
-  document.getElementById('coches').innerHTML=COCHES.map(function(n){var k=cuenta(filtro,n);
+  var mv=MOVIENDO!==null&&filaPorSid(MOVIENDO);
+  document.getElementById('mover-bar').innerHTML=mv?'<div class="mover-bar"><span>↔ Moviendo <b>'+COMIDAS[mv.k].e+' '+nombreTipo(mv)+'</b> de <b>'+mv.coche+'-'+pad(mv.fila)+mv.letra+'</b>. Toca el nuevo asiento'+(cochesMover().length>1?' (puedes cambiar de coche)':'')+'.</span><button onclick="cancelarMover()">Cancelar</button></div>':'';
+  document.getElementById('coches').innerHTML=(mv?cochesMover():COCHES).map(function(n){var k=cuenta(filtro,n);
     return '<button class="coche prem'+(n===coche?' sel':'')+'" onclick="coche='+n+';pintarMapa()"><div class="k">'+(k?k+' 🍽':'')+'</div><div class="n">'+n+'</div><div class="c">'+nServidos(n)+'/'+cuenta(null,n)+' ✓</div></button>';}).join('');
   var enCoche=lista(function(r){return r.coche===coche});
   var P=planoCoche(coche, LISTA.filter(function(r){return r.coche===coche})), letras=ESPEJO?P.cols.slice().reverse():P.cols;
@@ -1183,6 +1205,8 @@ function pintarMapa(){
       if(!l){ w+='<span></span>'; return; }
       if(P.existe&&!P.existe[f+l]){ w+='<span class="nohay"></span>'; return; }
       var key=coche+'-'+pad(f)+l, sv=ASIENTOS[key]||[], cls='seat'+(P.fuera[f+l]?' fuera':'')+(P.esp[f+l]?' esp':'')+(P.mesa[f+l]?' mesa':''), st='', badge='';
+      if(mv){ if(mv.coche===coche&&mv.fila===f&&mv.letra===l) cls+=' origen'; else if(!choque(mv, sv)) cls+=' libre'; }
+      else if(!sv.length&&venidoDe(key)) cls+=' ghost';
       if(sv.length){
         var svE=sv.filter(pasaEst); if(svE.length) sv=svE;
         var vivos=sv.filter(function(r){return subio[r.sid]!=='no'}), pend=vivos.filter(function(r){return !servidos[r.sid]});
@@ -1191,7 +1215,8 @@ function pintarMapa(){
         if(vivos.length&&!pend.length) cls+=' done';
         if(!vivos.length) cls+=' nosube'; else if(sv.some(function(r){return subio[r.sid]==='si'})) cls+=' sube';
         if((filtro&&!sv.some(function(r){return r.k===filtro}))||!svE.length) cls+=' dim';
-        badge='<span class="e">'+COMIDAS[ver.k].e+'</span>'+(sv.length>1?'<span class="x2">×'+sv.length+'</span>':'');
+        badge='<span class="e">'+COMIDAS[ver.k].e+'</span>'+(sv.length>1?'<span class="x2">×'+sv.length+'</span>':'')+
+          (ver.orig&&sv.length===1?'<span class="mv">de '+(ver.orig.coche!==coche?ver.orig.coche+'-':'')+pad(ver.orig.fila)+ver.orig.letra+'</span>':'');
       } else if(filtro) cls+=' dim';
       w+='<button class="'+cls+'" style="'+st+'" onclick="tocarAsiento(\''+key+'\')"><span class="lb">'+pad(f)+l+'</span>'+badge+'</button>';
     });
@@ -1211,6 +1236,8 @@ function pintarMapa(){
 }
 function tocarAsiento(key){
   var sv=ASIENTOS[key]||[];
+  if(MOVIENDO!==null) return elegirDestino(key);
+  if(!sv.length){ var g=venidoDe(key); if(g){ toast('Aquí iba '+nombreTipo(g)+': se cambió al '+g.coche+'-'+pad(g.fila)+g.letra); return; } }
   if(!modoClip||!sv.length) return ficha(key);
   if(sv.length>1){ toast('Este asiento tiene '+sv.length+' servicios: márcalos en la ficha'); return ficha(key); }
   var sid=sv[0].sid, s=subio[sid], v=!s?'si':s==='si'?'no':null;
@@ -1219,6 +1246,69 @@ function tocarAsiento(key){
   toast('Asiento '+key.split('-')[1]+': '+(v==='si'?'🧍 subió':v==='no'?'🚫 no subió · sin servicio':'❔ sin comprobar'));
   guardar();
   pintarMapa();
+}
+
+/* ── ↔ Cambiar a un pasajero de asiento ──
+   El servicio se mueve con todo lo marcado. r.orig guarda el asiento que traía el MOL
+   (para enseñar "de 06A", "antes 1-06A" y poder devolverlo). Si el asiento nuevo ya tiene
+   un servicio en el mismo tramo, se intercambian. Se guarda y, si se comparte, se sincroniza. */
+var MOVIENDO=null, ULTIMO_MOV=null;
+function filaPorSid(sid){ for(var i=0;i<LISTA.length;i++) if(LISTA[i].sid===sid) return LISTA[i]; return null; }
+// Asiento vacío donde iba alguien que se ha cambiado.
+function venidoDe(key){ for(var i=0;i<LISTA.length;i++){ var o=LISTA[i].orig; if(o&&o.coche+'-'+pad(o.fila)+o.letra===key) return LISTA[i]; } return null; }
+// ¿Algún servicio de ese asiento coincide en el tramo con el que se mueve?
+function solapa(a,b){ if(!a.origen||!a.destino||!b.origen||!b.destino) return true; return rangoEst(a.origen)<rangoEst(b.destino)&&rangoEst(b.origen)<rangoEst(a.destino); }
+function choque(r, sv){ return sv.filter(function(x){ return x.sid!==r.sid&&solapa(r,x); })[0]||null; }
+function cochesMover(){
+  var l=COCHES.slice(), S=serie&&SERIES[serie];
+  if(S) composicion(porCoche()).forEach(function(c){ if(c.clase!=='caf'&&l.indexOf(c.n)<0) l.push(c.n); });
+  return l.sort(function(a,b){return a-b});
+}
+function ponerEn(r, c, f, l){
+  if(!r.orig) r.orig={coche:r.coche, fila:r.fila, letra:r.letra};
+  r.coche=c; r.fila=f; r.letra=l;
+  if(r.orig.coche===c&&r.orig.fila===f&&r.orig.letra===l) delete r.orig;
+}
+function empezarMover(sid){ MOVIENDO=sid; cerrar(); filtro=null; var r=filaPorSid(sid); if(r) coche=r.coche; goP('mapa'); toast('Toca el nuevo asiento'); }
+function cancelarMover(){ MOVIENDO=null; pintarMapa(); }
+function elegirDestino(key){
+  var r=filaPorSid(MOVIENDO); if(!r){ MOVIENDO=null; return pintarMapa(); }
+  var p=key.split('-'), c=+p[0], f=parseInt(p[1],10), l=p[1].slice(-1);
+  if(r.coche===c&&r.fila===f&&r.letra===l){ return cancelarMover(); }
+  var otro=choque(r, ASIENTOS[key]||[]), de=r.coche+'-'+pad(r.fila)+r.letra, a=c+'-'+pad(f)+l;
+  hoja='mover'; fichaAbierta=null;
+  document.getElementById('sh-asiento').innerHTML=cabHoja('↔', otro?'Intercambiar asientos':'Cambiar de asiento', estCorto(r.origen)+' → '+estCorto(r.destino))+'<div class="sh-body">'+
+    '<div class="kv"><div><span>'+COMIDAS[r.k].e+' '+nombreTipo(r)+'</span><b>'+de+' → '+a+'</b></div>'+
+    (otro?'<div><span>'+COMIDAS[otro.k].e+' '+nombreTipo(otro)+'</span><b>'+a+' → '+de+'</b></div>':'')+'</div>'+
+    '<div class="nota" style="text-align:left">'+(otro?'El '+pad(f)+l+' ya tiene un servicio en el mismo tramo: se intercambian los dos.':'Se mueve con lo marcado (servido, subió / no subió).')+'</div></div>'+
+    '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok" onclick="moverA(\''+a+'\')">'+(otro?'⇄ Intercambiar':'✓ Mover a '+pad(f)+l)+'</button></div>';
+  document.getElementById('ov-asiento').classList.add('on');
+}
+function moverA(key){
+  var r=filaPorSid(MOVIENDO); if(!r) return;
+  var p=key.split('-'), c=+p[0], f=parseInt(p[1],10), l=p[1].slice(-1), otro=choque(r, ASIENTOS[key]||[]);
+  ULTIMO_MOV={r:{sid:r.sid, coche:r.coche, fila:r.fila, letra:r.letra, orig:r.orig}, o:otro?{sid:otro.sid, coche:otro.coche, fila:otro.fila, letra:otro.letra, orig:otro.orig}:null};
+  var de={c:r.coche, f:r.fila, l:r.letra};
+  ponerEn(r, c, f, l); anotar(r.sid);
+  if(otro){ ponerEn(otro, de.c, de.f, de.l); anotar(otro.sid); }
+  MOVIENDO=null; reindexar(); cerrar(); coche=c; guardar(); pintarMapa();
+  toastDeshacer((otro?'⇄ Intercambiados: ':'✓ Movido al ')+c+'-'+pad(f)+l);
+}
+function deshacerMover(){
+  var u=ULTIMO_MOV; if(!u) return; ULTIMO_MOV=null;
+  [u.r,u.o].forEach(function(x){ if(!x) return; var r=filaPorSid(x.sid); if(!r) return;
+    r.coche=x.coche; r.fila=x.fila; r.letra=x.letra; if(x.orig) r.orig=x.orig; else delete r.orig; anotar(r.sid); });
+  reindexar(); coche=u.r.coche; guardar(); pintarMapa(); toast('Deshecho');
+}
+function devolverAsiento(sid){
+  var r=filaPorSid(sid); if(!r||!r.orig) return;
+  MOVIENDO=sid; elegirDestino(r.orig.coche+'-'+pad(r.orig.fila)+r.orig.letra);
+}
+function toastDeshacer(t){
+  var el=document.getElementById('toast'); el.innerHTML='';
+  var sp=document.createElement('span'); sp.textContent=t; el.appendChild(sp);
+  var b=document.createElement('button'); b.textContent='Deshacer'; b.onclick=function(){ el.style.display='none'; deshacerMover(); }; el.appendChild(b);
+  el.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){el.style.display='none'},5000);
 }
 
 /* ── Resumen ── */
@@ -1254,6 +1344,7 @@ function pintarListaResumen(){
 function bloqueServicio(r, varios){
   var m=COMIDAS[r.k], su=subio[r.sid], sid=r.sid;
   return (varios?'<div class="seg-t" style="margin-top:4px">🛤️ '+estCorto(r.origen)+' → '+estCorto(r.destino)+'</div>':'')+
+    (r.orig?'<div class="movido">↪ Se cambió de asiento: en el MOL iba en el '+r.orig.coche+'-'+pad(r.orig.fila)+r.orig.letra+'</div>':'')+
     '<div class="big-meal" style="background:'+m.c+'"><span class="e">'+m.e+'</span><div><b>'+nombreTipo(r)+'</b><span>'+(su==='no'?'🚫 No subió · no se da servicio':servidos[sid]?'✅ Servido':'⏳ Pendiente de servir')+'</span></div></div>'+
     (r.especial?'<div class="alerg" style="margin:0 0 10px">⚠️ Menú especial: '+capital(r.especial)+'</div>':'')+
     (r.cumple?'<div class="alerg" style="background:rgba(219,39,119,.12);border-color:rgba(219,39,119,.4);color:#F9A8D4;margin:0 0 10px">🎂 ¡Hoy es su cumpleaños!'+(r.nombre?' · '+r.nombre:'')+'</div>':'')+
@@ -1265,7 +1356,9 @@ function bloqueServicio(r, varios){
       (r.nombre?'<div><span>Nombre</span><b>'+r.nombre+'</b></div>':'')+
       '<div><span>Sube en</span><b>'+estNombre(r.origen)+'</b></div><div><span>Baja en</span><b>'+estNombre(r.destino)+'</b></div>'+
       (r.opcion?'<div><span>Tarifa / opción</span><b>'+capital(r.opcion)+'</b></div>':'')+'</div>'+
-    '<button class="m-ok" style="width:100%;margin:10px 0 16px"'+(su==='no'?' disabled':'')+' onclick="toggleServido('+sid+');refrescar()">'+(su==='no'?'No subió':servidos[sid]?'↩︎ Desmarcar servido':'✓ Marcar servido')+'</button>';
+    '<button class="m-ok" style="width:100%;margin:10px 0 8px"'+(su==='no'?' disabled':'')+' onclick="toggleServido('+sid+');refrescar()">'+(su==='no'?'No subió':servidos[sid]?'↩︎ Desmarcar servido':'✓ Marcar servido')+'</button>'+
+    '<div class="btn2"><button class="am" onclick="empezarMover('+sid+')">↔ Cambiar de asiento</button>'+
+      (r.orig?'<button onclick="devolverAsiento('+sid+')">↩ Volver a '+(r.orig.coche!==r.coche?r.orig.coche+'-':'')+pad(r.orig.fila)+r.orig.letra+'</button>':'')+'</div>';
 }
 function ficha(key){
   fichaAbierta=key;
@@ -1331,6 +1424,7 @@ window.svAlMostrar=function(desdeCal){ svModo(desdeCal); comprobarRecibidos(); }
 // Botón "atrás" del móvil: la app pregunta aquí primero. true = ya lo he gestionado.
 window.svAtras=function(){
   if(document.getElementById('ov-asiento').classList.contains('on')){ cerrar(); return true; }
+  if(MOVIENDO!==null){ cancelarMover(); return true; }
   if(document.getElementById('p-check').classList.contains('on')){ goP('tren'); return true; }
   var inicio=cargado?'mapa':'tren';
   if(!document.getElementById('p-'+inicio).classList.contains('on')){ goP(inicio); return true; }
@@ -1375,13 +1469,14 @@ function pintarBotonCompartir(){
 function anotar(sid){
   var t=Date.now(); MARCAS_T[sid]=t;
   if(!COMPARTIDO||!COMPARTIDO.sync) return;
-  PEND[sid]={s:!!servidos[sid], u:subio[sid]||null, t:t};
+  var r=filaPorSid(sid);
+  PEND[sid]={s:!!servidos[sid], u:subio[sid]||null, t:t, a:r?r.coche+'-'+pad(r.fila)+r.letra:null};
   clearTimeout(svEnvio); svEnvio=setTimeout(sincronizar, 1200);
 }
 // Lo que llega del otro móvil: para cada servicio gana el cambio más reciente.
 function aplicarMarcas(m){
   if(!m||typeof m!=='object') return false;
-  var hay={}, cambio=false; LISTA.forEach(function(r){ hay[r.sid]=1; });
+  var hay={}, cambio=false, reindexado=false; LISTA.forEach(function(r){ hay[r.sid]=1; });
   Object.keys(m).forEach(function(k){
     var v=m[k], sid=parseInt(k,10);
     if(!v||typeof v!=='object'||isNaN(sid)||!hay[sid]||PEND[sid]) return;
@@ -1389,8 +1484,12 @@ function aplicarMarcas(m){
     MARCAS_T[sid]=t;
     if(v.s===true) servidos[sid]=true; else delete servidos[sid];
     if(v.u==='si'||v.u==='no') subio[sid]=v.u; else delete subio[sid];
+    // Cambio de asiento hecho en el otro móvil
+    var ma=typeof v.a==='string'&&v.a.match(/^(\d{1,2})-(\d{1,2})([A-Z])$/), r=ma&&filaPorSid(sid);
+    if(r&&(r.coche!==+ma[1]||r.fila!==+ma[2]||r.letra!==ma[3])){ ponerEn(r, +ma[1], +ma[2], ma[3]); reindexado=true; }
     cambio=true;
   });
+  if(reindexado) reindexar();
   if(cambio&&cargado) refrescar();
   return cambio;
 }
@@ -1550,7 +1649,9 @@ function filaSegura(r){
   o.sid=parseInt(o.sid,10); o.coche=parseInt(o.coche,10); o.fila=parseInt(o.fila,10);
   if(isNaN(o.sid)||isNaN(o.coche)||isNaN(o.fila)||!/^[A-Z]$/.test(o.letra||'')) return null;
   if(!propia(COMIDAS,o.k)) o.k='otr';
-  delete o.aviso;
+  delete o.aviso; delete o.orig;
+  var g=r.orig; if(g&&typeof g==='object'&&/^[A-Z]$/.test(g.letra||'')&&!isNaN(parseInt(g.coche,10))&&!isNaN(parseInt(g.fila,10)))
+    o.orig={coche:parseInt(g.coche,10), fila:parseInt(g.fila,10), letra:g.letra};
   return limpiarFila(o);
 }
 function recibirDatos(d, marcas){

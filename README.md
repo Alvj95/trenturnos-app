@@ -35,6 +35,7 @@ Cuando termine la temporada, borra el archivo y su línea `<script>`: el HTML pr
 Servicios a bordo recibe solo el tema activo (Halloween o Navidad) sin tocar su código.
 
 - **Serie y planos de asientos:** primero se sube el MOL; después la app pregunta qué tren es (S-103 por defecto, recuerda la última serie y la de cada nº de tren) y la rama (opcional), y avisa si los coches del MOL no encajan con la serie. La S-103 usa el **plano oficial de Renfe** (asientos exactos, de espaldas y mesas según el sentido Madrid–Barcelona); S-100, S-112, S-102 y S-106 usan un plano aproximado. Los planos están en `SERIES` dentro de `servicios/servicios.html`.
+- **Cambiar de asiento:** en la ficha, «↔ Cambiar de asiento» → se toca el asiento nuevo (también en otro coche). El servicio se mueve con lo marcado; si el asiento ya tiene servicio en el mismo tramo, se intercambian. Sale «de 06A» / «antes 1-06A», se puede deshacer o volver al asiento del MOL, y se sincroniza al compartir. Botón ⇄ para ver el coche en espejo.
 En las dos versiones, el botón 🍽️ del Calendario abre Servicios sin cambiar de perfil. **Compartir MOL** (📤) lo manda a la matrícula de un compañero, que lo abre con un código de 4 cifras; lo marcado se sincroniza entre los dos móviles. Necesita `version-url/supabase-servicios-compartidos.sql` ejecutado una vez en Supabase.
 
 ## Archivos
