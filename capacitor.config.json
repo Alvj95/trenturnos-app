@@ -2,5 +2,11 @@
   "appId": "com.trenturnos.app",
   "appName": "TrenTurnos",
   "webDir": "www",
-  "backgroundColor": "#07111F"
+  "backgroundColor": "#07111F",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_trenturnos",
+      "iconColor": "#F97316"
+    }
+  }
 }

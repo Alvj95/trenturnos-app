@@ -65,7 +65,10 @@ jobs:
           path: TrenTurnos.apk
           if-no-files-found: error
 
+      # Solo main publica versiones. Una rama lanzada a mano (Run workflow) solo
+      # comprueba que compila y deja el APK como artefacto de la ejecución.
       - name: Publish release with APK
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v5.0.${{ github.run_number }}
