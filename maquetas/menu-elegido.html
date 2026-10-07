@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Menú elegido</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* MAQUETA — primero el MOL, después la serie y la rama. Sin implementar. */
+:root{
+  --bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;
+  --nar2:#FB923C;--green:#16A34A;--green2:#4ADE80;--red2:#FCA5A5;
+  --tx:#F8FAFC;--tx2:#94A3B8;--tx3:#475569;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;
+  --pref:#7C3AED;--pref2:#C4B5FD;--tur:#0EA5E9;--tur2:#7DD3FC;--caf:#64748B;
+  --m-des:#D97706;--m-ape:#0891B2;--m-alm:#16A34A;--m-cen:#7C3AED;--m-cor:#0EA5E9;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#04080f;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center}
+button{font-family:inherit}
+.ph{width:100%;max-width:480px;min-height:100vh;background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E);padding-bottom:30px}
+.hdr{padding:16px 18px 12px;border-bottom:1px solid var(--div)}
+.pill{display:inline-flex;gap:4px;padding:3px 10px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.8px;background:rgba(217,119,6,.15);color:var(--acc3);border:1px solid rgba(217,119,6,.35)}
+.sub{font-size:11px;color:var(--tx2);margin-top:6px;font-weight:600}
+.wrap{padding:14px 16px}
+.card{background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:16px;padding:14px;margin-bottom:12px}
+.ct{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.chip small{display:block;font-size:9.5px;font-weight:600;color:var(--tx2);margin-top:1px}
+.chip.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:10px;color:var(--tx);padding:10px 11px;font:600 13px Inter,sans-serif}
+/* Composición */
+.comp{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px 0 6px}
+.comp::-webkit-scrollbar{display:none}
+.car{flex:none;width:44px;height:58px;border-radius:9px;border:1.5px solid var(--div);background:var(--s1);color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;padding:0}
+.car .n{font-weight:900;font-size:14px}
+.car .c{font-size:8px;font-weight:800;letter-spacing:.3px}
+.car.pref{border-color:rgba(124,58,237,.7)} .car.pref .c{color:var(--pref2)}
+.car.tur{border-color:rgba(14,165,233,.6)} .car.tur .c{color:var(--tur2)}
+.car.caf{border-style:dashed;cursor:default} .car.caf .c{color:var(--tx2)}
+.car.loco{width:34px;border-radius:18px 6px 6px 18px;cursor:default;font-size:15px}
+.car.loco.der{border-radius:6px 18px 18px 6px}
+.car.sel{background:rgba(217,119,6,.22);border-color:var(--acc2);box-shadow:0 0 0 2px rgba(245,158,11,.35)}
+.car .b{position:absolute;top:-6px;right:-5px;background:var(--acc);color:#fff;font-size:9px;font-weight:900;border-radius:9px;padding:1px 5px}
+.car.extra{border-style:dotted}
+.leyc{display:flex;gap:12px;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:6px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:3px}
+/* Coche */
+.wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 10px 14px}
+.wt{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:6px;gap:8px}
+.wt b{color:var(--tx);font-size:14px}
+.tag{font-size:9px;font-weight:800;letter-spacing:.5px;border-radius:20px;padding:3px 8px;white-space:nowrap}
+.tag.pref{color:var(--pref2);background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.5)}
+.tag.tur{color:var(--tur2);background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.45)}
+.lado{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);font-weight:800;letter-spacing:.5px;margin:2px 4px 4px}
+.srow{display:grid;align-items:center;gap:5px;margin:5px 0}
+.num{font-size:9.5px;color:var(--tx3);text-align:center;font-weight:700}
+.pas{font-size:8px;color:var(--tx3);text-align:center;writing-mode:vertical-rl;letter-spacing:1px}
+.seat{height:36px;border-radius:10px 10px 6px 6px;border:1px solid var(--div);background:var(--s2);color:var(--tx2);font-size:10.5px;font-weight:800;position:relative;padding:0;cursor:pointer}
+.seat.has{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat.fuera{outline:2px dashed var(--nar2)}
+.extremo{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:700;margin:4px 0}
+.nota{font-size:11.5px;color:var(--tx2);line-height:1.5}
+.nota b{color:var(--tx)}
+.aviso{margin-top:10px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.4);border-radius:12px;padding:10px 12px;font-size:11.5px;color:#FED7AA;line-height:1.45}
+.q{counter-reset:q} .q div{margin:8px 0;padding-left:22px;position:relative}
+.q div::before{counter-increment:q;content:counter(q);position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.seg button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:8px 4px;font-size:11.5px;font-weight:800;cursor:pointer}
+.seg button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+
+.ph{position:relative}
+.paso{display:none}.paso.on{display:block}
+.pasos{display:flex;gap:6px;margin-top:10px}
+.pasos span{flex:1;height:4px;border-radius:3px;background:var(--div)}
+.pasos span.on{background:var(--acc2)}
+.pdf{border:1.5px dashed #33496a;border-radius:14px;padding:22px 16px;text-align:center;background:var(--s2)}
+.pdf .big{font-size:34px}.pdf b{display:block;margin:6px 0 4px;font-size:14px}.pdf span{font-size:11.5px;color:var(--tx2)}
+.btn{display:block;width:100%;height:46px;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px}
+.btn.pri{background:var(--acc);color:#fff;box-shadow:0 4px 16px rgba(217,119,6,.4)}
+.btn.sec{background:var(--s2);color:var(--tx);border:1px solid var(--div);height:42px;font-size:13px}
+.btn.ok{background:var(--green);color:#fff}
+.leido{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.leido div{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:9px 10px;font-size:10px;color:var(--tx2);font-weight:700}
+.leido b{display:block;font-size:13.5px;color:var(--tx);margin-top:2px}
+.leido .del{font-size:9px;color:var(--green2);font-weight:800}
+.sug{display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.45);border-radius:12px;padding:9px 11px;font-size:11.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
+.encaja{margin-top:8px;font-size:11.5px;font-weight:700;border-radius:10px;padding:8px 10px}
+.encaja.si{background:rgba(22,163,74,.12);color:var(--green2);border:1px solid rgba(74,222,128,.4)}
+.encaja.no{background:rgba(249,115,22,.1);color:#FED7AA;border:1px solid rgba(249,115,22,.4)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mhdr .t{font-size:13px;font-weight:800}.mhdr .t small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
+.cambiar{background:var(--s2);border:1px solid var(--div);color:var(--acc3);font-weight:800;font-size:11.5px;border-radius:9px;padding:7px 10px;cursor:pointer}
+.seat.esp::after{content:"⤺";position:absolute;bottom:-6px;left:-4px;background:#334155;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px}
+.seat.mesa{box-shadow:inset 0 -3px 0 var(--acc2)}
+.nohay{height:36px}
+.oficial{display:inline-flex;gap:4px;font-size:9.5px;font-weight:800;color:var(--green2);background:rgba(22,163,74,.12);border:1px solid rgba(74,222,128,.4);border-radius:20px;padding:2px 8px;margin-top:6px}
+.sent{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.sent button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:10px;padding:7px 4px;font-size:11px;font-weight:800;cursor:pointer}
+.sent button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.leyp{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;font-size:10.5px;color:var(--tx2);font-weight:700;margin-top:10px}
+.anota{font-size:10.5px;color:var(--tx3);text-align:center;margin-top:8px}
+.ck-row{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--div);font-size:12px}
+.ck-row:first-child{border-top:0}.ck-row b{font-size:13px}.ck-row span{color:var(--tx2);font-weight:600}
+
+/* MAQUETA — identificar el menú elegido en el mapa. Sin implementar. */
+.opc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+.opc button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:12px;padding:9px 4px;font-size:12px;font-weight:800;cursor:pointer;line-height:1.25}
+.opc button small{display:block;font-size:9.5px;font-weight:600;margin-top:2px}
+.opc button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
+.seat .m{position:absolute;bottom:-7px;left:-5px;font-size:12px;background:#0b1626;border:1px solid rgba(255,255,255,.35);border-radius:50%;width:19px;height:19px;line-height:17px;text-align:center}
+.seat .t{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:900;letter-spacing:.3px;background:#fff;color:#111;border-radius:6px;padding:0 5px;line-height:14px;white-space:nowrap}
+.seat .t.esp{background:#FCA5A5;color:#450a0a}
+.seat.ring{box-shadow:0 0 0 3px var(--ring) inset!important}
+.chipsm{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-bottom:2px}
+.chipsm button{flex:none;border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:20px;padding:6px 10px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.chipsm button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.seat.dim{opacity:.18}
+.ley{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:11.5px;color:var(--tx2);font-weight:600}
+.ley b{color:var(--tx)}
+.ficha{background:var(--s1);border:1px solid var(--div);border-radius:16px;padding:12px;margin-top:12px}
+.big{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;color:#fff;margin-bottom:8px}
+.big .e{font-size:28px}.big b{display:block;font-size:16px}.big span{font-size:11px;font-weight:600;opacity:.9}
+.menu-card{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px}
+.menu-card .i{font-size:24px}.menu-card b{display:block;font-size:14px}.menu-card span{font-size:11px;color:var(--tx2);font-weight:600}
+.menu-card.esp{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
+.preg div{margin:8px 0;padding-left:22px;position:relative}
+.preg div::before{content:"?";position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+</style>
+</head>
+<body>
+<div class="ph">
+  <div class="hdr">
+    <div class="pill">🧪 MAQUETA · MENÚ ELEGIDO</div>
+    <div class="sub">Tren 3113 · S-103 · Coche 1 Club · ejemplo</div>
+  </div>
+  <div class="wrap">
+    <div class="ct">Elige cómo se ve</div>
+    <div class="opc" id="opc"></div>
+    <div class="chipsm" id="chips"></div>
+    <div class="wagon" id="wagon"></div>
+    <div class="card" style="margin-top:12px"><div class="ct">🔑 Leyenda de menús</div><div class="ley" id="ley"></div></div>
+    <div class="card"><div class="ct">💺 Así se vería la ficha (toca un asiento)</div><div id="ficha" class="nota">Toca un asiento con servicio.</div></div>
+    <div class="card"><div class="ct">❓ Para dejarlo bien, dime</div>
+      <div class="nota preg">
+        <div>¿Qué es <b>«De la granja»</b> y <b>«Del molino»</b>? He supuesto 🍗 carne y 🍝 pasta/cereal: corrígeme.</div>
+        <div>¿Hay más menús que salgan en el MOL (por ejemplo «Del mar», «De la huerta»…)?</div>
+        <div>¿Qué dietas especiales suelen salir? (Sin gluten, vegetariano, sin lactosa, halal, infantil…)</div>
+      </div></div>
+  </div>
+</div>
+<script>
+/* Menús (propuesta). Clave = texto como sale en el MOL. */
+var MENUS={
+  'DE LA GRANJA':{i:'🍗',t:'GRANJA',n:'De la granja',d:'(¿carne?)'},
+  'DEL MOLINO':{i:'🍝',t:'MOLINO',n:'Del molino',d:'(¿pasta / cereal?)'},
+  'DESAYUNO CALIENTE':{i:'🔥',t:'CALIENTE',n:'Desayuno caliente',d:''},
+  'DESAYUNO FRIO':{i:'🧊',t:'FRÍO',n:'Desayuno frío',d:''},
+  'ESP:SIN GLUTEN':{i:'🌾',t:'SIN GLUTEN',n:'Especial · Sin gluten',d:'dieta',esp:1},
+  'ESP:VEGETARIANO':{i:'🥗',t:'VEGETAR.',n:'Especial · Vegetariano',d:'dieta',esp:1},
+  'ESP:SIN LACTOSA':{i:'🥛',t:'SIN LACT.',n:'Especial · Sin lactosa',d:'dieta',esp:1},
+  'ESP:INFANTIL':{i:'🧸',t:'INFANTIL',n:'Especial · Infantil',d:'dieta',esp:1}
+};
+var COM={des:['☕','var(--m-des)','Desayuno'],ape:['🥨','var(--m-ape)','Aperitivo'],alm:['🍽️','var(--m-alm)','Almuerzo'],cen:['🌙','var(--m-cen)','Cena'],cor:['🥤','var(--m-cor)','Cortesía']};
+// Asientos de ejemplo (coche 1 Club del 3113) con su menú
+var SV={'06A':['alm','DE LA GRANJA'],'06C':['alm','DEL MOLINO'],'07A':['cor',null],'09A':['ape',null],'09B':['alm','ESP:SIN GLUTEN'],'09C':['alm','DE LA GRANJA'],
+  '10A':['alm',null],'10B':['des','DESAYUNO CALIENTE'],'10C':['des','DESAYUNO FRIO'],'11A':['alm','DE LA GRANJA'],'11B':['alm','ESP:VEGETARIANO'],'11C':['alm','DEL MOLINO'],'13A':['cor',null]};
+var opcion='A', filtro=null;
+var OPC={A:['A · Icono','en la esquina'],B:['B · Etiqueta','con texto'],C:['C · Filtro','tocas y resalta']};
+function pintar(){
+  document.getElementById('opc').innerHTML=Object.keys(OPC).map(function(k){ return '<button class="'+(k===opcion?'sel':'')+'" onclick="opcion=\''+k+'\';filtro=null;pintar()">'+OPC[k][0]+'<small>'+OPC[k][1]+'</small></button>'; }).join('');
+  // cuenta por menú
+  var n={}; Object.keys(SV).forEach(function(a){ var m=SV[a][1]; if(m) n[m]=(n[m]||0)+1; });
+  var sinElegir=Object.keys(SV).filter(function(a){return !SV[a][1]}).length;
+  document.getElementById('chips').innerHTML='<button class="'+(!filtro?'sel':'')+'" onclick="filtro=null;pintar()">Todos · '+Object.keys(SV).length+'</button>'+
+    Object.keys(n).map(function(m){ return '<button class="'+(filtro===m?'sel':'')+'" onclick="filtro=\''+m+'\';pintar()">'+MENUS[m].i+' '+MENUS[m].n.replace('Especial · ','')+' · '+n[m]+'</button>'; }).join('')+
+    '<button class="'+(filtro==='-'?'sel':'')+'" onclick="filtro=\'-\';pintar()">Sin elegir · '+sinElegir+'</button>';
+  document.getElementById('chips').style.display=opcion==='C'?'flex':'none';
+  var cols=['A',null,'B','C'], g='18px '+cols.map(function(l){return l?'1fr':'14px'}).join(' ');
+  var w='<div class="wt"><span><b>Coche 1</b> · Club</span><span class="tag pref">CLUB · 2+1</span></div>';
+  w+='<div class="srow" style="grid-template-columns:'+g+'"><span></span>'+cols.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
+  for(var f=5;f<=14;f++){ w+='<div class="srow" style="grid-template-columns:'+g+'"><span class="num">'+f+'</span>';
+    cols.forEach(function(l){ if(!l){ w+='<span></span>'; return; } var a=(f<10?'0':'')+f+l, s=SV[a], cls='seat', st='', ex='';
+      if(s){ var c=COM[s[0]], m=s[1]&&MENUS[s[1]]; cls+=' has'; st='background:'+c[1]; ex='<span class="e">'+c[0]+'</span>';
+        if(opcion==='A'&&m) ex+='<span class="m">'+m.i+'</span>';
+        if(opcion==='B'&&m) ex+='<span class="t'+(m.esp?' esp':'')+'">'+m.t+'</span>';
+        if(opcion==='C'){ if(m) ex+='<span class="m">'+m.i+'</span>'; if(filtro&&((filtro==='-')?!!s[1]:s[1]!==filtro)) cls+=' dim'; }
+      } else if(opcion==='C'&&filtro) cls+=' dim';
+      w+='<button class="'+cls+'" style="'+st+'" onclick="ficha(\''+a+'\')">'+a+ex+'</button>'; });
+    w+='</div>'; }
+  document.getElementById('wagon').innerHTML=w;
+  document.getElementById('ley').innerHTML=Object.keys(MENUS).map(function(k){ var m=MENUS[k]; return '<span>'+m.i+' <b>'+m.n.replace('Especial · ','')+'</b> '+(m.esp?'<span style="color:var(--red2)">especial</span>':m.d)+'</span>'; }).join('')+'<span>— <b>Sin elección</b> sin icono</span>';
+}
+function ficha(a){ var s=SV[a]; if(!s) return; var c=COM[s[0]], m=s[1]&&MENUS[s[1]];
+  document.getElementById('ficha').innerHTML='<div class="big" style="background:'+c[1]+'"><span class="e">'+c[0]+'</span><div><b>'+c[2]+'</b><span>Asiento '+a+' · Coche 1</span></div></div>'+
+    (m?'<div class="menu-card'+(m.esp?' esp':'')+'"><span class="i">'+m.i+'</span><div><b>'+m.n+'</b><span>'+(m.esp?'⚠️ Dieta especial: avisar al preparar':'Menú elegido por el cliente')+'</span></div></div>'
+      :'<div class="menu-card"><span class="i">➖</span><div><b>Sin elección</b><span>Menú del día</span></div></div>');
+}
+pintar();
+</script>
+</body>
+</html>
