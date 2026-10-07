@@ -106,99 +106,124 @@ button{font-family:inherit}
 .ck-row{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--div);font-size:12px}
 .ck-row:first-child{border-top:0}.ck-row b{font-size:13px}.ck-row span{color:var(--tx2);font-weight:600}
 
-/* MAQUETA — identificar el menú elegido en el mapa. Sin implementar. */
-.opc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
-.opc button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:12px;padding:9px 4px;font-size:12px;font-weight:800;cursor:pointer;line-height:1.25}
-.opc button small{display:block;font-size:9.5px;font-weight:600;margin-top:2px}
-.opc button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+/* MAQUETA v2 — menú elegido con etiqueta (opción B). Sin implementar. */
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+.tabs button{border:1px solid var(--div);background:var(--s2);color:var(--tx2);border-radius:12px;padding:9px 4px;font-size:12.5px;font-weight:800;cursor:pointer}
+.tabs button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
 .seat .e{position:absolute;top:-7px;right:-5px;font-size:11px}
-.seat .m{position:absolute;bottom:-7px;left:-5px;font-size:12px;background:#0b1626;border:1px solid rgba(255,255,255,.35);border-radius:50%;width:19px;height:19px;line-height:17px;text-align:center}
-.seat .t{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:900;letter-spacing:.3px;background:#fff;color:#111;border-radius:6px;padding:0 5px;line-height:14px;white-space:nowrap}
+.seat .t{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:900;letter-spacing:.2px;background:#fff;color:#111;border-radius:6px;padding:0 5px;line-height:14px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .seat .t.esp{background:#FCA5A5;color:#450a0a}
-.seat.ring{box-shadow:0 0 0 3px var(--ring) inset!important}
-.chipsm{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-bottom:2px}
-.chipsm button{flex:none;border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:20px;padding:6px 10px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
-.chipsm button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
-.seat.dim{opacity:.18}
-.ley{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:11.5px;color:var(--tx2);font-weight:600}
-.ley b{color:var(--tx)}
-.ficha{background:var(--s1);border:1px solid var(--div);border-radius:16px;padding:12px;margin-top:12px}
+.srow{margin:8px 0}
+.cochesb{display:flex;gap:6px;margin:0 0 10px}
+.cochesb button{flex:1;border:1px solid var(--div);background:var(--s1);color:var(--tx);border-radius:12px;padding:6px 2px;font-weight:900;font-size:15px;cursor:pointer}
+.cochesb button small{display:block;font-size:9px;color:var(--tx2);font-weight:700}
+.cochesb button.sel{border-color:var(--acc2);background:rgba(217,119,6,.18)}
 .big{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;color:#fff;margin-bottom:8px}
 .big .e{font-size:28px}.big b{display:block;font-size:16px}.big span{font-size:11px;font-weight:600;opacity:.9}
 .menu-card{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px}
 .menu-card .i{font-size:24px}.menu-card b{display:block;font-size:14px}.menu-card span{font-size:11px;color:var(--tx2);font-weight:600}
 .menu-card.esp{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}
-.preg div{margin:8px 0;padding-left:22px;position:relative}
-.preg div::before{content:"?";position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:16px}
+.grp{border-top:1px solid var(--div);padding:10px 0}
+.grp:first-of-type{border-top:0}
+.grp-h{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;margin-bottom:6px}
+.grp-h .tot{margin-left:auto;font-size:16px;font-weight:900}
+.fila{display:flex;align-items:center;gap:8px;padding:4px 0 4px 6px;font-size:12.5px;font-weight:700;color:var(--tx2)}
+.fila .lb{background:#fff;color:#111;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px}
+.fila .lb.esp{background:#FCA5A5;color:#450a0a}
+.fila .lb.no{background:var(--s3);color:var(--tx2)}
+.fila .n{margin-left:auto;color:var(--tx);font-size:14px;font-weight:900}
+.fila .as{font-size:10.5px;color:var(--tx3);font-weight:600}
+.ley{display:grid;grid-template-columns:1fr;gap:8px;font-size:12px;color:var(--tx2);font-weight:600}
+.ley .g b{color:var(--tx);display:block;margin-bottom:3px}
+.ley .lb{display:inline-block;background:#fff;color:#111;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px;margin:2px 4px 2px 0}
+.ley .lb.esp{background:#FCA5A5;color:#450a0a}
+.pista{font-size:10.5px;color:var(--tx3);margin-top:3px}
 </style>
 </head>
 <body>
 <div class="ph">
   <div class="hdr">
-    <div class="pill">🧪 MAQUETA · MENÚ ELEGIDO</div>
-    <div class="sub">Tren 3113 · S-103 · Coche 1 Club · ejemplo</div>
+    <div class="pill">🧪 MAQUETA · MENÚ ELEGIDO (B)</div>
+    <div class="sub">Tren 3113 · S-103 · ejemplo con todos los menús</div>
   </div>
   <div class="wrap">
-    <div class="ct">Elige cómo se ve</div>
-    <div class="opc" id="opc"></div>
-    <div class="chipsm" id="chips"></div>
-    <div class="wagon" id="wagon"></div>
-    <div class="card" style="margin-top:12px"><div class="ct">🔑 Leyenda de menús</div><div class="ley" id="ley"></div></div>
-    <div class="card"><div class="ct">💺 Así se vería la ficha (toca un asiento)</div><div id="ficha" class="nota">Toca un asiento con servicio.</div></div>
-    <div class="card"><div class="ct">❓ Para dejarlo bien, dime</div>
-      <div class="nota preg">
-        <div>¿Qué es <b>«De la granja»</b> y <b>«Del molino»</b>? He supuesto 🍗 carne y 🍝 pasta/cereal: corrígeme.</div>
-        <div>¿Hay más menús que salgan en el MOL (por ejemplo «Del mar», «De la huerta»…)?</div>
-        <div>¿Qué dietas especiales suelen salir? (Sin gluten, vegetariano, sin lactosa, halal, infantil…)</div>
-      </div></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="vista"></div>
   </div>
 </div>
 <script>
-/* Menús (propuesta). Clave = texto como sale en el MOL. */
+/* Catálogo de menús por tipo de comida (como los ofrece Renfe Prémium).
+   'mol' = cómo puede venir escrito en el MOL. */
 var MENUS={
-  'DE LA GRANJA':{i:'🍗',t:'GRANJA',n:'De la granja',d:'(¿carne?)'},
-  'DEL MOLINO':{i:'🍝',t:'MOLINO',n:'Del molino',d:'(¿pasta / cereal?)'},
-  'DESAYUNO CALIENTE':{i:'🔥',t:'CALIENTE',n:'Desayuno caliente',d:''},
-  'DESAYUNO FRIO':{i:'🧊',t:'FRÍO',n:'Desayuno frío',d:''},
-  'ESP:SIN GLUTEN':{i:'🌾',t:'SIN GLUTEN',n:'Especial · Sin gluten',d:'dieta',esp:1},
-  'ESP:VEGETARIANO':{i:'🥗',t:'VEGETAR.',n:'Especial · Vegetariano',d:'dieta',esp:1},
-  'ESP:SIN LACTOSA':{i:'🥛',t:'SIN LACT.',n:'Especial · Sin lactosa',d:'dieta',esp:1},
-  'ESP:INFANTIL':{i:'🧸',t:'INFANTIL',n:'Especial · Infantil',d:'dieta',esp:1}
+  des:[{k:'cal',t:'CALIENTE',i:'🔥',n:'Desayuno caliente',mol:'DESAYUNO CALIENTE'},
+       {k:'fri',t:'FRÍO',i:'🧊',n:'Desayuno frío',mol:'DESAYUNO FRIO'},
+       {k:'fyy',t:'FRUTA Y YOGUR',i:'🍓',n:'Fruta y yogur',mol:'FRUTA Y YOGUR'}],
+  alm:[{k:'car',t:'CARNE',i:'🍗',n:'De la granja · carne',mol:'DE LA GRANJA'},
+       {k:'pes',t:'PESCADO',i:'🐟',n:'De la barca · pescado',mol:'DE LA BARCA'},
+       {k:'pas',t:'PASTA',i:'🍝',n:'Del molino · pasta',mol:'DEL MOLINO'}],
+  ape:[{k:'sal',t:'SALADO',i:'🥨',n:'Salado',mol:'SALADO'},
+       {k:'mix',t:'MIXTO',i:'🧀',n:'Mixto',mol:'MIXTO'},
+       {k:'fru',t:'FRUTA',i:'🍎',n:'Fruta',mol:'FRUTA'}]
 };
-var COM={des:['☕','var(--m-des)','Desayuno'],ape:['🥨','var(--m-ape)','Aperitivo'],alm:['🍽️','var(--m-alm)','Almuerzo'],cen:['🌙','var(--m-cen)','Cena'],cor:['🥤','var(--m-cor)','Cortesía']};
-// Asientos de ejemplo (coche 1 Club del 3113) con su menú
-var SV={'06A':['alm','DE LA GRANJA'],'06C':['alm','DEL MOLINO'],'07A':['cor',null],'09A':['ape',null],'09B':['alm','ESP:SIN GLUTEN'],'09C':['alm','DE LA GRANJA'],
-  '10A':['alm',null],'10B':['des','DESAYUNO CALIENTE'],'10C':['des','DESAYUNO FRIO'],'11A':['alm','DE LA GRANJA'],'11B':['alm','ESP:VEGETARIANO'],'11C':['alm','DEL MOLINO'],'13A':['cor',null]};
-var opcion='A', filtro=null;
-var OPC={A:['A · Icono','en la esquina'],B:['B · Etiqueta','con texto'],C:['C · Filtro','tocas y resalta']};
+MENUS.cen=MENUS.alm; MENUS.mer=MENUS.ape;
+var ESP={sg:{t:'SIN GLUTEN',n:'Especial · Sin gluten'},veg:{t:'VEGETARIANO',n:'Especial · Vegetariano'}};
+var COM={des:['☕','var(--m-des)','Desayuno'],ape:['🥨','var(--m-ape)','Aperitivo'],alm:['🍽️','var(--m-alm)','Almuerzo'],mer:['🧁','#db2777','Merienda'],cen:['🌙','var(--m-cen)','Cena'],cor:['🥤','var(--m-cor)','Cortesía']};
+// Ejemplo: [coche, asiento, comida, menú | 'esp:xx' | null]
+var SV=[[1,'06A','alm','car'],[1,'06C','alm','pas'],[1,'07A','cor',null],[1,'09A','ape','sal'],[1,'09B','alm','esp:sg'],[1,'09C','alm','pes'],
+  [1,'10A','alm',null],[1,'10B','des','cal'],[1,'10C','des','fyy'],[1,'11A','alm','car'],[1,'11B','alm','esp:veg'],[1,'11C','alm','pes'],[1,'13A','ape','fru'],
+  [2,'06B','des','fri'],[2,'06C','des','cal'],[2,'07B','ape','mix'],[2,'07C','ape','sal'],[2,'08A','des',null],[2,'08B','des','cal'],[2,'10B','alm','car'],[2,'10C','alm','pas'],[2,'13A','alm','pes']];
+var vista='mapa', coche=1, sel=null;
+function menu(s){ if(!s[3]) return null; if(s[3].indexOf('esp:')===0){ var e=ESP[s[3].slice(4)]; return {t:e.t,n:e.n,i:'⚠️',esp:1}; }
+  return (MENUS[s[2]]||[]).filter(function(m){return m.k===s[3]})[0]; }
 function pintar(){
-  document.getElementById('opc').innerHTML=Object.keys(OPC).map(function(k){ return '<button class="'+(k===opcion?'sel':'')+'" onclick="opcion=\''+k+'\';filtro=null;pintar()">'+OPC[k][0]+'<small>'+OPC[k][1]+'</small></button>'; }).join('');
-  // cuenta por menú
-  var n={}; Object.keys(SV).forEach(function(a){ var m=SV[a][1]; if(m) n[m]=(n[m]||0)+1; });
-  var sinElegir=Object.keys(SV).filter(function(a){return !SV[a][1]}).length;
-  document.getElementById('chips').innerHTML='<button class="'+(!filtro?'sel':'')+'" onclick="filtro=null;pintar()">Todos · '+Object.keys(SV).length+'</button>'+
-    Object.keys(n).map(function(m){ return '<button class="'+(filtro===m?'sel':'')+'" onclick="filtro=\''+m+'\';pintar()">'+MENUS[m].i+' '+MENUS[m].n.replace('Especial · ','')+' · '+n[m]+'</button>'; }).join('')+
-    '<button class="'+(filtro==='-'?'sel':'')+'" onclick="filtro=\'-\';pintar()">Sin elegir · '+sinElegir+'</button>';
-  document.getElementById('chips').style.display=opcion==='C'?'flex':'none';
-  var cols=['A',null,'B','C'], g='18px '+cols.map(function(l){return l?'1fr':'14px'}).join(' ');
-  var w='<div class="wt"><span><b>Coche 1</b> · Club</span><span class="tag pref">CLUB · 2+1</span></div>';
-  w+='<div class="srow" style="grid-template-columns:'+g+'"><span></span>'+cols.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
-  for(var f=5;f<=14;f++){ w+='<div class="srow" style="grid-template-columns:'+g+'"><span class="num">'+f+'</span>';
-    cols.forEach(function(l){ if(!l){ w+='<span></span>'; return; } var a=(f<10?'0':'')+f+l, s=SV[a], cls='seat', st='', ex='';
-      if(s){ var c=COM[s[0]], m=s[1]&&MENUS[s[1]]; cls+=' has'; st='background:'+c[1]; ex='<span class="e">'+c[0]+'</span>';
-        if(opcion==='A'&&m) ex+='<span class="m">'+m.i+'</span>';
-        if(opcion==='B'&&m) ex+='<span class="t'+(m.esp?' esp':'')+'">'+m.t+'</span>';
-        if(opcion==='C'){ if(m) ex+='<span class="m">'+m.i+'</span>'; if(filtro&&((filtro==='-')?!!s[1]:s[1]!==filtro)) cls+=' dim'; }
-      } else if(opcion==='C'&&filtro) cls+=' dim';
-      w+='<button class="'+cls+'" style="'+st+'" onclick="ficha(\''+a+'\')">'+a+ex+'</button>'; });
-    w+='</div>'; }
-  document.getElementById('wagon').innerHTML=w;
-  document.getElementById('ley').innerHTML=Object.keys(MENUS).map(function(k){ var m=MENUS[k]; return '<span>'+m.i+' <b>'+m.n.replace('Especial · ','')+'</b> '+(m.esp?'<span style="color:var(--red2)">especial</span>':m.d)+'</span>'; }).join('')+'<span>— <b>Sin elección</b> sin icono</span>';
+  document.getElementById('tabs').innerHTML=[['mapa','💺 Mapa'],['resumen','📋 Qué preparar'],['leyenda','🔑 Menús']].map(function(t){
+    return '<button class="'+(vista===t[0]?'sel':'')+'" onclick="vista=\''+t[0]+'\';pintar()">'+t[1]+'</button>'; }).join('');
+  var v=document.getElementById('vista');
+  if(vista==='mapa') v.innerHTML=mapa(); else if(vista==='resumen') v.innerHTML=resumen(); else v.innerHTML=leyenda();
 }
-function ficha(a){ var s=SV[a]; if(!s) return; var c=COM[s[0]], m=s[1]&&MENUS[s[1]];
-  document.getElementById('ficha').innerHTML='<div class="big" style="background:'+c[1]+'"><span class="e">'+c[0]+'</span><div><b>'+c[2]+'</b><span>Asiento '+a+' · Coche 1</span></div></div>'+
-    (m?'<div class="menu-card'+(m.esp?' esp':'')+'"><span class="i">'+m.i+'</span><div><b>'+m.n+'</b><span>'+(m.esp?'⚠️ Dieta especial: avisar al preparar':'Menú elegido por el cliente')+'</span></div></div>'
-      :'<div class="menu-card"><span class="i">➖</span><div><b>Sin elección</b><span>Menú del día</span></div></div>');
+function mapa(){
+  var h='<div class="cochesb">'+[1,2].map(function(c){ return '<button class="'+(c===coche?'sel':'')+'" onclick="coche='+c+';sel=null;pintar()">'+c+'<small>'+(c===1?'Club':'Preferente')+'</small></button>'; }).join('')+'</div>';
+  var cols=['A',null,'B','C'], g='18px '+cols.map(function(l){return l?'1fr':'14px'}).join(' ');
+  h+='<div class="wagon"><div class="wt"><span><b>Coche '+coche+'</b></span><span class="tag pref">'+(coche===1?'CLUB':'PREFERENTE')+' · 2+1</span></div>';
+  h+='<div class="srow" style="grid-template-columns:'+g+'"><span></span>'+cols.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
+  for(var f=(coche===1?5:1);f<=14;f++){ h+='<div class="srow" style="grid-template-columns:'+g+'"><span class="num">'+f+'</span>';
+    cols.forEach(function(l){ if(!l){ h+='<span></span>'; return; } var a=(f<10?'0':'')+f+l, s=SV.filter(function(x){return x[0]===coche&&x[1]===a})[0], cls='seat', st='', ex='';
+      if(s){ var c=COM[s[2]], m=menu(s); cls+=' has'; st='background:'+c[1]; ex='<span class="e">'+c[0]+'</span>'+(m?'<span class="t'+(m.esp?' esp':'')+'">'+m.t+'</span>':''); }
+      h+='<button class="'+cls+'" style="'+st+'" onclick="sel=\''+a+'\';pintar()">'+a+ex+'</button>'; });
+    h+='</div>'; }
+  h+='</div><div class="nota" style="margin-top:8px">Etiqueta blanca = menú elegido · <span style="color:var(--red2)">roja = dieta especial</span> · sin etiqueta = sin elección</div>';
+  var s=sel&&SV.filter(function(x){return x[0]===coche&&x[1]===sel})[0];
+  if(s){ var c=COM[s[2]], m=menu(s);
+    h+='<div class="card" style="margin-top:12px"><div class="ct">💺 Ficha del asiento '+sel+'</div><div class="big" style="background:'+c[1]+'"><span class="e">'+c[0]+'</span><div><b>'+c[2]+'</b><span>Coche '+coche+' · Madrid Atocha → Barcelona</span></div></div>'+
+      (m?'<div class="menu-card'+(m.esp?' esp':'')+'"><span class="i">'+m.i+'</span><div><b>'+m.n+'</b><span>'+(m.esp?'Dieta especial: avisar al preparar':'Menú elegido por el cliente')+'</span></div></div>'
+        :'<div class="menu-card"><span class="i">➖</span><div><b>Sin elección</b><span>Se sirve el menú que haya</span></div></div>')+'</div>';
+  } else h+='<div class="nota" style="margin-top:8px">Toca un asiento con servicio para ver su ficha.</div>';
+  return h;
+}
+function resumen(){
+  var h='<div class="card"><div class="ct">📋 Qué preparar · todo el tren</div>';
+  ['des','alm','ape','cor'].forEach(function(k){
+    var l=SV.filter(function(s){return s[2]===k}); if(!l.length) return; var c=COM[k];
+    h+='<div class="grp"><div class="grp-h"><span style="font-size:18px">'+c[0]+'</span>'+c[2]+'<span class="tot">'+l.length+'</span></div>';
+    if(!MENUS[k]){ h+='</div>'; return; } // la cortesía no tiene menú a elegir
+    var por={}, orden=[];
+    l.forEach(function(s){ var m=menu(s), key=m?m.t:'—'; if(!por[key]){ por[key]={m:m,as:[]}; orden.push(key); } por[key].as.push(s[0]+'-'+s[1]); });
+    orden.sort(function(a,b){ var ea=por[a].m&&por[a].m.esp?1:0, eb=por[b].m&&por[b].m.esp?1:0; return (a==='—')-(b==='—')||eb-ea||por[b].as.length-por[a].as.length; });
+    orden.forEach(function(key){ var p=por[key], m=p.m;
+      h+='<div class="fila"><span class="lb'+(m&&m.esp?' esp':'')+(m?'':' no')+'">'+(m?m.t:'SIN ELECCIÓN')+'</span>'+(m&&!m.esp?'<span>'+m.i+'</span>':'')+
+        '<span class="n">'+p.as.length+'</span></div>'+(m&&m.esp?'<div class="fila as">'+p.as.join(' · ')+'</div>':''); });
+    h+='</div>';
+  });
+  h+='</div><div class="nota">Las dietas especiales salen primero y con sus asientos, para no olvidarlas.</div>';
+  return h;
+}
+function leyenda(){
+  var h='<div class="card"><div class="ct">🔑 Menús que reconoce la app</div><div class="ley">';
+  [['des','☕ Desayunos'],['alm','🍽️ Almuerzos y 🌙 cenas'],['ape','🥨 Aperitivos y 🧁 meriendas']].forEach(function(g){
+    h+='<div class="g"><b>'+g[1]+'</b>'+MENUS[g[0]].map(function(m){ return '<span class="lb">'+m.t+'</span>'+m.i+' '+m.n+(m.mol!==m.t?' <span class="pista">(en el MOL: «'+m.mol+'»)</span>':'')+'<br>'; }).join('')+'</div>'; });
+  h+='<div class="g"><b>⚠️ Dietas especiales</b><span class="lb esp">SIN GLUTEN</span><span class="lb esp">VEGETARIANO</span>… la que venga en el MOL, siempre en rojo.</div>';
+  h+='<div class="g"><b>➖ Sin elección / sin preferencia</b>Sin etiqueta.</div></div></div>';
+  return h;
 }
 pintar();
 </script>
