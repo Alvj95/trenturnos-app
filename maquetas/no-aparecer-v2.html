@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>No quiero aparecer v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* MAQUETA — "No quiero aparecer en TrenTurnos". Sin implementar. */
+:root{--bg:#07111F;--s1:#0D1B2E;--s2:#132236;--s3:#1A2D44;--div:#1E3350;--tx:#F8FAFC;--tx2:#94A3B8;--tx3:#64748B;
+  --blue:#3B82F6;--vio:#A78BFA;--amb:#FCD34D;--red:#EF4444;--red2:#FCA5A5;--green:#16A34A;--green2:#4ADE80}
+*{box-sizing:border-box}
+html,body{margin:0;background:#04080f;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+h1{font-size:18px;text-align:center;margin:22px 16px 4px}
+.intro{max-width:760px;margin:0 auto 6px;padding:0 16px;color:var(--tx2);font-size:13px;line-height:1.5;text-align:center}
+.sec{font-size:12px;font-weight:900;letter-spacing:1px;color:var(--amb);text-transform:uppercase;text-align:center;margin:30px 16px 10px}
+.row{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:0 16px}
+.cap{width:300px}
+.lbl{font-size:13px;font-weight:900;margin:0 0 6px}
+.lbl small{display:block;font-weight:600;color:var(--tx2);font-size:11px;margin-top:2px}
+.ph{width:300px;height:600px;border-radius:30px;border:6px solid #1f2937;background:var(--bg);position:relative;overflow:hidden;font-size:13px}
+.cen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:18px}
+.logo{font-size:36px}.tt{font-size:17px;font-weight:900}.q{font-size:12px;color:var(--tx2);margin:2px 0 18px}
+.pb{width:100%;display:flex;align-items:center;gap:10px;border-radius:14px;padding:13px 14px;margin-bottom:10px;text-align:left;border:2px solid}
+.pb b{display:block;font-size:14px}.pb small{color:var(--tx2);font-size:10px}.pb .e{font-size:24px}
+.p1{background:linear-gradient(135deg,#1A2D44,#132236);border-color:#2563EB}.p1 b{color:var(--blue)}
+.p2{background:linear-gradient(135deg,#2E1F4D,#1E1533);border-color:#7C3AED}.p2 b{color:var(--vio)}
+.p3{background:linear-gradient(135deg,#3A2A0C,#241A08);border-color:#D97706}.p3 b{color:var(--amb)}
+.lnk{margin-top:14px;font-size:12px;color:var(--tx2);text-decoration:underline;text-underline-offset:3px}
+.gbtn{width:100%;margin-top:8px;border:1.5px dashed #475569;border-radius:14px;padding:11px;color:#CBD5E1;font-weight:800;font-size:12.5px;text-align:center;background:transparent}
+.foot{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 16px;border-top:1px solid var(--div);font-size:11px;color:var(--tx3);text-align:center;line-height:1.45}
+.foot a{color:var(--red2);font-weight:800;text-decoration:none}
+.hl{outline:2px solid var(--amb);outline-offset:4px;border-radius:10px}
+/* hoja */
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.sh{position:absolute;left:0;right:0;bottom:0;background:var(--s1);border-radius:20px 20px 0 0;padding:10px 16px 16px;border-top:1px solid var(--div)}
+.hd{width:38px;height:4px;border-radius:3px;background:#334155;margin:0 auto 10px}
+.sh h3{margin:0 0 4px;font-size:16px}.sh p{margin:0 0 10px;color:var(--tx2);font-size:11.5px;line-height:1.45}
+.f{margin-bottom:8px}.f label{display:block;font-size:10.5px;font-weight:800;color:var(--tx2);margin-bottom:3px}
+.f div.in{background:var(--s3);border:1px solid var(--div);border-radius:10px;padding:9px 10px;font-size:13px;font-weight:700}
+.f div.in.ph2{color:var(--tx3);font-weight:500}
+.two{display:flex;gap:8px}.two .f{flex:1}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--tx2);margin:8px 0 10px;line-height:1.4}
+.chk i{flex:none;width:16px;height:16px;border-radius:4px;background:var(--red);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;color:#fff;font-weight:900}
+.send{width:100%;border:0;border-radius:12px;padding:12px;font-weight:900;font-size:14px;color:#fff;background:linear-gradient(135deg,#DC2626,#B91C1C)}
+.cancel{width:100%;border:0;background:none;color:var(--tx2);font-weight:700;padding:9px;font-size:12.5px}
+.box{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px;font-size:11.5px;color:var(--tx2);line-height:1.5;text-align:left;width:100%}
+.box b{color:var(--tx)}
+.big{font-size:44px;margin-bottom:6px}
+.okt{font-size:17px;font-weight:900;margin-bottom:6px;text-align:center}
+.oks{font-size:12px;color:var(--tx2);text-align:center;line-height:1.5;margin-bottom:14px}
+/* admin */
+.top{padding:14px 14px 10px;border-bottom:1px solid var(--div);font-weight:900;font-size:15px}
+.top small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600;margin-top:2px}
+.card{margin:10px 12px;background:var(--s1);border:1px solid var(--div);border-radius:14px;overflow:hidden}
+.ch{padding:10px 12px;font-weight:900;font-size:13px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--div)}
+.badge{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px}
+.badge.g{background:#334155}
+.it{padding:10px 12px;border-bottom:1px solid var(--div)}
+.it:last-child{border-bottom:0}
+.it .n{font-weight:900;font-size:13px}.it .m{font-size:11px;color:var(--tx2);margin-top:2px}
+.it .bt{display:flex;gap:6px;margin-top:8px}
+.it .bt span{flex:1;text-align:center;border-radius:9px;padding:7px;font-size:11.5px;font-weight:900}
+.bk{background:rgba(239,68,68,.15);color:var(--red2);border:1px solid rgba(239,68,68,.4)}
+.rj{background:var(--s3);color:var(--tx2);border:1px solid var(--div)}
+.ub{background:rgba(22,163,74,.12);color:var(--green2);border:1px solid rgba(22,163,74,.4)}
+.warn{font-size:10.5px;color:#FDBA74;margin-top:6px}
+/* efecto */
+.cmp{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;padding:0 16px}
+.mini{width:300px;background:var(--s1);border:1px solid var(--div);border-radius:14px;padding:12px}
+.mini h4{margin:0 0 8px;font-size:12px;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px}
+.pp{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--div);font-size:12.5px}
+.pp:last-child{border-bottom:0}
+.av{width:26px;height:26px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.gone{opacity:.35;text-decoration:line-through}
+.srch{background:var(--s3);border-radius:10px;padding:8px 10px;font-size:12px;margin-bottom:8px;color:var(--tx2)}
+.none{font-size:12px;color:var(--tx3);text-align:center;padding:14px 0}
+.q2{max-width:760px;margin:26px auto 40px;padding:0 16px}
+.q2 .box{font-size:12.5px}
+.q2 li{margin-bottom:6px}
+</style>
+<style>
+.alert{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.45);border-radius:12px;padding:9px 11px;font-size:11px;line-height:1.45;color:#FECACA;margin-bottom:10px;text-align:left}
+.alert b{color:#fff}.alert ul{margin:4px 0 0;padding-left:16px}.alert li{margin-bottom:2px}
+.info{background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.45);border-radius:12px;padding:9px 11px;font-size:11px;line-height:1.45;color:#FDE68A;text-align:left;width:100%}
+.info b{color:#fff}
+.sh2{position:absolute;left:0;right:0;bottom:0;top:0;background:var(--s1);padding:14px 14px 14px;overflow:hidden}
+.ta{background:var(--s3);border:1px solid var(--div);border-radius:10px;padding:9px 10px;font-size:12px;color:var(--tx2);height:62px;line-height:1.4}
+.var{font-size:11px;font-weight:900;color:var(--amb);margin:0 0 4px}
+.txtbox{max-width:900px;margin:0 auto;padding:0 16px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.txtbox .box{width:420px;font-size:12.5px}
+.dlg{position:absolute;left:18px;right:18px;top:170px;background:var(--s1);border:1px solid var(--div);border-radius:16px;padding:16px;text-align:center}
+.dlg .bt2{display:flex;gap:8px;margin-top:12px}.dlg .bt2 span{flex:1;border-radius:10px;padding:10px;font-weight:900;font-size:12.5px}
+</style>
+</head>
+<body>
+<h1>🚫 «No quiero aparecer» · versión 2 (textos de privacidad)</h1>
+<div class="intro">Maqueta sin implementar. Ahora se deja muy claro que la solicitud es <b>definitiva</b>, que se pierde el acceso a <b>todas</b> las funciones (la app es para compañeros) y que volver a entrar <b>no está garantizado</b>: se valora cada caso.</div>
+
+<div class="sec">1 · Antes de enviar la solicitud</div>
+<div class="row">
+  <div class="cap"><div class="lbl">Formulario con aviso<small>El aviso rojo va arriba, antes de los datos</small></div>
+    <div class="ph"><div class="dim"></div>
+      <div class="sh" style="top:0;border-radius:0;overflow:hidden"><div class="hd"></div>
+        <h3>🚫 No quiero aparecer</h3>
+        <div class="alert"><b>⚠️ Solicitud por privacidad de datos</b>
+          <ul><li>Dejarás de aparecer en TrenTurnos: horario, compañeros, buscador y servicios.</li>
+          <li><b>No podrás usar ninguna función de la app</b>: es una herramienta entre compañeros.</li>
+          <li><b>Es definitivo.</b> Volver a entrar solo es posible pidiéndolo, y se valorará si se concede.</li></ul></div>
+        <div class="two"><div class="f"><label>Nombre</label><div class="in">Juan</div></div><div class="f"><label>Apellidos</label><div class="in">Pérez Gómez</div></div></div>
+        <div class="two"><div class="f"><label>Matrícula</label><div class="in">1234567</div></div><div class="f"><label>Base</label><div class="in">Barcelona ▾</div></div></div>
+        <div class="chk" style="margin:6px 0 4px"><i>✓</i><span>Entiendo que <b style="color:var(--tx)">perderé el acceso a toda la app</b>.</span></div>
+        <div class="chk" style="margin:0 0 10px"><i>✓</i><span>Entiendo que volver a entrar <b style="color:var(--tx)">no está garantizado</b>.</span></div>
+        <div class="send">Enviar solicitud</div><div class="cancel">Cancelar</div>
+      </div></div></div>
+  <div class="cap"><div class="lbl">Segunda confirmación<small>Al pulsar «Enviar solicitud»</small></div>
+    <div class="ph"><div class="cen" style="opacity:.2"><div class="logo">🚆</div><div class="tt">TrenTurnos v5</div></div><div class="dim"></div>
+      <div class="dlg"><div class="big" style="font-size:36px">⚠️</div><div class="okt">¿Seguro?</div>
+        <div class="oks" style="margin-bottom:0">Cuando se acepte, la matrícula <b style="color:var(--tx)">1234567</b> quedará fuera de TrenTurnos y <b style="color:var(--tx)">no podrá usar la app</b>.<br><br>Volver a entrar solo será posible si se valora y se aprueba.</div>
+        <div class="bt2"><span style="background:var(--s3);color:var(--tx)">Cancelar</span><span style="background:linear-gradient(135deg,#DC2626,#B91C1C);color:#fff">Sí, enviar</span></div></div>
+    </div></div>
+  <div class="cap"><div class="lbl">Enviada<small>Recuerda lo que implica</small></div>
+    <div class="ph"><div class="cen">
+      <div class="big">📨</div><div class="okt">Solicitud enviada</div>
+      <div class="oks">Por privacidad de datos, cuando el administrador la acepte dejarás de aparecer en TrenTurnos y ya no podrás entrar.</div>
+      <div class="box"><b>Juan Pérez Gómez</b><br>Matrícula 1234567 · Base Barcelona<br>Enviada el 08/10/2026 · ⏳ Pendiente</div>
+      <div class="send" style="margin-top:16px;background:var(--s3);color:var(--tx)">Cerrar</div>
+    </div></div></div>
+</div>
+
+<div class="sec">2 · Si después intenta entrar</div>
+<div class="row">
+  <div class="cap"><div class="lbl">Acceso retirado<small>Al poner su matrícula en Tripulante o Interventor</small></div>
+    <div class="ph"><div class="cen">
+      <div class="big">🔒</div><div class="okt">Acceso retirado</div>
+      <div class="oks">La matrícula <b style="color:var(--tx)">1234567</b> pidió no aparecer en TrenTurnos por privacidad de datos.</div>
+      <div class="alert" style="width:100%">TrenTurnos es una herramienta <b>entre compañeros</b>: quien no quiere compartir sus datos tampoco puede usar sus funciones.</div>
+      <div class="info">Puedes pedir volver a entrar, pero <b>no está garantizado</b>: el administrador valorará cada caso y puede denegarlo.</div>
+      <div class="send" style="margin-top:12px;background:var(--s3);color:var(--tx);border:1px solid var(--div)">Solicitar volver a entrar</div>
+      <div class="cancel">Volver</div>
+    </div></div></div>
+  <div class="cap"><div class="lbl">Solicitud de reingreso<small>Tiene que explicar el motivo</small></div>
+    <div class="ph"><div class="sh2">
+      <h3 style="margin:0 0 6px;font-size:16px">🙋 Volver a TrenTurnos</h3>
+      <div class="info" style="margin-bottom:10px">Tu solicitud <b>se valorará</b>. Enviarla no garantiza volver a tener acceso; el administrador decide si se concede.</div>
+      <div class="two"><div class="f"><label>Nombre</label><div class="in">Juan</div></div><div class="f"><label>Apellidos</label><div class="in">Pérez Gómez</div></div></div>
+      <div class="two"><div class="f"><label>Matrícula</label><div class="in">1234567</div></div><div class="f"><label>Base</label><div class="in">Barcelona ▾</div></div></div>
+      <div class="f"><label>Motivo (obligatorio)</label><div class="ta">¿Por qué quieres volver? Al volver, tu nombre y tu horario saldrán otra vez a los compañeros.</div></div>
+      <div class="chk" style="margin:4px 0 10px"><i>✓</i><span>Acepto volver a aparecer en la app (horario, compañeros y buscador).</span></div>
+      <div class="send" style="background:linear-gradient(135deg,#16A34A,#15803D)">Enviar solicitud</div><div class="cancel">Cancelar</div>
+    </div></div></div>
+  <div class="cap"><div class="lbl">Respuesta<small>Pendiente o denegada (si se aprueba, entra normal)</small></div>
+    <div class="ph"><div class="cen">
+      <div class="big">⏳</div><div class="okt">En valoración</div>
+      <div class="oks">Tu solicitud para volver se está valorando. Mientras tanto no puedes usar la app.</div>
+      <div style="height:1px;background:var(--div);width:100%;margin:6px 0 18px"></div>
+      <div class="big">⛔</div><div class="okt">Solicitud denegada</div>
+      <div class="oks" style="margin-bottom:6px">El administrador ha valorado tu solicitud y no se concede el acceso.</div>
+    </div></div></div>
+</div>
+
+<div class="sec">3 · Tu panel: pedir volver</div>
+<div class="row">
+  <div class="cap"><div class="lbl">Solicitudes de reingreso<small>Con el motivo y la fecha en que pidió salir</small></div>
+    <div class="ph" style="overflow:auto">
+      <div class="top">🛡️ Panel de administrador<small>Personas que no quieren aparecer</small></div>
+      <div class="card"><div class="ch">🙋 Piden volver <span class="badge">1</span></div>
+        <div class="it"><div class="n">Juan Pérez Gómez</div><div class="m">Mat. 1234567 · Barcelona</div>
+          <div class="m">Salió el 08/10/2026 · pide volver el 20/10/2026</div>
+          <div class="box" style="margin-top:6px;font-size:11px">«Me equivoqué al pulsar, quiero volver a usar el calendario.»</div>
+          <div class="bt"><span class="ub">✅ Readmitir</span><span class="bk">⛔ Denegar</span></div></div>
+      </div>
+      <div class="card"><div class="ch">🚫 Solicitudes de salida <span class="badge g">0</span></div><div class="it"><div class="m">No hay solicitudes nuevas.</div></div></div>
+      <div class="card"><div class="ch">🔒 Fuera de la app <span class="badge g">3</span></div>
+        <div class="it"><div class="n">Carlos Ruiz</div><div class="m">Mat. 1112223 · Sevilla · desde 02/10/2026</div><div class="m" style="color:var(--red2)">⛔ Reingreso denegado el 05/10/2026</div></div>
+      </div>
+    </div></div>
+</div>
+
+<div class="sec">Textos · elige el tono del aviso principal</div>
+<div class="txtbox">
+  <div class="box"><div class="var">Tono A · Neutro (el de la maqueta)</div>
+  «TrenTurnos es una herramienta <b>entre compañeros</b>: quien no quiere compartir sus datos tampoco puede usar sus funciones. Puedes pedir volver a entrar, pero no está garantizado: el administrador valorará cada caso.»</div>
+  <div class="box"><div class="var">Tono B · Más firme</div>
+  «Esta app es <b>solo para compañeros</b> que comparten su horario. Al pedir no aparecer, <b>renuncias</b> a usarla. El reingreso es excepcional: cada solicitud se valorará y puede denegarse sin más explicación.»</div>
+</div>
+<div class="q2"><div class="box">Nota: en los textos de la app <b>no pongo «persona no grata»</b>; lo puede leer cualquiera y podría verse como una acusación. Con «se valorará» y «puede denegarse» queda igual de claro que la decisión es tuya.</div></div>
+</body></html>
