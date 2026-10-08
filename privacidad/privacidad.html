@@ -1,0 +1,354 @@
+<!-- PRIVACIDAD:INICIO — «No quiero aparecer en TrenTurnos». FUENTE: privacidad/privacidad.html,
+     se incrusta igual en version-url/index.html y www/index.html con privacidad/incrustar.py.
+     Necesita en Supabase version-url/supabase-privacidad.sql. -->
+<style>
+#pv-capa,#pv-bloqueo{position:fixed;inset:0;z-index:2147483000;display:none;font-family:Inter,system-ui,sans-serif;color:#F8FAFC}
+#pv-capa{background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center;z-index:2147483002}
+#pv-bloqueo{background:#07111F;z-index:2147483001;align-items:center;justify-content:center;padding:20px;overflow:auto}
+#pv-capa.on,#pv-bloqueo.on{display:flex}
+.pv-hoja{width:100%;max-width:480px;max-height:100%;overflow:auto;background:#0D1B2E;border-top:1px solid #1E3350;border-radius:20px 20px 0 0;padding:12px 16px 18px}
+.pv-asa{width:38px;height:4px;border-radius:3px;background:#334155;margin:0 auto 10px}
+.pv-hoja h3{margin:0 0 8px;font-size:17px;font-weight:900}
+.pv-rojo{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.45);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;color:#FECACA;margin-bottom:12px;text-align:left}
+.pv-rojo b{color:#fff}.pv-rojo ul{margin:4px 0 0;padding-left:18px}.pv-rojo li{margin-bottom:3px}
+.pv-ambar{background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.45);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;color:#FDE68A;text-align:left;margin-bottom:12px}
+.pv-ambar b{color:#fff}
+.pv-dos{display:flex;gap:8px}.pv-dos .pv-campo{flex:1;min-width:0}
+.pv-campo{margin-bottom:9px}
+.pv-campo label{display:block;font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:4px}
+.pv-campo input,.pv-campo textarea{width:100%;box-sizing:border-box;background:#1A2D44;border:1px solid #1E3350;border-radius:10px;padding:10px;font-size:14px;font-weight:700;color:#F8FAFC;font-family:inherit}
+.pv-campo textarea{height:80px;resize:none;font-weight:500;font-size:13px}
+.pv-check{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#94A3B8;margin:6px 0;line-height:1.4;cursor:pointer}
+.pv-check input{flex:none;width:18px;height:18px;margin:0;accent-color:#EF4444}
+.pv-check b{color:#F8FAFC}
+.pv-btn{display:block;width:100%;border:0;border-radius:12px;padding:13px;font-weight:900;font-size:14px;color:#fff;cursor:pointer;font-family:inherit;margin-top:10px}
+.pv-rojob{background:linear-gradient(135deg,#DC2626,#B91C1C)}
+.pv-verde{background:linear-gradient(135deg,#16A34A,#15803D)}
+.pv-gris{background:#1A2D44;color:#F8FAFC;border:1px solid #1E3350}
+.pv-btn:disabled{opacity:.6}
+.pv-link{display:block;width:100%;border:0;background:none;color:#94A3B8;font-weight:700;padding:10px;font-size:13px;cursor:pointer;font-family:inherit}
+.pv-msg{font-size:12px;color:#FCA5A5;min-height:16px;margin-top:6px;text-align:center}
+.pv-centro{width:100%;max-width:360px;text-align:center}
+.pv-ico{font-size:46px;margin-bottom:6px}
+.pv-tit{font-size:19px;font-weight:900;margin-bottom:8px}
+.pv-sub{font-size:13px;color:#94A3B8;line-height:1.5;margin-bottom:14px}
+.pv-sub b{color:#F8FAFC}
+.pv-caja{background:#132236;border:1px solid #1E3350;border-radius:12px;padding:10px 12px;font-size:12.5px;color:#94A3B8;line-height:1.5;text-align:left}
+.pv-caja b{color:#F8FAFC}
+#pv-dialogo{position:fixed;inset:0;z-index:2147483003;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;font-family:Inter,system-ui,sans-serif;color:#F8FAFC}
+#pv-dialogo.on{display:flex}
+#pv-dialogo .pv-d{width:100%;max-width:340px;background:#0D1B2E;border:1px solid #1E3350;border-radius:16px;padding:18px;text-align:center}
+#pv-dialogo .pv-fila{display:flex;gap:8px}#pv-dialogo .pv-fila .pv-btn{flex:1}
+#btnNoAparecer{display:block;margin:16px auto 0;background:none;border:0;color:#94A3B8;font-size:12.5px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-family:inherit;padding:6px}
+.pv-adm-it{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:9px;padding:9px 11px;margin-bottom:6px;font-size:12px}
+.pv-adm-it .n{font-weight:900;font-size:13px}.pv-adm-it .m{color:var(--tx2,#94A3B8);font-size:11px;margin-top:2px}
+.pv-adm-bt{display:flex;gap:6px;margin-top:8px}
+.pv-adm-bt button{flex:1;border-radius:9px;padding:8px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit}
+.pv-b-rojo{background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.4)}
+.pv-b-gris{background:var(--s3,#1A2D44);color:var(--tx2,#94A3B8);border:1px solid var(--div,#1E3350)}
+.pv-b-verde{background:rgba(22,163,74,.12);color:#4ADE80;border:1px solid rgba(22,163,74,.4)}
+.pv-adm-t{font-size:12px;font-weight:900;margin:12px 0 6px}
+</style>
+<div id="pv-capa"></div>
+<div id="pv-bloqueo"></div>
+<div id="pv-dialogo"></div>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   «No quiero aparecer en TrenTurnos» (privacidad de datos).
+   · Desde el Portal de Perfil, cualquiera pide salir (nombre, apellidos,
+     matrícula y base). El admin lo acepta o lo rechaza en su panel.
+   · Aceptada: la matrícula pasa a privacidad_excluidos. La app la quita
+     del Horario General (compañeros, buscador, "viajas con"…) y de los
+     cambios de turno publicados, y esa matrícula ya no puede entrar
+     (pantalla "Acceso retirado"). Este móvil también queda bloqueado.
+   · Para volver: "Solicitar volver a entrar" (con motivo). Se valora:
+     el admin readmite o deniega.
+═══════════════════════════════════════════════════════════ */
+(function(){
+  var K_EXC='privExcluidos', K_BLOQ='privBloqueo', K_SOL='privSolicitud';
+  var EXC = {};
+  function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} return null; }
+  function norm(m){ return String(m==null?'':m).trim().toUpperCase(); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function sb(){ return (typeof sbAdmin!=='undefined' && sbAdmin) ? sbAdmin : null; }
+  function esAdmin(){ return typeof perfilAdminActual!=='undefined' && perfilAdminActual && perfilAdminActual.rol==='admin'; }
+  function aviso(t){ if(typeof toast==='function') toast(t); }
+  (function(){ try{ (JSON.parse(ls(K_EXC)||'[]')||[]).forEach(function(m){ EXC[norm(m)]=1; }); }catch(e){} })();
+
+  // ── Filtrado: quien está fuera no sale en ningún listado ──
+  window.privEsExcluido = function(m){ m=norm(m); return !!(m && EXC[m]); };
+  window.privFiltrarEmpleados = function(lista){
+    if(!Array.isArray(lista) || !Object.keys(EXC).length) return lista;
+    return lista.filter(function(e){ return !window.privEsExcluido(e && e[0]); });
+  };
+  function refiltrar(){
+    var B = window.BASES; if(!B) return;
+    Object.keys(B).forEach(function(k){ if(B[k] && Array.isArray(B[k].data)) B[k].data = window.privFiltrarEmpleados(B[k].data); });
+  }
+  async function cargarExcluidos(){
+    var c=sb(); if(!c) return false;
+    try{
+      var r = await c.rpc('priv_excluidos');
+      if(r.error || !Array.isArray(r.data)) return false;
+      EXC = {}; r.data.forEach(function(x){ var m=norm(typeof x==='object'&&x?x.priv_excluidos:x); if(m) EXC[m]=1; });
+      ls(K_EXC, JSON.stringify(Object.keys(EXC)));
+      refiltrar();
+      return true;
+    }catch(e){ return false; }
+  }
+  async function estado(m){
+    var c=sb(); if(!c) return null;
+    try{ var r = await c.rpc('priv_estado', {p_matricula:m}); return r.error ? null : r.data; }catch(e){ return null; }
+  }
+
+  // ── Matrículas conocidas de este móvil ──
+  function misMatriculas(){
+    var out=[], aj=null; try{ aj=JSON.parse(ls('aj5')||'null'); }catch(e){}
+    [ls(K_BLOQ), ls(K_SOL), aj&&aj.matricula, ls('interventorMatriculaValidada')].forEach(function(m){ m=norm(m); if(m && out.indexOf(m)<0) out.push(m); });
+    return out;
+  }
+
+  // ── Pantalla "Acceso retirado" (tapa toda la app) ──
+  var _bloqueada = null;
+  function mostrarBloqueo(m, est){
+    _bloqueada = m; ls(K_BLOQ, m);
+    var el = document.getElementById('pv-bloqueo');
+    var pend = est==='fuera_reingreso_pendiente', deneg = est==='fuera_reingreso_denegado';
+    el.innerHTML = '<div class="pv-centro">'
+      +'<div class="pv-ico">🔒</div><div class="pv-tit">Acceso retirado</div>'
+      +'<div class="pv-sub">La matrícula <b>'+esc(m)+'</b> pidió no aparecer en TrenTurnos por privacidad de datos.</div>'
+      +'<div class="pv-rojo">TrenTurnos es una herramienta <b>entre compañeros</b>: quien no quiere compartir sus datos tampoco puede usar sus funciones.</div>'
+      +(pend ? '<div class="pv-caja" style="text-align:center"><div style="font-size:30px">⏳</div><b>En valoración</b><br>Tu solicitud para volver se está valorando. Mientras tanto no puedes usar la app.</div>'
+        : (deneg ? '<div class="pv-caja" style="text-align:center;margin-bottom:12px"><div style="font-size:30px">⛔</div><b>Solicitud denegada</b><br>El administrador ha valorado tu solicitud y no se concede el acceso.</div>' : '')
+          +'<div class="pv-ambar">Puedes pedir volver a entrar, pero <b>no está garantizado</b>: el administrador valorará cada caso y puede denegarlo.</div>'
+          +'<button class="pv-btn pv-gris" onclick="privAbrirReingreso()">Solicitar volver a entrar</button>')
+      +'<button class="pv-link" onclick="privRevisarDeNuevo()">🔄 Comprobar de nuevo</button>'
+      +'</div>';
+    el.classList.add('on');
+    if(window.__svOcultar) try{ window.__svOcultar(); }catch(e){}
+  }
+  function quitarBloqueo(){
+    var el = document.getElementById('pv-bloqueo'); el.classList.remove('on'); el.innerHTML='';
+    _bloqueada = null; ls(K_BLOQ, null); ls(K_SOL, null);
+  }
+  window.privRevisarDeNuevo = async function(){
+    if(!_bloqueada) return;
+    var e = await estado(_bloqueada);
+    if(e===null){ aviso('Sin conexión: inténtalo más tarde'); return; }
+    if(String(e).indexOf('fuera')===0){ mostrarBloqueo(_bloqueada, e); aviso('Sigue sin acceso'); return; }
+    quitarBloqueo(); await cargarExcluidos();
+    aviso('✅ Tienes acceso de nuevo'); setTimeout(function(){ location.reload(); }, 900);
+  };
+
+  // Al abrir la app (desde revisarPerfil): primero lo guardado (sin red), luego se confirma con Supabase.
+  window.__privRevisarInicio = function(){
+    if(esAdmin()) return false;
+    var mias = misMatriculas(), bloqueada = ls(K_BLOQ);
+    var fuera = bloqueada ? norm(bloqueada) : mias.filter(function(m){ return EXC[m]; })[0];
+    if(fuera) mostrarBloqueo(fuera, 'fuera');
+    (async function(){
+      await cargarExcluidos();
+      if(esAdmin()) return;
+      var candidatas = fuera ? [fuera] : misMatriculas().filter(function(m){ return EXC[m] || m===norm(ls(K_SOL)); });
+      for(var i=0;i<candidatas.length;i++){
+        var e = await estado(candidatas[i]);
+        if(e===null) return; // sin conexión: se queda como estaba
+        if(String(e).indexOf('fuera')===0){ mostrarBloqueo(candidatas[i], e); return; }
+        if(candidatas[i]===fuera){ quitarBloqueo(); location.reload(); return; }
+        if(e==='normal' && candidatas[i]===norm(ls(K_SOL))) ls(K_SOL, null); // la rechazaste: se olvida
+      }
+    })();
+    return !!fuera;
+  };
+  // Al poner la matrícula en Tripulante o Interventor. true = está fuera (ya se ve la pantalla).
+  window.__privComprobarMatricula = async function(m){
+    m = norm(m); if(!m || esAdmin()) return false;
+    var e = await estado(m);
+    if(e===null ? EXC[m] : String(e).indexOf('fuera')===0){ mostrarBloqueo(m, e||'fuera'); return true; }
+    return false;
+  };
+  // Entrar sin matrícula (Tripulante "saltar" o Servicios): si este móvil está bloqueado, no.
+  window.__privDispositivoBloqueado = function(){
+    if(esAdmin()) return false;
+    var b = ls(K_BLOQ) ? norm(ls(K_BLOQ)) : misMatriculas().filter(function(m){ return EXC[m]; })[0];
+    if(b){ mostrarBloqueo(b, 'fuera'); return true; }
+    return false;
+  };
+
+  // ── Hojas y diálogo ──
+  function abrirHoja(html){ var c=document.getElementById('pv-capa'); c.innerHTML='<div class="pv-hoja" onclick="event.stopPropagation()"><div class="pv-asa"></div>'+html+'</div>'; c.classList.add('on'); }
+  window.privCerrarHoja = function(){ var c=document.getElementById('pv-capa'); c.classList.remove('on'); c.innerHTML=''; };
+  function dialogo(html, okTxt, okCls){
+    return new Promise(function(res){
+      var d=document.getElementById('pv-dialogo');
+      d.innerHTML='<div class="pv-d">'+html+'<div class="pv-fila"><button class="pv-btn pv-gris" id="pv-d-no">Cancelar</button><button class="pv-btn '+(okCls||'pv-rojob')+'" id="pv-d-si">'+okTxt+'</button></div></div>';
+      d.classList.add('on');
+      document.getElementById('pv-d-no').onclick=function(){ d.classList.remove('on'); res(false); };
+      document.getElementById('pv-d-si').onclick=function(){ d.classList.remove('on'); res(true); };
+    });
+  }
+  function camposDatos(m){
+    return '<div class="pv-dos"><div class="pv-campo"><label>Nombre</label><input id="pv-nom" maxlength="60" autocomplete="off"></div>'
+      +'<div class="pv-campo"><label>Apellidos</label><input id="pv-ape" maxlength="80" autocomplete="off"></div></div>'
+      +'<div class="pv-dos"><div class="pv-campo"><label>Matrícula</label><input id="pv-mat" maxlength="12" inputmode="numeric" autocomplete="off" value="'+esc(m||'')+'"></div>'
+      +'<div class="pv-campo"><label>Base</label><input id="pv-base" maxlength="60" list="pv-bases" placeholder="Ej.: Barcelona" autocomplete="off"></div></div>'
+      +'<datalist id="pv-bases"><option>Barcelona</option><option>Madrid</option><option>Sevilla</option><option>Málaga</option><option>Valencia</option><option>Zaragoza</option><option>Alicante</option><option>Granada</option><option>Figueres</option></datalist>';
+  }
+  function leerDatos(){
+    var v=function(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; };
+    return {nombre:v('pv-nom'), apellidos:v('pv-ape'), matricula:norm(v('pv-mat')), base:v('pv-base'), motivo:v('pv-mot')};
+  }
+  function msg(t){ var el=document.getElementById('pv-msg'); if(el) el.textContent=t||''; }
+
+  // Pedir salir
+  window.privAbrirSalida = function(){
+    abrirHoja('<h3>🚫 No quiero aparecer</h3>'
+      +'<div class="pv-rojo"><b>⚠️ Solicitud por privacidad de datos</b><ul>'
+      +'<li>Dejarás de aparecer en TrenTurnos: horario, compañeros, buscador y servicios.</li>'
+      +'<li><b>No podrás usar ninguna función de la app</b>: es una herramienta entre compañeros.</li>'
+      +'<li><b>Es definitivo.</b> Volver a entrar solo es posible pidiéndolo, y se valorará si se concede.</li></ul></div>'
+      +camposDatos('')
+      +'<label class="pv-check"><input type="checkbox" id="pv-c1"><span>Entiendo que <b>perderé el acceso a toda la app</b>.</span></label>'
+      +'<label class="pv-check"><input type="checkbox" id="pv-c2"><span>Entiendo que volver a entrar <b>no está garantizado</b>.</span></label>'
+      +'<div class="pv-msg" id="pv-msg"></div>'
+      +'<button class="pv-btn pv-rojob" id="pv-enviar" onclick="privEnviarSalida()">Enviar solicitud</button>'
+      +'<button class="pv-link" onclick="privCerrarHoja()">Cancelar</button>');
+  };
+  window.privEnviarSalida = async function(){
+    var d=leerDatos();
+    if(!d.nombre||!d.apellidos||!d.matricula||!d.base){ msg('Rellena nombre, apellidos, matrícula y base.'); return; }
+    if(!/^[0-9A-Z]{3,12}$/.test(d.matricula)){ msg('Revisa la matrícula.'); return; }
+    if(!document.getElementById('pv-c1').checked || !document.getElementById('pv-c2').checked){ msg('Marca las dos casillas para continuar.'); return; }
+    msg('');
+    var ok = await dialogo('<div class="pv-ico" style="font-size:36px">⚠️</div><div class="pv-tit">¿Seguro?</div>'
+      +'<div class="pv-sub">Cuando se acepte, la matrícula <b>'+esc(d.matricula)+'</b> quedará fuera de TrenTurnos y <b>no podrá usar la app</b>.<br><br>Volver a entrar solo será posible si se valora y se aprueba.</div>', 'Sí, enviar');
+    if(!ok) return;
+    var c=sb(); if(!c){ msg('Sin conexión. Inténtalo más tarde.'); return; }
+    var b=document.getElementById('pv-enviar'); if(b){ b.disabled=true; b.textContent='Enviando…'; }
+    var r; try{ r = await c.rpc('priv_solicitar', {p_tipo:'salida', p_nombre:d.nombre, p_apellidos:d.apellidos, p_matricula:d.matricula, p_base:d.base, p_motivo:null}); }catch(e){ r={error:e}; }
+    if(b){ b.disabled=false; b.textContent='Enviar solicitud'; }
+    if(r.error){ msg('No se pudo enviar ahora mismo. Inténtalo de nuevo.'); return; }
+    if(r.data==='ya_fuera'){ privCerrarHoja(); mostrarBloqueo(d.matricula, 'fuera'); return; }
+    ls(K_SOL, d.matricula);
+    abrirHoja('<div class="pv-centro" style="margin:0 auto"><div class="pv-ico">📨</div><div class="pv-tit">'+(r.data==='ya_pendiente'?'Ya estaba enviada':'Solicitud enviada')+'</div>'
+      +'<div class="pv-sub">Por privacidad de datos, cuando el administrador la acepte dejarás de aparecer en TrenTurnos y ya no podrás entrar.</div>'
+      +'<div class="pv-caja"><b>'+esc(d.nombre+' '+d.apellidos)+'</b><br>Matrícula '+esc(d.matricula)+' · Base '+esc(d.base)+'<br>⏳ Pendiente</div>'
+      +'<button class="pv-btn pv-gris" onclick="privCerrarHoja()">Cerrar</button></div>');
+  };
+
+  // Pedir volver
+  window.privAbrirReingreso = function(){
+    abrirHoja('<h3>🙋 Volver a TrenTurnos</h3>'
+      +'<div class="pv-ambar">Tu solicitud <b>se valorará</b>. Enviarla no garantiza volver a tener acceso; el administrador decide si se concede.</div>'
+      +camposDatos(_bloqueada)
+      +'<div class="pv-campo"><label>Motivo (obligatorio)</label><textarea id="pv-mot" maxlength="500" placeholder="¿Por qué quieres volver? Al volver, tu nombre y tu horario saldrán otra vez a los compañeros."></textarea></div>'
+      +'<label class="pv-check"><input type="checkbox" id="pv-c1"><span>Acepto volver a aparecer en la app (horario, compañeros y buscador).</span></label>'
+      +'<div class="pv-msg" id="pv-msg"></div>'
+      +'<button class="pv-btn pv-verde" id="pv-enviar" onclick="privEnviarReingreso()">Enviar solicitud</button>'
+      +'<button class="pv-link" onclick="privCerrarHoja()">Cancelar</button>');
+  };
+  window.privEnviarReingreso = async function(){
+    var d=leerDatos();
+    if(!d.nombre||!d.apellidos||!d.matricula||!d.base){ msg('Rellena nombre, apellidos, matrícula y base.'); return; }
+    if(d.motivo.length<3){ msg('Escribe el motivo.'); return; }
+    if(!document.getElementById('pv-c1').checked){ msg('Marca la casilla para continuar.'); return; }
+    var c=sb(); if(!c){ msg('Sin conexión. Inténtalo más tarde.'); return; }
+    var b=document.getElementById('pv-enviar'); if(b){ b.disabled=true; b.textContent='Enviando…'; }
+    var r; try{ r = await c.rpc('priv_solicitar', {p_tipo:'reingreso', p_nombre:d.nombre, p_apellidos:d.apellidos, p_matricula:d.matricula, p_base:d.base, p_motivo:d.motivo}); }catch(e){ r={error:e}; }
+    if(b){ b.disabled=false; b.textContent='Enviar solicitud'; }
+    if(r.error){ msg('No se pudo enviar ahora mismo. Inténtalo de nuevo.'); return; }
+    if(r.data==='no_fuera'){ msg('Esa matrícula no está fuera de la app.'); return; }
+    privCerrarHoja();
+    mostrarBloqueo(d.matricula, 'fuera_reingreso_pendiente');
+  };
+
+  // ── Panel de administrador ──
+  function nombreEnHorario(m){
+    var B=window.BASES; if(!B) return null;
+    for(var k in B){ var d=B[k]&&B[k].data; if(!Array.isArray(d)) continue;
+      for(var i=0;i<d.length;i++) if(norm(d[i][0])===m) return d[i][1]; }
+    return null;
+  }
+  function fecha(t){ try{ return new Date(t).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+  window.privAdminCargar = async function(){
+    if(!esAdmin()) return;
+    var lista=document.getElementById('pvAdminLista'), est=document.getElementById('pvAdminEstado'), badge=document.getElementById('pvAdminBadge');
+    if(!lista) return;
+    if(est) est.textContent='Cargando...';
+    var r; try{ r = await sb().rpc('priv_admin_listar'); }catch(e){ r={error:e}; }
+    if(r.error || !r.data){ if(est) est.textContent='No se pudo cargar (¿ejecutaste supabase-privacidad.sql?)'; return; }
+    var sol=r.data.solicitudes||[], exc=r.data.excluidos||[];
+    var sal=sol.filter(function(s){return s.tipo==='salida'}), rei=sol.filter(function(s){return s.tipo==='reingreso'});
+    if(badge){ badge.textContent=sol.length; badge.style.display=sol.length?'inline-block':'none'; }
+    if(est) est.textContent = sol.length ? sol.length+' solicitud(es) pendiente(s) · '+exc.length+' fuera de la app' : 'No hay solicitudes pendientes · '+exc.length+' fuera de la app';
+    var fueraPorMat={}; exc.forEach(function(e){ fueraPorMat[e.matricula]=e; });
+    var h='';
+    if(rei.length){ h+='<div class="pv-adm-t">🙋 Piden volver</div>';
+      rei.forEach(function(s){ var e=fueraPorMat[s.matricula];
+        h+='<div class="pv-adm-it"><div class="n">'+esc(s.nombre+' '+s.apellidos)+'</div><div class="m">Mat. '+esc(s.matricula)+' · '+esc(s.base)+'</div>'
+          +'<div class="m">'+(e?'Salió el '+esc(fecha(e.desde))+' · ':'')+'pide volver el '+esc(fecha(s.creado))+'</div>'
+          +'<div class="pv-caja" style="margin-top:6px;font-size:11.5px">«'+esc(s.motivo||'')+'»</div>'
+          +'<div class="pv-adm-bt"><button class="pv-b-verde" onclick="privAdminResolver('+s.id+',true,\'reingreso\')">✅ Readmitir</button><button class="pv-b-rojo" onclick="privAdminResolver('+s.id+',false,\'reingreso\')">⛔ Denegar</button></div></div>'; }); }
+    if(sal.length){ h+='<div class="pv-adm-t">🚫 Piden no aparecer</div>';
+      sal.forEach(function(s){ var nh=nombreEnHorario(s.matricula), comp='';
+        if(nh===null) comp='<div class="m">Horario General sin cargar: no se ha podido comprobar el nombre.</div>';
+        else { var a=norm(nh), ap=norm(s.apellidos).split(/\s+/)[0]||'', no=norm(s.nombre).split(/\s+/)[0]||'';
+          comp = (ap && a.indexOf(ap)>=0) || (no && a.indexOf(no)>=0)
+            ? '<div class="m" style="color:#4ADE80">✓ En el Horario General esa matrícula es '+esc(nh)+'</div>'
+            : '<div class="m" style="color:#FDBA74">⚠️ En el Horario General esa matrícula es de '+esc(nh)+': revisa antes</div>'; }
+        h+='<div class="pv-adm-it"><div class="n">'+esc(s.nombre+' '+s.apellidos)+'</div><div class="m">Mat. '+esc(s.matricula)+' · '+esc(s.base)+' · '+esc(fecha(s.creado))+'</div>'+comp
+          +'<div class="pv-adm-bt"><button class="pv-b-rojo" onclick="privAdminResolver('+s.id+',true,\'salida\')">🚫 Bloquear</button><button class="pv-b-gris" onclick="privAdminResolver('+s.id+',false,\'salida\')">Rechazar</button></div></div>'; }); }
+    h+='<div class="pv-adm-t">🔒 Fuera de la app ('+exc.length+')</div>';
+    if(!exc.length) h+='<div class="pv-adm-it"><div class="m">Nadie.</div></div>';
+    exc.forEach(function(e){
+      h+='<div class="pv-adm-it"><div class="n">'+esc(e.nombre||'—')+'</div><div class="m">Mat. '+esc(e.matricula)+' · '+esc(e.base||'')+' · desde '+esc(fecha(e.desde))+'</div>'
+        +(e.reingreso_denegado?'<div class="m" style="color:#FCA5A5">⛔ Reingreso denegado el '+esc(fecha(e.reingreso_denegado))+'</div>':'')
+        +'<div class="pv-adm-bt"><button class="pv-b-verde" onclick="privAdminDesbloquear(\''+esc(e.matricula)+'\')">↩️ Desbloquear</button></div></div>'; });
+    lista.innerHTML=h;
+  };
+  window.privAdminResolver = async function(id, aceptar, tipo){
+    var txt = tipo==='salida' ? (aceptar?'¿Bloquear? Dejará de aparecer en la app y no podrá entrar.':'¿Rechazar la solicitud?')
+      : (aceptar?'¿Readmitir? Volverá a aparecer en la app y podrá entrar.':'¿Denegar el reingreso?');
+    if(!confirm(txt)) return;
+    var r; try{ r = await sb().rpc('priv_admin_resolver', {p_id:id, p_aceptar:aceptar}); }catch(e){ r={error:e}; }
+    if(r.error){ aviso('Error: '+(r.error.message||r.error)); return; }
+    aviso('✅ Hecho'); await cargarExcluidos(); privAdminCargar();
+  };
+  window.privAdminDesbloquear = async function(m){
+    if(!confirm('¿Desbloquear la matrícula '+m+'? Volverá a aparecer en la app y podrá entrar.')) return;
+    var r; try{ r = await sb().rpc('priv_admin_desbloquear', {p_matricula:m}); }catch(e){ r={error:e}; }
+    if(r.error){ aviso('Error: '+(r.error.message||r.error)); return; }
+    aviso('✅ Desbloqueada'); await cargarExcluidos(); privAdminCargar();
+  };
+
+  function montar(){
+    // Enlace en el Portal de Perfil, debajo de los tres perfiles
+    var s=document.getElementById('btnPerfilServicios');
+    if(s && !document.getElementById('btnNoAparecer')){
+      var b=document.createElement('button'); b.type='button'; b.id='btnNoAparecer'; b.textContent='🚫 No quiero aparecer en TrenTurnos';
+      b.addEventListener('click', window.privAbrirSalida); s.parentNode.appendChild(b);
+    }
+    // Tarjeta en el Panel de Administrador, después de "Solicitudes de acceso"
+    var l=document.getElementById('listaSolicitudesAcceso'), card=l&&l.closest('.admin-card');
+    if(card && !document.getElementById('pvAdminLista')){
+      var c=document.createElement('div'); c.className='admin-card';
+      c.innerHTML='<div class="admin-card-hdr"><div class="admin-card-ico" style="background:rgba(239,68,68,.15);color:#FCA5A5">🚫</div><div>'
+        +'<div class="admin-card-tit">No quieren aparecer <span id="pvAdminBadge" style="display:none;background:#EF4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:4px"></span></div>'
+        +'<div class="admin-card-sub">Privacidad de datos: quién pide salir de la app, quién está fuera y quién pide volver.</div></div></div>'
+        +'<button class="m-save" style="width:100%;margin-bottom:8px" onclick="privAdminCargar()">🔄 Actualizar lista</button>'
+        +'<div class="estado-archivo sin-archivo" id="pvAdminEstado">Toca "Actualizar lista" para ver las solicitudes.</div>'
+        +'<div id="pvAdminLista" style="margin-top:8px"></div>';
+      card.parentNode.insertBefore(c, card.nextSibling);
+    }
+    // Se carga junto con las solicitudes de acceso (al abrir el panel)
+    if(typeof window.cargarSolicitudesAccesoAdmin==='function' && !window.cargarSolicitudesAccesoAdmin.__pv){
+      var orig=window.cargarSolicitudesAccesoAdmin;
+      window.cargarSolicitudesAccesoAdmin=function(){ try{ window.privAdminCargar(); }catch(e){} return orig.apply(this, arguments); };
+      window.cargarSolicitudesAccesoAdmin.__pv=true;
+    }
+    cargarExcluidos();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', montar); else montar();
+})();
+</script>
+<!-- PRIVACIDAD:FIN -->

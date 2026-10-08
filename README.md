@@ -25,6 +25,7 @@ Cada push compila un APK nuevo con GitHub Actions (`.github/workflows/android.ym
    ```
    (la segunda solo mientras haya un tema de temporada; ver abajo).
 3. Vuelve a incrustar Servicios: `python3 servicios/incrustar.py www/index.html`.
+4. Vuelve a incrustar Privacidad: `python3 privacidad/incrustar.py www/index.html`.
 4. Haz push: GitHub Actions genera el APK nuevo.
 
 ## Temas de temporada (Halloween, Navidad…)
@@ -47,6 +48,7 @@ En las dos versiones, el botón 🍽️ del Calendario abre Servicios sin cambia
 | --- | --- |
 | `www/index.html` | Tu app (sin cambios salvo la línea de `native-bridge.js`) |
 | `servicios/servicios.html` | **Servicios a bordo** (fuente). Se incrusta en `www/index.html` y en `version-url/index.html` con `python3 servicios/incrustar.py [archivo]`; no editar a mano el bloque `SERVICIOS:INICIO/FIN` |
+| `privacidad/privacidad.html` | **«No quiero aparecer en TrenTurnos»** (fuente). Enlace en el Portal de Perfil para pedir salir de la app por privacidad (nombre, apellidos, matrícula y base); el admin bloquea o rechaza en su panel. Quien está fuera desaparece del Horario General, compañeros, buscador y cambios de turno, y no puede entrar (pantalla «Acceso retirado», con «Solicitar volver a entrar», que se valora). Se incrusta en los dos `index.html` con `python3 privacidad/incrustar.py [archivos]`; necesita `version-url/supabase-privacidad.sql` |
 | `www/tema-halloween.js` | Tema de Halloween (del 1 de octubre al 5 de noviembre): app, pantalla de inicio y Portal de Interventor |
 | `www/tema-navidad.js` | Tema de Navidad (del 1 de diciembre al 6 de enero). **Preparado pero aún no conectado**: para activarlo, añade `<script src="tema-navidad.js"></script>` debajo de la línea del tema de Halloween en `index.html` |
 | `www/native-bridge.js` | Hace que en Android funcionen *Compartir*, las descargas (Excel) y las notificaciones. En la web no hace nada |
