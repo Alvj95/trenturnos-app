@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Servicios a bordo</title>
+<title>Ciclo real</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* Servicios a bordo — módulo de TrenTurnos.
@@ -270,6 +270,7 @@ button{font-family:inherit}
 .qp .lb.no{background:var(--s3);color:var(--tx2)}
 .qp .p{color:var(--tx2);font-weight:600;font-size:11.5px;line-height:1.35}
 .qp .n{margin-left:auto;font-size:15px;font-weight:900;color:var(--tx)}
+.demo{background:rgba(124,58,237,.18);border:1px solid rgba(196,181,253,.5);color:#DDD6FE;border-radius:12px;padding:9px 11px;font-size:11.5px;font-weight:700;margin-bottom:12px;line-height:1.4}
 .girar{width:30px;height:26px;border-radius:8px;border:1px solid var(--div);background:var(--s2);color:var(--acc3);font-size:15px;font-weight:900;cursor:pointer;padding:0;line-height:1}
 .girar.on{background:rgba(217,119,6,.22);border-color:var(--acc2)}
 .lado{text-align:center;font-size:9.5px;color:var(--tx3);font-weight:800;letter-spacing:.4px;margin:4px 0}
@@ -352,6 +353,7 @@ button{font-family:inherit}
 
     <!-- COMPROBACIÓN -->
     <div class="panel" id="p-check">
+      <div class="demo">🧪 MAQUETA sobre la app real · MOL del tren 3060 (06/10/2026). Los asientos 13B y 14C eligieron desayuno frío y caliente; elige un ciclo abajo y mira el mapa, la ficha y el Resumen.</div>
       <div class="card" id="ck-head"></div>
       <div class="card" id="ck-tren">
         <div class="card-t">🚆 ¿Qué tren es?</div>
@@ -411,27 +413,18 @@ var COMIDAS = {
   cum:{n:'Cumpleaños',e:'🎂',c:'var(--m-cum)'},
   otr:{n:'Otro',e:'🍴',c:'var(--m-otr)'}
 };
-var TIPOS = {'AVE':['S-103','S-100','S-112','S-102','S-106'],'Avlo':['S-112 Avlo','S-106 Avlo'],'Alvia':['S-130','S-730','S-120'],'Altaria':['Altaria'],'Euromed':['S-103']};
-var MODELO = {'112':'Talgo 350','103':'Siemens Velaro','102':'Talgo 350','100':'Alstom','106':'Talgo Avril','130':'Talgo 250','730':'Talgo 250','120':'CAF','':'Talgo'};
+var TIPOS = {'AVE':['S-103','S-100','S-112','S-102','S-106'],'Avlo':['S-112 Avlo','S-106 Avlo'],'Alvia':['S-130','S-730','S-120'],'Euromed':['S-103']};
+var MODELO = {'112':'Talgo 350','103':'Siemens Velaro','102':'Talgo 350','100':'Alstom','106':'Talgo Avril','130':'Talgo 250','730':'Talgo 250','120':'CAF'};
 /* ── Planos de asientos por serie ──
    comp: qué es cada coche (pref = Club/Preferente/Confort, tur = Turista/Estándar, caf = cafetería).
    Las letras son las de los MOL y Renfe: 2+1 → A │ B C, 2+2 → A B │ C D, 3+2 → A B C │ D E.
    oficial: plano de Renfe asiento a asiento (hoy la S-103). El resto es aproximado (composición
    contrastada en internet, nº de filas provisional). Si un servicio del MOL cae en un asiento que el
    plano no tiene, se añade igualmente y se marca en naranja: nunca se pierde. */
-function PLANO_TALGO_ALVIA(){
-  var o={nombres:{}, lados:null,
-    1:{cols:['A',null,'B','C'], asientos:{A:'1-5',B:'1-5',C:'1-5'}},
-    2:{cols:['A',null,'B','C'], asientos:{A:'1-8',B:'1-8',C:'1-8'}},
-    3:{cols:['A',null,'B','C'], asientos:{A:'1-8',B:'1-8',C:'1-8'}},
-    10:{cols:['A','B',null,'C','D'], asientos:{A:'1-5',B:'1-5',C:'1-5',D:'1-5'}}};
-  for(var c=4;c<=9;c++) o[c]={cols:['A','B',null,'C','D'], asientos:{A:'1-9',B:'1-9',C:'1-9',D:'1-9'}};
-  return o;
-}
 var DISTR = {'2+1':['A',null,'B','C'], '2+2':['A','B',null,'C','D'], '3+2':['A','B','C',null,'D','E']};
 var SERIES = {
   'S-103':{tractoras:false, comp:'pref:1-3,caf:4,tur:5-8', pref:'2+1', tur:'2+2', filas:{pref:17,tur:18}, oficial:{
-    nombres:{1:'Club',2:'Preferente',3:'Preferente'}, lados:['Madrid','Barcelona'],
+    nombres:{1:'Club',2:'Preferente',3:'Preferente'},
     1:{cols:['A',null,'B','C'], asientos:{A:'5-14',B:'5-14',C:'5-14'}},
     2:{cols:['A',null,'B','C'], asientos:{A:'2-17',B:'1-17',C:'1-17'}},
     3:{cols:['A',null,'B','C'], asientos:{A:'1-17',B:'1-18',C:'1-18'}},
@@ -446,29 +439,7 @@ var SERIES = {
            vuelta:{1:'9A 10A 9B 10B 9C 10C 5A 6A 5B 6B 5C 6C',2:'2A 3A 2B 3B 2C 3C',3:'1A 2A 1B 2B 1C 2C',5:'2A 3A 2B 3B 2C 3C 2D 3D',6:'2A 3A 2B 3B 2C 3C 2D 3D',7:'2A 3A 2B 3B 2C 3C 2D 3D',8:'2A 3A 2B 3B 2C 3C 2D 3D 14D 15D'}}
   }},
   'S-100':{tractoras:true, comp:'pref:1-3,caf:4,tur:5-8', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}, nombres:{1:'Club'}},
-  // S-102: plano de Renfe (AVE Madrid–Huesca). Fila 1 del lado de Madrid.
-  'S-102':{tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:9,tur:9}, oficial:{
-    nombres:{1:'Club',2:'Club'}, lados:['Madrid','otro extremo'],
-    1:{cols:['A',null,'B','C'], asientos:{A:'3-8',B:'3-8',C:'3-8'}},
-    2:{cols:['A',null,'B','C'], asientos:{A:'1-7',B:'1-7',C:'1-7'}},
-    3:{cols:['A',null,'B','C'], asientos:{A:'1-9',B:'1-8',C:'1-9'}},
-    4:{cols:['A',null,'B','C'], asientos:{A:'1-9',B:'1-8',C:'1-9'}},
-    5:{cols:['A',null,'B','C'], asientos:{A:'1-8',B:'1-8',C:'1-8'}},
-    7:{cols:['A','B',null,'C','D'], asientos:{A:'2-5',B:'1-5',C:'1-5',D:'1-5'}, nota:'♿ Plazas para silla de ruedas: 11H y 12H'},
-    8:{cols:['A','B',null,'C','D'], asientos:{A:'1-9',B:'1-9',C:'1-9',D:'1-9'}},
-    9:{cols:['A','B',null,'C','D'], asientos:{A:'1-9',B:'1-9',C:'1-9',D:'1-9'}},
-    10:{cols:['A','B',null,'C','D'], asientos:{A:'1-9',B:'1-9',C:'1-9',D:'1-9'}},
-    11:{cols:['A','B',null,'C','D'], asientos:{A:'1-9',B:'1-9',C:'1-9',D:'1-9'}},
-    12:{cols:['A','B',null,'C','D'], asientos:{A:'2-8',B:'2-8',C:'1-8',D:'1-8'}},
-    // ida = saliendo de Madrid · vuelta = hacia Madrid
-    espaldas:{ida:{1:'8A 8B 8C',2:'7A 7B 7C',3:'9A 9C',4:'9A 9C',5:'8A 8B 8C',7:'5A 5B 5C 5D',8:'9A 9B 9C 9D',9:'9A 9B 9C 9D',10:'9A 9B 9C 9D',11:'9A 9B 9C 9D',12:'8A 8B 8C 8D'},
-              vuelta:{1:'3A 3B 3C',2:'1A 1B 1C',3:'1A 1B 1C',4:'1A 1B 1C',5:'1A 1B 1C',7:'1B 1C 1D',8:'1A 1B 1C 1D',9:'1A 1B 1C 1D',10:'1A 1B 1C 1D',11:'1A 1B 1C 1D',12:'2A 2B 1C 1D'}},
-    mesas:{ida:{1:'7A 8A 7B 8B 7C 8C',2:'6A 7A 6B 7B 6C 7C',3:'8A 9A 8C 9C',4:'8A 9A 8C 9C',5:'7A 8A 7B 8B 7C 8C',7:'4A 5A 4B 5B 4C 5C 4D 5D',8:'8A 9A 8B 9B 8C 9C 8D 9D',9:'8A 9A 8B 9B 8C 9C 8D 9D',10:'8A 9A 8B 9B 8C 9C 8D 9D',11:'8A 9A 8B 9B 8C 9C 8D 9D',12:'7A 8A 7B 8B 7C 8C 7D 8D'},
-           vuelta:{1:'3A 4A 3B 4B 3C 4C',2:'1A 2A 1B 2B 1C 2C',3:'1A 2A 1B 2B 1C 2C',4:'1A 2A 1B 2B 1C 2C',5:'1A 2A 1B 2B 1C 2C',7:'2A 1B 2B 1C 2C 1D 2D',8:'1A 2A 1B 2B 1C 2C 1D 2D',9:'1A 2A 1B 2B 1C 2C 1D 2D',10:'1A 2A 1B 2B 1C 2C 1D 2D',11:'1A 2A 1B 2B 1C 2C 1D 2D',12:'2A 3A 2B 3B 1C 2C 1D 2D'}}
-  }},
-  // Alvia S-130 y Altaria: plano de Renfe (filas exactas; espaldas y mesas no se leen bien en el plano).
-  'S-130':{tractoras:true, comp:'pref:1-3,caf:3.5,tur:4-10', pref:'2+1', tur:'2+2', filas:{pref:8,tur:9}, oficial:PLANO_TALGO_ALVIA()},
-  'Altaria':{tractoras:true, comp:'pref:1-3,caf:3.5,tur:4-10', pref:'2+1', tur:'2+2', filas:{pref:8,tur:9}, oficial:PLANO_TALGO_ALVIA()},
+  'S-102':{tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}, nombres:{1:'Club',2:'Club'}},
   'S-112':{tractoras:true, comp:'pref:1-5,caf:6,tur:7-12', pref:'2+1', tur:'2+2', filas:{pref:14,tur:16}, nombres:{1:'Club',2:'Club'}},
   'S-106':{tractoras:true, comp:'pref:1-2,tur:3-5,caf:6,tur:7-12', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}, nombres:{1:'Confort',2:'Confort'}},
   'S-106 Avlo':{tractoras:true, comp:'tur:1-12', pref:'2+2', tur:'3+2', filas:{pref:14,tur:18}},
@@ -800,7 +771,7 @@ function columnasImagen(t, ancho){
 }
 // Vocabulario del MOL: lo leído de una imagen se ajusta a la palabra conocida más parecida.
 var VOC_TIPO=['Desayuno','Aperitivo','Almuerzo','Comida','Merienda','Cena','Cortesía','Box Caliente','Box Clásico','Box del Norte','Box Frío','Cumpleaños'];
-var VOC_MENU=['Menú sin preferencia','Menú sin posibilidad de elección','Menú último minuto','Menú Cortesía','Desayuno frío','Desayuno caliente','Fruta y yogur','De la granja','De la barca','Del molino','Salado','Mixto','Sin elección','Especial'];
+var VOC_MENU=['Menú sin preferencia','Menú sin posibilidad de elección','Menú último minuto','Menú Cortesía','Desayuno frío','Desayuno caliente','De la granja','Del molino','Sin elección','Especial'];
 var VOC_EST=['MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES','MADRID-CHAMARTÍN-CLARA CAMPOAMOR','BARCELONA-SANTS','ZARAGOZA DELICIAS','CAMP DE TARRAGONA','LLEIDA-PIRINEUS','GIRONA','FIGUERES-VILAFANT',
   'SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','MÁLAGA-MARÍA ZAMBRANO','VALÈNCIA-JOAQUÍN SOROLLA','ALICANTE-TERMINAL','GUADALAJARA-YEBES','CALATAYUD','CIUDAD REAL','PUERTOLLANO',
   'ANTEQUERA-SANTA ANA','CUENCA-FERNANDO ZÓBEL','ALBACETE-LOS LLANOS','SEGOVIA-GUIOMAR','VALLADOLID-CAMPO GRANDE','OURENSE','LEÓN','PALENCIA','ZAMORA','HUESCA','GRANADA','MURCIA DEL CARMEN','ELCHE AV','ORIHUELA','CASTELLÓ','TOLEDO'];
@@ -852,7 +823,7 @@ async function procesarImagen(file){
     var mt=null; t.lineas.some(function(L){ mt=L.txt.match(/TREN\D{0,6}(\d{3,5})\b/i); return mt; });
     if(mt) filas.forEach(function(r){ if(!r.tren) r.tren=mt[1]; });
     filas.forEach(function(r,i){ r.sid=i; });
-    LEIDO={nombre:limpio(file.name||'Captura del MOL'), filas:filas, deImagen:true, ciclo:cicloEnTexto(t.lineas.map(function(L){return L.txt}).join(' ')+' '+(file.name||''))};
+    LEIDO={nombre:limpio(file.name||'Captura del MOL'), filas:filas, deImagen:true};
     barra(100);
     if(!filas.length) throw new Error('No he encontrado filas de servicio en esta imagen');
     mostrarComprobacion();
@@ -885,7 +856,7 @@ async function procesarPdf(bytes, nombre){
       barra(10+80*p/doc.numPages);
     }
     filas.forEach(function(f){ f.t.sort(function(a,b){return a.x-b.x}); f.txt=f.t.map(function(t){return t.s}).join(' '); });
-    LEIDO={nombre:limpio(nombre), filas:interpretar(filas), ciclo:cicloEnTexto(filas.map(function(f){return f.txt}).join(' ')+' '+nombre)};
+    LEIDO={nombre:limpio(nombre), filas:interpretar(filas)};
     barra(100);
     if(!LEIDO.filas.length) throw new Error('No he encontrado filas de servicio en este PDF');
     mostrarComprobacion();
@@ -997,10 +968,8 @@ function pintarTipos(){
   poner('.x-comp-t','🚃 Composición'+(serie?' · '+serie:' · genérica'));
   pintarCiclo();
 }
-/* ── 🍴 Menú elegido y ciclo de la carta ──
-   Etiqueta en el asiento con lo que eligió el cliente (CALIENTE, CARNE, SALADO…; dietas en rojo).
-   Con el ciclo de la semana (1–4), además el plato. Cartas: «Renfe AVE Prémium · Ciclos de
-   restauración»; lo que ese documento no trae (null) se queda en el tipo de menú. */
+/* ── 🍴 Menú elegido y ciclo de la carta (MAQUETA) ──
+   Etiqueta en el asiento con lo que eligió el cliente; con el ciclo, el plato. */
 var MENU_ELEGIDO=[
   {re:/FRUTA.*YOG|YOGUR/,t:'FRUTA Y YOGUR',i:'🍓',k:'fyy'},{re:/CALIENTE/,t:'CALIENTE',i:'🔥',k:'cal'},{re:/FRIO/,t:'FRÍO',i:'🧊',k:'fri'},
   {re:/GRANJA|CARNE/,t:'CARNE',i:'🍗',k:'car'},{re:/BARCA|PESCADO/,t:'PESCADO',i:'🐟',k:'pes'},{re:/MOLINO|PASTA/,t:'PASTA',i:'🍝',k:'pas'},
@@ -1026,7 +995,6 @@ var CICLOS={
     alm:{car:'Ensalada de escarola, pera y queso azul → Pechuga de pollo al vermouth',pes:'Ensalada de quinoa y jengibre → Pastel de salmón con puré de apionabo',pas:'Ensalada verde con espárragos → Canelones de dos carnes'}}};
 var CICLO=0, CICLO_MOL=0;
 function platoDe(r){ var m=menuElegido(r); if(!m||m.esp||!CICLO) return null; var g={des:'des',ape:'ape',mer:'ape',alm:'alm',cen:'alm'}[r.k], c=CICLOS[CICLO]&&CICLOS[CICLO][g]; return c&&c[m.k]||null; }
-function cicloEnTexto(t){ var mm=sinAcento(t||'').match(/\bCICLO\s*[:Nº.]*\s*([1-4])\b/); return mm?+mm[1]:0; }
 function pintarCiclo(){
   var h=[1,2,3,4].map(function(n){ return '<button class="'+(CICLO===n?'sel':'')+'" onclick="CICLO='+n+';pintarCiclo();refrescarSiCargado()">'+n+'<small>Ciclo</small></button>'; }).join('')+
     '<button class="'+(!CICLO?'sel':'')+'" onclick="CICLO=0;pintarCiclo();refrescarSiCargado()">?<small>No lo sé</small></button>';
@@ -1037,7 +1005,6 @@ function pintarCiclo(){
 function refrescarSiCargado(){ if(cargado&&!document.getElementById('p-check').classList.contains('on')){ guardar(); if(document.getElementById('p-resumen').classList.contains('on')) pintarResumen(); else pintarMapa(); if(fichaAbierta) ficha(fichaAbierta); } }
 /* ── Composición y planos ── */
 function rangoF(t){ var o={}; String(t||'').split(',').forEach(function(r){ var a=r.split('-'), i=+a[0], f=+(a[1]||a[0]); for(;i<=f;i++) o[i]=1; }); return o; }
-function numCoche(n){ return n%1?'':n; } // la cafetería sin número (p. ej. Alvia) va entre dos coches
 function setDe(t){ var o={}; String(t||'').split(' ').forEach(function(x){ if(x) o[x]=1; }); return o; }
 function cochesDef(def){ var out=[]; def.split(',').forEach(function(p){ var a=p.split(':'), r=rangoF(a[1]); Object.keys(r).forEach(function(n){ out.push({n:+n, clase:a[0]}); }); }); return out; }
 // Servicios por coche: los de la comprobación (si se está comprobando) o los cargados.
@@ -1060,7 +1027,7 @@ function nombreCoche(c){
 function compHTML(comp, n){
   var S=serie&&SERIES[serie], loco=S&&S.tractoras;
   return (loco?'<div class="car loco">🚂</div>':'')+comp.map(function(c){
-    return '<div class="car '+c.clase+(c.raro?' raro':'')+'"><span class="n">'+numCoche(c.n)+'</span><span class="c">'+(c.clase==='caf'?'☕':({Club:'CLUB',Preferente:'PREF',Confort:'CONF',Turista:'TUR'})[nombreCoche(c)]||'TUR')+'</span>'+(n[c.n]?'<span class="b">'+n[c.n]+'</span>':'')+'</div>'; }).join('')+
+    return '<div class="car '+c.clase+(c.raro?' raro':'')+'"><span class="n">'+c.n+'</span><span class="c">'+(c.clase==='caf'?'☕':({Club:'CLUB',Preferente:'PREF',Confort:'CONF',Turista:'TUR'})[nombreCoche(c)]||'TUR')+'</span>'+(n[c.n]?'<span class="b">'+n[c.n]+'</span>':'')+'</div>'; }).join('')+
     (loco?'<div class="car loco der">🚂</div>':'');
 }
 /* Sentido de la marcha en el corredor Madrid–Barcelona–Figueres (el del plano oficial de la S-103):
@@ -1068,10 +1035,7 @@ function compHTML(comp, n){
 var CORREDOR=[/MADRID/,/GUADALAJARA/,/CALATAYUD/,/ZARAGOZA/,/LLEIDA/,/CAMP DE TARRAGONA/,/BARCELONA/,/GIRONA/,/FIGUERES/];
 function posCorredor(e){ var t=sinAcento(estNombre(e)); for(var i=0;i<CORREDOR.length;i++) if(CORREDOR[i].test(t)) return i; return -1; }
 function sentidoMarcha(){
-  var v=0; LISTA.forEach(function(r){
-    var o=/MADRID/.test(sinAcento(estNombre(r.origen))), d=/MADRID/.test(sinAcento(estNombre(r.destino)));
-    if(o&&!d){ v++; return; } if(d&&!o){ v--; return; }
-    var a=posCorredor(r.origen), b=posCorredor(r.destino); if(a>-1&&b>-1&&a!==b) v+=a<b?1:-1; });
+  var v=0; LISTA.forEach(function(r){ var a=posCorredor(r.origen), b=posCorredor(r.destino); if(a>-1&&b>-1&&a!==b) v+=a<b?1:-1; });
   return v>0?'ida':v<0?'vuelta':null;
 }
 // Plano de un coche: oficial (asiento a asiento), aproximado (según la serie) o genérico (según el MOL).
@@ -1081,8 +1045,7 @@ function planoCoche(c, enCoche){
   if(of&&cc&&!cc.raro){
     P.tipo='oficial'; P.cols=of.cols.slice(); P.existe={}; P.nota=of.nota||''; P.distr=P.cols.length===4?'2+1':'2+2';
     Object.keys(of.asientos).forEach(function(l){ Object.keys(rangoF(of.asientos[l])).forEach(function(f){ P.existe[f+l]=1; }); });
-    P.lados=S.oficial.lados;
-    P.sentido=S.oficial.espaldas?sentidoMarcha():null;
+    P.sentido=sentidoMarcha();
     if(P.sentido){ P.esp=setDe(S.oficial.espaldas[P.sentido][c]); P.mesa=setDe(S.oficial.mesas[P.sentido][c]); }
   } else if(S&&cc){
     P.tipo='aprox'; P.distr=cc.clase==='pref'?S.pref:S.tur; P.cols=DISTR[P.distr].slice(); P.existe={};
@@ -1131,7 +1094,7 @@ function abrirSerie(){
     '<div class="card-t" style="margin-top:14px">🍴 Ciclo de menú</div><div class="cic x-ciclo"></div>'+
     '<div class="card-t x-comp-t" style="margin-top:14px"></div><div class="comp x-comp"></div><div class="x-encaja"></div></div>'+
     '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok" onclick="aplicarSerie()">✓ Usar esta serie</button></div>';
-  hojaSerieAntes={tipo:tipo, serie:serie, ciclo:CICLO};
+  hojaSerieAntes={tipo:tipo, serie:serie};
   pintarTipos();
   document.getElementById('ov-asiento').classList.add('on');
 }
@@ -1162,7 +1125,6 @@ function mostrarComprobacion(){
     Object.keys(tipos).map(function(t){return '<span>'+t+' · '+tipos[t]+'</span>'}).join('')+'</div>';
   document.getElementById('i-num').value=tren||'';
   proponerSerie(tren||'');
-  CICLO_MOL=LEIDO.ciclo||0; if(CICLO_MOL) CICLO=CICLO_MOL;
   if(LEIDO.deImagen) document.getElementById('ck-head').innerHTML+='<div class="estf-on" style="margin-top:10px"><span>📷 Leído de una imagen: comprueba sobre todo los asientos. Los dudosos salen en naranja; corrígelos o confírmalos para incluirlos.</span></div>';
   document.getElementById('ck-list').innerHTML=F.map(function(r,i){
     var fx=r.aviso?'<div class="clips" style="align-items:center;gap:6px;margin-top:6px">Coche <input class="inp" id="fx-c'+i+'" style="width:58px;padding:6px" inputmode="numeric" value="'+(r.coche>0?r.coche:'')+'">'+
@@ -1297,7 +1259,7 @@ function pintarMapa(){
     '<button class="girar'+(ESPEJO?' on':'')+'" onclick="girarVista()" title="Ver al revés (izquierda ↔ derecha)">⇄</button></span></div>';
   w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+letras.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
   // Plano oficial: la fila 1 está del lado de Madrid; los números crecen hacia Barcelona.
-  if(P.tipo==='oficial'&&P.lados) w+='<div class="lado">Lado '+P.lados[0]+(P.sentido==='vuelta'?' · ▲ sentido de la marcha':'')+'</div>';
+  if(P.tipo==='oficial') w+='<div class="lado">Lado Madrid'+(P.sentido==='vuelta'?' · ▲ sentido de la marcha':'')+'</div>';
   for(var f=P.min;f<=P.max;f++){
     w+='<div class="srow" style="grid-template-columns:'+cols+'"><span class="num">'+f+'</span>';
     letras.forEach(function(l){
@@ -1323,9 +1285,9 @@ function pintarMapa(){
     });
     w+='</div>';
   }
-  if(P.tipo==='oficial'&&P.lados) w+='<div class="lado">'+(P.sentido==='ida'?'▼ sentido de la marcha · ':'')+(P.lados[1]==='otro extremo'?'Otro extremo':'Lado '+P.lados[1])+'</div>';
+  if(P.tipo==='oficial') w+='<div class="lado">'+(P.sentido==='ida'?'▼ sentido de la marcha · ':'')+'Lado Barcelona</div>';
   if(P.nota) w+='<div class="lado">'+P.nota+'</div>';
-  if(P.tipo==='oficial'&&P.lados&&!P.sentido) w+='<div class="lado">No se sabe el sentido de la marcha: no se marcan asientos de espaldas ni mesas.</div>';
+  if(P.tipo==='oficial'&&!P.sentido) w+='<div class="lado">Trayecto fuera de Madrid–Barcelona: no se marcan asientos de espaldas ni mesas.</div>';
   if(Object.keys(P.fuera).length) w+='<div class="lado" style="color:var(--nar2)">Borde naranja: asiento que trae el MOL y no está en el plano. ¿Es otra serie?</div>';
   document.getElementById('wagon').innerHTML=w;
   document.getElementById('clipbar').innerHTML='<div class="clipbar"><span style="font-size:20px">📎</span><div class="txt"><b>Control de embarque</b><br>'+
@@ -1474,6 +1436,7 @@ function bloqueServicio(r, varios){
     '<div class="btn2"><button class="am" onclick="empezarMover('+sid+')">↔ Cambiar de asiento</button>'+
       (r.orig?'<button onclick="devolverAsiento('+sid+')">↩ Volver a '+(r.orig.coche!==r.coche?r.orig.coche+'-':'')+pad(r.orig.fila)+r.orig.letra+'</button>':'')+'</div>';
 }
+function fichaMenu(r){ return ''; }
 function tarjetaMenu(r){
   var me=menuElegido(r); if(!me) return '';
   var p=platoDe(r);
@@ -1497,7 +1460,7 @@ function refrescar(){
   if(fichaAbierta&&document.getElementById('ov-asiento').classList.contains('on')) ficha(fichaAbierta);
 }
 function cerrar(){
-  if(hoja==='serie'&&hojaSerieAntes){ tipo=hojaSerieAntes.tipo; serie=hojaSerieAntes.serie; var cc=CICLO!==hojaSerieAntes.ciclo; CICLO=hojaSerieAntes.ciclo; hojaSerieAntes=null; if(cc) setTimeout(refrescarSiCargado,0); }
+  if(hoja==='serie'&&hojaSerieAntes){ tipo=hojaSerieAntes.tipo; serie=hojaSerieAntes.serie; hojaSerieAntes=null; }
   document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; hoja=null; }
 /* ── Guardado en el móvil ──
    El servicio cargado (y lo marcado: servido, subió / no subió) se guarda
@@ -1519,7 +1482,7 @@ function restaurar(){
   tipo=d.tipo||tipo; serie=('serie' in d)?String(d.serie||''):serie; pintarTipos();
   document.getElementById('i-rama').value=d.rama||''; document.getElementById('i-num').value=d.num||'';
   servidos=d.servidos||{}; subio=d.subio||{}; CARGADO_EN=d.cargadoEn;
-  MARCAS_T=d.marcasT||{}; PEND=d.pend||{}; CICLO=[1,2,3,4].indexOf(+d.ciclo)>-1?+d.ciclo:0;
+  MARCAS_T=d.marcasT||{}; PEND=d.pend||{}; CICLO=+d.ciclo||0;
   if(d.compartido&&d.compartido.id&&d.compartido.token) COMPARTIDO=d.compartido;
   montar(d.lista.map(limpiarFila));
   abrirMapa();
@@ -1710,7 +1673,7 @@ async function compartir(){
   try{
     var d=((await rpc('sv_compartir',{p_de:de, p_para:para, p_pin:pin, p_tren:num, p_fecha:(LISTA[0]&&LISTA[0].fecha)||'',
       p_resumen:LISTA.length+' servicios · '+valor('i-ruta'), p_sincronizar:sync,
-      p_datos:{v:1, lista:lista, servidos:servidos, subio:subio, marcasT:MARCAS_T, tipo:tipo, serie:serie, rama:valor('i-rama'), num:num, ciclo:CICLO}}))||[])[0];
+      p_datos:{v:1, lista:lista, servidos:servidos, subio:subio, marcasT:MARCAS_T, tipo:tipo, serie:serie, rama:valor('i-rama'), num:num}}))||[])[0];
     if(!d||!d.id) throw new Error('sin respuesta');
     COMPARTIDO={id:d.id, token:d.token, rol:'emisor', con:para, pin:pin, sync:sync, nombres:nombres, estado:'pendiente'};
     PEND={}; guardar(); iniciarSync(); pintarCompartir();
@@ -1789,13 +1752,23 @@ function recibirDatos(d, marcas){
   Object.keys(d.subio||{}).forEach(function(k){ var v=d.subio[k]; if(hay[k]&&(v==='si'||v==='no')) subio[k]=v; });
   Object.keys(d.marcasT||{}).forEach(function(k){ if(hay[k]) MARCAS_T[k]=+d.marcasT[k]||0; });
   CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null}; filtro=null;
-  CICLO=[1,2,3,4].indexOf(+d.ciclo)>-1?+d.ciclo:0;
   montar(l);
   aplicarMarcas(marcas);
 }
 
 pintarTipos();
 restaurar();
+// MAQUETA: el MOL real del tren 3060 (sin nombres de clientes)
+if(!cargado){
+  var M3060=[['1-05B','sp'],['1-05C','sp'],['1-06A','sp'],['1-07A','np'],['1-07B','sp'],['1-07C','sp'],['1-08A','np'],['1-08B','sp'],['1-08C','sp'],['1-09A','sp'],['1-10A','sp'],
+    ['1-10B','um'],['1-11A','np'],['1-11B','sp'],['1-11C','np'],['1-12B','np'],['1-13A','um'],['1-13B','DESAYUNO FRÍO'],['1-13C','np'],['1-14B','np'],['1-14C','DESAYUNO CALIENTE'],
+    ['2-05A','box'],['2-07C','np'],['2-10C','np'],['5-11C','box']];
+  var TXT={sp:'Menú sin preferencia',np:'Menú sin posibilidad de elección',um:'Menú último minuto'};
+  LEIDO={nombre:'MOL tren 3060 (captura real)', deImagen:false, filas:M3060.map(function(x,i){ var p=x[0].split('-'), box=x[1]==='box';
+    return limpiarFila({sid:i, coche:+p[0], fila:parseInt(p[1],10), letra:p[1].slice(-1), k:box?'box':'des', tipoTxt:box?'Box Caliente':'Desayuno',
+      menu:box?'':(TXT[x[1]]||x[1]), origen:'BARCELONA-SANTS', destino:'MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES', fecha:'06/10/2026', tren:'3060'}); })};
+  mostrarComprobacion();
+}
 /* ── Temas de temporada (Halloween, Navidad…) ──
    Los decide la app: este módulo solo recibe el tema activo (estilos, adornos,
    saludo y opciones para elegir) y lo pinta. Sin tema, todo se ve normal.

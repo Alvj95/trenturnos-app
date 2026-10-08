@@ -7,6 +7,10 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_trenturnos",
       "iconColor": "#F97316"
+    },
+    "SystemBars": {
+      "insetsHandling": "disable",
+      "style": "DARK"
     }
   }
 }
