@@ -696,7 +696,7 @@ function arreglarAsiento(t){
   var a=(ASI_NUM[t[0]]||t[0]), b=(ASI_NUM[t[1]]||t[1]), c=(ASI_LETRA[t[2]]||t[2]).toUpperCase();
   var s=a+b+c; return (/^\d\d[A-F]$/.test(s) && s.slice(0,2)!=='00')?s:''; // la fila 00 no existe
 }
-function arreglarCoche(t){ t=(t||'').replace(/[OoQD]/g,'0').replace(/[Ss]/g,'5').replace(/[Il|i]/g,'1').replace(/\D/g,''); return t.length&&t.length<=3?t:''; }
+function arreglarCoche(t){ t=(t||'').replace(/[OoQD]/g,'0').replace(/[Ss]/g,'5').replace(/[Il|i]/g,'1').replace(/\D/g,''); return t.length&&t.length<=4?t:''; }
 
 async function ocrTabla(worker, canvas, gris, original, esc){
   await worker.setParameters({tessedit_pageseg_mode:'6', preserve_interword_spaces:'1', tessedit_char_whitelist:''});
@@ -846,10 +846,18 @@ async function procesarImagen(file){
   try{
     barra(5);
     var img=new Image(), url=URL.createObjectURL(file); img.src=url; await img.decode(); URL.revokeObjectURL(url);
-    barra(15); var pr=prepararImagen(img);
+    await leerCapturas([img], file.name||'Captura del MOL', 'imagen');
+  }catch(e){ err.textContent='⚠️ '+e.message; document.getElementById('bar').style.display='none'; }
+}
+// Lee una o varias capturas (imágenes, o páginas de un PDF sin texto) con OCR y enseña la comprobación.
+async function leerCapturas(imgs, nombre, que){
+  var filas=[], textos=[];
+  for(var pi=0;pi<imgs.length;pi++){
+    barra(15); var pr=prepararImagen(imgs[pi]);
     var w=await lectorOCR(); barra(25);
     var t=await ocrTabla(w, pr.canvas, pr.gris, pr.original, pr.escala); barra(85);
-    var c=columnasImagen(t, pr.canvas.width), filas=[];
+    var c=columnasImagen(t, pr.canvas.width), deEsta=[];
+    textos=textos.concat(t.lineas.map(function(L){return L.txt}));
     c.filas.forEach(function(f){
       var celda={fecha:f.fecha, coche:f.coche||'', asiento:f.asiento||''};
       c.cols.forEach(function(col,i){ if(col.k&&f.porCol[i]) celda[col.k]=limpiarCelda(f.porCol[i]); });
@@ -857,28 +865,29 @@ async function procesarImagen(file){
       if(celda.menu) celda.menu=ajustar(celda.menu, VOC_MENU);
       if(celda.origen) celda.origen=ajustar(celda.origen, VOC_EST, true);
       if(celda.destino) celda.destino=ajustar(celda.destino, VOC_EST, true);
-      if(celda.nombre&&/bl[a4]nc[o0]|^\(?en\W{0,3}l[a4]nc[o0]/i.test(celda.nombre)) celda.nombre='';
+      if(celda.nombre&&/bl[a4]nc[o0]|^\(?\s*en\W{0,3}b?l\W?.?nc[o0]/i.test(celda.nombre)) celda.nombre='';
       var r=deCeldas(celda, f.fecha+' '+(f.crudo||''));
       if(!r.aviso&&f.dudoso) r.aviso='Asiento dudoso en la imagen: compruébalo';
-      r.deImagen=true; filas.push(r);
+      r.deImagen=true; deEsta.push(r);
     });
-    revisarOrden(filas);
-    t.filas.filter(function(f){return f.mal}).forEach(function(f){ var r=deCeldas({fecha:f.fecha}, f.L.txt); r.deImagen=true; filas.push(r); });
-    // nº de tren: "CDGO_TREN 3060" o similar, encima de la tabla
-    var mt=null; t.lineas.some(function(L){ mt=L.txt.match(/TREN\D{0,6}(\d{3,5})\b/i); return mt; });
-    if(mt) filas.forEach(function(r){ if(!r.tren) r.tren=mt[1]; });
-    filas.forEach(function(r,i){ r.sid=i; });
-    LEIDO={nombre:limpio(file.name||'Captura del MOL'), filas:filas, deImagen:true, ciclo:cicloEnTexto(t.lineas.map(function(L){return L.txt}).join(' ')+' '+(file.name||''))};
-    barra(100);
-    if(!filas.length) throw new Error('No he encontrado filas de servicio en esta imagen');
-    mostrarComprobacion();
-  }catch(e){ err.textContent='⚠️ '+e.message; document.getElementById('bar').style.display='none'; }
+    revisarOrden(deEsta);
+    t.filas.filter(function(f){return f.mal}).forEach(function(f){ var r=deCeldas({fecha:f.fecha}, f.L.txt); r.deImagen=true; deEsta.push(r); });
+    filas=filas.concat(deEsta);
+  }
+  // nº de tren: "CDGO_TREN 3060" o similar, encima de la tabla
+  var mt=null; textos.some(function(x){ mt=x.match(/TREN\D{0,20}?(\d{3,5})\b/i); return mt; });
+  if(mt) filas.forEach(function(r){ if(!r.tren) r.tren=mt[1]; });
+  filas.forEach(function(r,i){ r.sid=i; });
+  LEIDO={nombre:limpio(nombre), filas:filas, deImagen:true, ciclo:cicloEnTexto(textos.join(' ')+' '+nombre)};
+  barra(100);
+  if(!filas.length) throw new Error('No he encontrado filas de servicio en '+(que==='pdf'?'este PDF':'esta imagen'));
+  mostrarComprobacion();
 }
 // Corregir a mano coche y asiento de una fila dudosa (pantalla de comprobación).
 function corregirFila(i){
   var r=LEIDO.filas[i], c=document.getElementById('fx-c'+i).value.trim(), a=document.getElementById('fx-a'+i).value.trim().toUpperCase().replace(/\s/g,'');
   var m=a.match(/^(\d{1,2})([A-Z])$/);
-  if(!/^\d{1,3}$/.test(c)||!m){ toast('Escribe el coche (número) y el asiento (p. ej. 05B)'); return; }
+  if(!/^\d{1,4}$/.test(c)||!m){ toast('Escribe el coche (número) y el asiento (p. ej. 05B)'); return; }
   r.coche=parseInt(c,10); r.fila=parseInt(m[1],10); r.letra=m[2]; r.aviso=validar(r);
   mostrarComprobacion();
 }
@@ -889,10 +898,11 @@ async function procesarPdf(bytes, nombre){
     if(!window.pdfjsLib) throw new Error('No se pudo cargar el lector de PDF (¿sin conexión?)');
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     barra(10);
-    var doc=await pdfjsLib.getDocument({data:bytes}).promise, filas=[];
+    var doc=await pdfjsLib.getDocument({data:bytes}).promise, filas=[], hayTexto=false;
     for(var p=1;p<=doc.numPages;p++){
       var tc=await (await doc.getPage(p)).getTextContent();
       var trozos=tc.items.filter(function(t){return t.str.trim()}).map(function(t){return {x:t.transform[4],y:t.transform[5],w:t.width,s:t.str.trim()}});
+      if(trozos.length) hayTexto=true;
       trozos.sort(function(a,b){return b.y-a.y||a.x-b.x});
       trozos.forEach(function(t){
         var f=filas.length&&filas[filas.length-1];
@@ -900,12 +910,36 @@ async function procesarPdf(bytes, nombre){
       });
       barra(10+80*p/doc.numPages);
     }
+    // PDF sin texto (p. ej. "Microsoft Print to PDF": las letras van dibujadas): se leen sus páginas como una captura.
+    if(!hayTexto) return await leerCapturas(await paginasComoImagen(doc), nombre, 'pdf');
     filas.forEach(function(f){ f.t.sort(function(a,b){return a.x-b.x}); f.txt=f.t.map(function(t){return t.s}).join(' '); });
     LEIDO={nombre:limpio(nombre), filas:interpretar(filas), ciclo:cicloEnTexto(filas.map(function(f){return f.txt}).join(' ')+' '+nombre)};
     barra(100);
     if(!LEIDO.filas.length) throw new Error('No he encontrado filas de servicio en este PDF');
     mostrarComprobacion();
   }catch(e){ err.textContent='⚠️ '+e.message; document.getElementById('bar').style.display='none'; }
+}
+// Cada página del PDF dibujada en un lienzo (fondo blanco, ~2600 px de ancho) para el OCR.
+async function paginasComoImagen(doc){
+  var out=[];
+  for(var p=1;p<=Math.min(doc.numPages,6);p++){
+    var pg=await doc.getPage(p), v0=pg.getViewport({scale:1}), v=pg.getViewport({scale:Math.min(4, 2600/v0.width)});
+    var cv=document.createElement('canvas'); cv.width=Math.round(v.width); cv.height=Math.round(v.height);
+    var cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height);
+    await pg.render({canvasContext:cx, viewport:v}).promise;
+    out.push(recortarBlanco(cv));
+  }
+  return out;
+}
+// Quita el margen en blanco alrededor de la tabla (así el OCR la ve más grande).
+function recortarBlanco(cv){
+  var W=cv.width, H=cv.height, d=cv.getContext('2d').getImageData(0,0,W,H).data, x0=W, y0=H, x1=0, y1=0;
+  for(var y=0;y<H;y+=2) for(var x=0;x<W;x+=2){ var i=(y*W+x)*4; if(d[i]+d[i+1]+d[i+2]<600){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  if(x1<=x0||y1<=y0) return cv;
+  var m=20; x0=Math.max(0,x0-m); y0=Math.max(0,y0-m); x1=Math.min(W,x1+m); y1=Math.min(H,y1+m);
+  var o=document.createElement('canvas'); o.width=x1-x0; o.height=y1-y0;
+  var ox=o.getContext('2d'); ox.fillStyle='#fff'; ox.fillRect(0,0,o.width,o.height); ox.drawImage(cv, x0,y0,o.width,o.height, 0,0,o.width,o.height);
+  return o;
 }
 function interpretar(filas){
   var cab=null, res=[];
@@ -946,7 +980,7 @@ function repartir(trozos, cab, modo){
 function deCeldas(c, txt){
   var coche=(c.coche||'').trim(), asi=(c.asiento||'').trim().toUpperCase();
   // "21 B03C" o "3 04C" juntos en una celda → coche y asiento por separado
-  var junto=(coche+' '+asi).trim().match(/^(\d{1,3})\s+B?(\d{1,2})\s?([A-Z])$/);
+  var junto=(coche+' '+asi).trim().match(/^(\d{1,4})\s+B?(\d{1,2})\s?([A-Z])$/);
   var m=asi.replace(/\s/g,'').match(/^B?(\d{1,2})([A-Z])$/);
   var r={fecha:(c.fecha||'').trim(), tren:(c.tren||'').trim(), txt:txt,
     coche:junto?parseInt(junto[1],10):parseInt(coche,10),
