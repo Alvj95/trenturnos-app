@@ -153,6 +153,108 @@
     window.Notification = NativeNotification;
   }
 
+  // ── ⏰ Alarma inteligente programada en el móvil ────────────
+  // En la web, la alarma solo avisa con la app abierta (mira la hora cada 30 s). Aquí se
+  // programan en Android, para los próximos 14 días, las de 5 min antes de fichar y 45 min
+  // antes de salir fuera de base: suenan aunque la app esté cerrada o el móvil bloqueado.
+  // Se reprograman al abrir la app, al salir de ella y al cambiar turnos o ajustes.
+  if (LocalNotifications) {
+    var CANAL_AL = 'alarmas', ID_AL = 880000, DIAS_AL = 14, alTimer = null, alInexacta = false, alN = 0;
+    function alMismaEst(a, b) {
+      function n(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+      a = n(a); b = n(b);
+      return !!a && !!b && (a === b || a.indexOf(b) === 0 || b.indexOf(a) === 0);
+    }
+    function alHora(s) { var m = /^(\d{1,2}):(\d{2})/.exec(String(s || '')); return m ? [+m[1], +m[2]] : null; }
+    function alClave(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    // Las alarmas que tocan, con la hora exacta de cada una.
+    function alCalcular() {
+      var AJ = window.AJ, TV = window.TV, out = [], ahora = Date.now();
+      if (!AJ || !TV || !AJ.alarmas || !AJ.alarmas.activas) return out;
+      for (var i = 0; i < DIAS_AL; i++) {
+        var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i);
+        var t = TV[alClave(d)], h = t && alHora(t.hF);
+        if (!t || !h) continue;
+        var toma = new Date(d); toma.setHours(h[0], h[1], 0, 0);
+        if (AJ.alarmas.fichar !== false && ['ordinario', 'trabajado', 'reserva'].indexOf(t.tipo) > -1) {
+          out.push({ id: ID_AL + i * 2, at: new Date(toma.getTime() - 5 * 60000),
+            title: '⏰ Fichar en ' + t.hF, body: 'Turno ' + t.tipo + ' · Firma en 5 minutos' });
+        }
+        if (AJ.alarmas.salida !== false && ['ordinario', 'trabajado'].indexOf(t.tipo) > -1 && t.sal && AJ.base && !alMismaEst(t.sal, AJ.base)) {
+          out.push({ id: ID_AL + i * 2 + 1, at: new Date(toma.getTime() - 45 * 60000),
+            title: '🚆 Salir hacia ' + t.sal + ' (' + t.hF + ')', body: 'Estás fuera de base — tienes 45 min para llegar al tren' });
+        }
+      }
+      return out.filter(function (a) { return a.at.getTime() > ahora + 30000; });
+    }
+    function alCanal() {
+      return LocalNotifications.createChannel ? LocalNotifications.createChannel({ id: CANAL_AL, name: 'Alarma inteligente',
+        description: 'Aviso 5 min antes de fichar y 45 min antes de salir fuera de base', importance: 5, visibility: 1, vibration: true }).catch(function () {}) : Promise.resolve();
+    }
+    function alBorrarProgramadas() {
+      return LocalNotifications.getPending().then(function (r) {
+        var ids = ((r && r.notifications) || []).filter(function (n) { return n.id >= ID_AL && n.id < ID_AL + 1000; }).map(function (n) { return { id: n.id }; });
+        return ids.length ? LocalNotifications.cancel({ notifications: ids }) : null;
+      }).catch(function () {});
+    }
+    function alPintarEstado() {
+      var sw = document.getElementById('alarm-sw'), body = sw && sw.closest('.aj-card-body');
+      if (!body) return;
+      var el = document.getElementById('alarm-nativa');
+      if (!el) { el = document.createElement('div'); el.id = 'alarm-nativa'; el.style.cssText = 'font-size:11.5px;line-height:1.45;margin-top:10px;color:var(--tx2)'; body.appendChild(el); }
+      var on = window.AJ && AJ.alarmas && AJ.alarmas.activas;
+      el.innerHTML = !on ? '' : (window.__alarmasNativas
+        ? '📱 <b style="color:var(--green2)">' + alN + ' alarma' + (alN === 1 ? '' : 's') + ' programada' + (alN === 1 ? '' : 's') + '</b> en el móvil para los próximos ' + DIAS_AL + ' días: suenan aunque la app esté cerrada.'
+        : '⚠️ Sin permiso de notificaciones: las alarmas solo suenan con la app abierta.') +
+        (window.__alarmasNativas && alInexacta ? '<br><span style="color:var(--nar3)">⚠️ Android puede retrasarlas unos minutos.</span> <a href="#" onclick="window.__alarmaPermisoExacto();return false" style="color:var(--acc3);font-weight:800">Permitir hora exacta</a>' : '');
+    }
+    window.__alarmaPermisoExacto = function () {
+      if (LocalNotifications.changeExactNotificationSetting) LocalNotifications.changeExactNotificationSetting().then(function () { alProgramar(); }).catch(function () {});
+    };
+    function alProgramar() {
+      return LocalNotifications.checkPermissions().then(function (p) {
+        var lista = alCalcular(), on = window.AJ && AJ.alarmas && AJ.alarmas.activas;
+        if (p.display !== 'granted' || !on) {
+          window.__alarmasNativas = false; alN = 0;
+          return alBorrarProgramadas().then(alPintarEstado);
+        }
+        return alCanal().then(alBorrarProgramadas).then(function () {
+          if (!lista.length) return null;
+          return LocalNotifications.schedule({ notifications: lista.map(function (a) {
+            return { id: a.id, title: a.title, body: a.body, channelId: CANAL_AL, schedule: { at: a.at, allowWhileIdle: true } };
+          }) });
+        }).then(function (r) {
+          window.__alarmasNativas = true; alN = lista.length; alInexacta = !!(r && r.warning);
+          alPintarEstado();
+        });
+      }).catch(function () { window.__alarmasNativas = false; alPintarEstado(); });
+    }
+    function alPronto() { clearTimeout(alTimer); alTimer = setTimeout(alProgramar, 1200); }
+    window.__alarmasReprogramar = alPronto;
+    window.addEventListener('load', function () {
+      // Cambios de turnos o de ajustes de alarma → se reprograman.
+      ['saveTV', 'toggleAlarmas', 'toggleAlarmFichar', 'toggleAlarmSalida'].forEach(function (f) {
+        var orig = window[f];
+        if (typeof orig !== 'function') return;
+        window[f] = function () { var r = orig.apply(this, arguments); alPronto(); return r; };
+      });
+      // Probar: además del sonido, una notificación de prueba a los 10 s (bloquea el móvil y espera).
+      var test = window.alarmaTest;
+      if (typeof test === 'function') window.alarmaTest = function () {
+        test.apply(this, arguments);
+        LocalNotifications.checkPermissions().then(function (p) {
+          if (p.display !== 'granted') { if (window.toast) toast('⚠️ Activa las notificaciones de TrenTurnos en Android'); return; }
+          return alCanal().then(function () {
+            return LocalNotifications.schedule({ notifications: [{ id: ID_AL + 999, title: '⏰ Prueba de alarma', body: 'Así te llegará el aviso para fichar', channelId: CANAL_AL, schedule: { at: new Date(Date.now() + 10000), allowWhileIdle: true } }] });
+          }).then(function () { if (window.toast) toast('🔔 En 10 s llega una notificación de prueba: puedes bloquear el móvil'); });
+        }).catch(function () {});
+      };
+      setTimeout(alProgramar, 2500);
+      setInterval(alProgramar, 30 * 60000);
+    });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) alProgramar(); else alPronto(); });
+  }
+
   // ── Notificaciones push (Firebase) ──────────────────────────
   // En el navegador los avisos llegan por Web Push; el WebView de Android no
   // lo tiene. Aquí el móvil se registra en Firebase y guarda su "token" en
