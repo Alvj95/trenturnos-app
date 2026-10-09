@@ -94,18 +94,18 @@ button{font-family:inherit}
 .salita .stt{font-size:11px;font-weight:900;color:#C4B5FD;letter-spacing:.5px;margin:0 0 4px;display:flex;justify-content:space-between}
 .salita .seat:not(.has){border-color:rgba(167,139,250,.5);color:#C4B5FD}
 .sltag{background:rgba(124,58,237,.15);border:1px solid rgba(167,139,250,.5);color:#DDD6FE;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;margin-bottom:10px}
-/* 🏁 Orden de bajada */
-.ob .obs{border:1px solid var(--div);border-radius:14px;padding:10px 12px;margin-top:8px;background:var(--s2)}
-.ob .obs.next{border-color:var(--acc2);background:rgba(217,119,6,.12)}
-.ob .obh{display:flex;align-items:center;gap:10px}
-.ob .obn{flex:none;width:28px;height:28px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px}
-.ob .next .obn{background:var(--acc);color:#fff}
-.ob .obm{flex:1;font-weight:900;font-size:14px}.ob .obm small{display:block;font-size:11px;color:var(--tx2);font-weight:700;margin-top:2px}
-.ob .obc{font-weight:900;font-size:18px}
-.ob .obcs{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.ob .obch{font-size:11px;font-weight:800;border-radius:8px;padding:3px 7px;background:var(--s3);border:1px solid rgba(251,146,60,.6);color:#FDBA74;cursor:pointer;font-family:inherit}
-.ob .obch.ok{opacity:.5;text-decoration:line-through;border-color:var(--div);color:var(--tx2)}
-.ob .obch.no{opacity:.6;text-decoration:line-through;border-color:rgba(239,68,68,.5);color:var(--red2)}
+/* 🛤️ Resumen: quién sube y quién baja en cada parada */
+.sx{display:flex;gap:6px;margin:0 0 6px}.sx button{flex:1;border-radius:12px;padding:11px;font-weight:900;font-size:14px;border:1px solid var(--div);background:var(--s2);color:var(--tx2);font-family:inherit;cursor:pointer}
+.sx button.on{border-color:var(--acc2);background:rgba(217,119,6,.18);color:var(--acc3)}
+.st1{padding:10px 0;border-bottom:1px solid var(--div)}.st1:last-child{border-bottom:0}
+.st1 .hd{display:flex;align-items:center;gap:8px;font-weight:900;font-size:14.5px}
+.st1 .hd .nn{flex:none;width:24px;height:24px;border-radius:50%;background:var(--s3);font-size:12px;display:flex;align-items:center;justify-content:center}
+.st1 .hd .q{margin-left:auto;font-size:13px;color:var(--tx2);white-space:nowrap}.st1 .hd .q b{color:var(--tx);font-size:16px}
+.st1 .ss{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 0 32px}
+.st1 .ss button{font-size:12px;font-weight:800;border-radius:7px;padding:3px 7px;background:var(--s3);color:var(--tx);border:0;font-family:inherit;cursor:pointer}
+.st1 .ss button.no{background:rgba(239,68,68,.15);color:var(--red2);text-decoration:line-through}
+.st1 .nosub{font-size:12px;font-weight:800;color:var(--red2);margin:5px 0 0 32px}
+.rs-mas{width:100%;border:1px dashed var(--div);background:none;color:var(--tx2);border-radius:12px;padding:11px;font-weight:800;font-size:13px;font-family:inherit;margin:0 0 12px;cursor:pointer}
 .wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 12px 14px}
 .wtit{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:8px}
 .wtit b{color:var(--tx);font-size:14px}
@@ -413,12 +413,15 @@ button{font-family:inherit}
 
     <!-- RESUMEN -->
     <div class="panel" id="p-resumen">
-      <div id="est-resumen"></div>
-      <div class="card ob" id="rs-bajada"></div>
-      <div class="card" id="rs-total"></div>
-      <div class="card" id="rs-lista"></div>
-      <div class="card" id="rs-comidas"></div>
-      <div class="card" id="rs-coches"></div>
+      <div class="card" id="rs-paradas"></div>
+      <button class="rs-mas" id="rs-mas-btn" onclick="RS_MAS=!RS_MAS;pintarResumen()"></button>
+      <div id="rs-mas">
+        <div id="est-resumen"></div>
+        <div class="card" id="rs-total"></div>
+        <div class="card" id="rs-lista"></div>
+        <div class="card" id="rs-comidas"></div>
+        <div class="card" id="rs-coches"></div>
+      </div>
     </div>
   </div>
 
@@ -1542,7 +1545,7 @@ function quePreparar(){
 function pintarResumen(){
   pintarEstaciones();
   var t=aServir().length, s=nServidos();
-  pintarBajada();
+  pintarParadas();
   document.getElementById('rs-total').innerHTML='<div class="card-t">✅ Servidos</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:900">'+s+'</span><span style="color:var(--tx2);font-weight:700">de '+t+' servicios'+(nEstado('no')?' <span style="color:var(--red2)">('+nEstado('no')+' no subieron)</span>':'')+'</span></div><div class="prog"><i style="width:'+(t?Math.round(s/t*100):0)+'%"></i></div>'+
     '<div class="est3"><div><b style="color:var(--green2)">'+nEstado('si')+'</b>🧍 A bordo</div><div><b style="color:var(--red2)">'+nEstado('no')+'</b>🚫 No subió</div><div><b>'+nEstado('nc')+'</b>❔ Sin comprobar</div></div>';
   var ex=aServir().filter(function(r){return r.extra});
@@ -1566,23 +1569,25 @@ function pintarListaResumen(){
     (F.length?F.map(function(r){ return filaHTML(r, subio[r.sid]==='no'?'🚫':servidos[r.sid]?'✅':'⏳', "ficha('"+seatKey(r)+"')", clipsHTML(r.sid)); }).join(''):'<div class="vacio">Nada en esta lista.</div>');
 }
 
-/* 🏁 Orden de bajada: cada parada (en el orden del recorrido) con quién baja en ella.
-   Resaltada, la primera que aún tiene a alguien por servir. */
-function pintarBajada(){
-  var d={}; lista(function(r){ return !!r.destino; }).forEach(function(r){ (d[r.destino]=d[r.destino]||[]).push(r); });
-  var est=Object.keys(d).sort(function(a,b){ return rangoEst(a)-rangoEst(b); }), prox=-1;
-  function porServir(r){ return !servidos[r.sid]&&subio[r.sid]!=='no'; }
-  est.forEach(function(e,i){ if(prox<0&&d[e].some(porServir)) prox=i; });
-  var h='<div class="card-t">🏁 Orden de bajada</div><div style="font-size:11.5px;color:var(--tx2);font-weight:600">En el orden del recorrido: primero quien baja antes.</div>';
-  est.forEach(function(e,i){
-    var l=d[e].sort(function(a,b){ return a.coche-b.coche||a.fila-b.fila||a.letra.localeCompare(b.letra); }), pend=l.filter(porServir).length;
-    h+='<div class="obs'+(i===prox?' next':'')+'"><div class="obh"><div class="obn">'+(i+1)+'</div><div class="obm">'+estNombre(e)+
-      '<small>'+(i===prox?'Próxima parada · ':'')+(pend?'⏳ '+pend+' por servir':'✅ todos servidos')+'</small></div><div class="obc">'+l.length+'</div></div>'+
-      '<div class="obcs">'+l.map(function(r){ var c=servidos[r.sid]?' ok':subio[r.sid]==='no'?' no':'';
-        return '<button class="obch'+c+'" onclick="ficha(\''+seatKey(r)+'\')">'+(esAcop(r.coche)?'🔗'+cocheReal(r.coche)+'-':r.coche+'-')+pad(r.fila)+r.letra+' '+COMIDAS[r.k].e+'</button>'; }).join('')+'</div></div>';
+/* 🛤️ Resumen sencillo: en cada parada (en el orden del recorrido), quién sube o quién baja,
+   y quién no subió (en rojo). Lo demás (qué preparar, servidos, lista…) va en «Ver más». */
+var RS_MAS=false;
+function pintarParadas(){
+  var modo=estFiltro.modo==='baja'?'baja':'sube', campo=modo==='sube'?'origen':'destino', d={};
+  LISTA.forEach(function(r){ if(r[campo]) (d[r[campo]]=d[r[campo]]||[]).push(r); });
+  function asi(r){ return (esAcop(r.coche)?'🔗'+cocheReal(r.coche):r.coche)+'-'+pad(r.fila)+r.letra; }
+  var h='<div class="sx"><button class="'+(modo==='sube'?'on':'')+'" onclick="setEst(\'sube\',null)">⬆️ Suben</button>'+
+    '<button class="'+(modo==='baja'?'on':'')+'" onclick="setEst(\'baja\',null)">⬇️ Bajan</button></div>';
+  Object.keys(d).sort(function(a,b){ return rangoEst(a)-rangoEst(b); }).forEach(function(e,i){
+    var l=d[e].sort(function(a,b){ return a.coche-b.coche||a.fila-b.fila||a.letra.localeCompare(b.letra); }),
+      no=l.filter(function(r){ return subio[r.sid]==='no'; });
+    h+='<div class="st1"><div class="hd"><span class="nn">'+(i+1)+'</span>'+estCorto(e)+'<span class="q"><b>'+l.length+'</b> '+(modo==='sube'?'suben':'bajan')+'</span></div>'+
+      '<div class="ss">'+l.map(function(r){ return '<button class="'+(subio[r.sid]==='no'?'no':'')+'" onclick="ficha(\''+seatKey(r)+'\')">'+asi(r)+'</button>'; }).join('')+'</div>'+
+      (no.length?'<div class="nosub">🚫 No subió: '+no.map(asi).join(', ')+'</div>':'')+'</div>';
   });
-  document.getElementById('rs-bajada').innerHTML=est.length?h:'';
-  document.getElementById('rs-bajada').style.display=est.length?'':'none';
+  document.getElementById('rs-paradas').innerHTML=h;
+  document.getElementById('rs-mas').style.display=RS_MAS?'':'none';
+  document.getElementById('rs-mas-btn').textContent=RS_MAS?'▾ Ver menos':'▸ Ver más: qué preparar, servidos, lista completa';
 }
 
 /* ── Ficha del asiento (uno o varios servicios) ── */
@@ -2011,6 +2016,24 @@ function recibirDatos(d, marcas){
 
 pintarTipos();
 restaurar();
+/* «Desliza hacia abajo para actualizar», también dentro de Servicios: el gesto lo pinta y lo
+   hace la app (parent.__ptr); aquí solo se comprueba que se puede (arriba del todo, sin ventanas abiertas). */
+(function(){
+  function ptr(){ try{ return parent!==window&&parent.__ptr||null; }catch(e){ return null; } }
+  function arriba(t){
+    if(!t||!t.closest||t.closest('input,textarea,select')) return false;
+    if(document.getElementById('ov-asiento').classList.contains('on')||MOVIENDO!==null) return false;
+    for(var el=t; el&&el!==document.body; el=el.parentElement){
+      var cs=getComputedStyle(el); if(/(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+1&&el.scrollTop>0) return false; }
+    return true;
+  }
+  var activo=false;
+  document.addEventListener('touchstart', function(e){ var p=ptr(); activo=false;
+    if(!p||e.touches.length!==1||!arriba(e.target)) return; activo=true; p.ini(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  document.addEventListener('touchmove', function(e){ var p=ptr(); if(activo&&p) p.mov(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  document.addEventListener('touchend', function(){ var p=ptr(); if(activo&&p) p.fin(); activo=false; }, {passive:true});
+  document.addEventListener('touchcancel', function(){ var p=ptr(); if(activo&&p) p.cancelar(); activo=false; }, {passive:true});
+})();
 /* ── Temas de temporada (Halloween, Navidad…) ──
    Los decide la app: este módulo solo recibe el tema activo (estilos, adornos,
    saludo y opciones para elegir) y lo pinta. Sin tema, todo se ve normal.
