@@ -79,6 +79,33 @@ button{font-family:inherit}
 .coche .c{font-size:8.5px;color:var(--tx2);font-weight:700}
 .coche.prem .c{color:var(--acc3)}
 .coche.sel{border-color:var(--acc2);background:rgba(217,119,6,.18)}
+/* 🔗 Tren acoplado (unidad múltiple): coches de 4 cifras en el MOL (6001 = coche 1 del otro tren) */
+.coches.grp{gap:10px}
+.cgrp{flex:none;border:1px solid var(--div);border-radius:14px;padding:6px 8px 8px;background:rgba(13,27,46,.6)}
+.cgrp.ac{border-color:rgba(56,189,248,.55);background:rgba(14,165,233,.08)}
+.cgrp .cgt{font-size:10px;font-weight:900;letter-spacing:.6px;color:var(--tx2);margin:0 2px 6px;white-space:nowrap;text-transform:uppercase}
+.cgrp.ac .cgt{color:#7DD3FC}
+.cgrp .cgc{display:flex;gap:5px}
+.coche .u{font-size:8px;color:#7DD3FC;font-weight:800}
+.acb{display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,233,.15);border:1px solid rgba(56,189,248,.5);color:#7DD3FC;border-radius:8px;padding:1px 7px;font-size:10.5px;font-weight:900;margin-left:6px;vertical-align:middle}
+.acnote{background:rgba(14,165,233,.10);border:1px solid rgba(56,189,248,.45);color:#BAE6FD;border-radius:12px;padding:9px 11px;font-size:12px;font-weight:700;margin:8px 0 0}
+/* 🛋️ Salita exclusiva (S-103, coche 1 Club, filas 1–3) */
+.salita{margin:2px 0 6px;padding:6px 8px 8px;border:2px solid rgba(167,139,250,.6);border-radius:14px;background:rgba(124,58,237,.10)}
+.salita .stt{font-size:11px;font-weight:900;color:#C4B5FD;letter-spacing:.5px;margin:0 0 4px;display:flex;justify-content:space-between}
+.salita .seat:not(.has){border-color:rgba(167,139,250,.5);color:#C4B5FD}
+.sltag{background:rgba(124,58,237,.15);border:1px solid rgba(167,139,250,.5);color:#DDD6FE;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;margin-bottom:10px}
+/* 🏁 Orden de bajada */
+.ob .obs{border:1px solid var(--div);border-radius:14px;padding:10px 12px;margin-top:8px;background:var(--s2)}
+.ob .obs.next{border-color:var(--acc2);background:rgba(217,119,6,.12)}
+.ob .obh{display:flex;align-items:center;gap:10px}
+.ob .obn{flex:none;width:28px;height:28px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px}
+.ob .next .obn{background:var(--acc);color:#fff}
+.ob .obm{flex:1;font-weight:900;font-size:14px}.ob .obm small{display:block;font-size:11px;color:var(--tx2);font-weight:700;margin-top:2px}
+.ob .obc{font-weight:900;font-size:18px}
+.ob .obcs{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.ob .obch{font-size:11px;font-weight:800;border-radius:8px;padding:3px 7px;background:var(--s3);border:1px solid rgba(251,146,60,.6);color:#FDBA74;cursor:pointer;font-family:inherit}
+.ob .obch.ok{opacity:.5;text-decoration:line-through;border-color:var(--div);color:var(--tx2)}
+.ob .obch.no{opacity:.6;text-decoration:line-through;border-color:rgba(239,68,68,.5);color:var(--red2)}
 .wagon{background:rgba(7,17,31,.75);border:1.5px solid var(--div);border-radius:26px;padding:12px 12px 14px}
 .wtit{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:8px}
 .wtit b{color:var(--tx);font-size:14px}
@@ -387,6 +414,7 @@ button{font-family:inherit}
     <!-- RESUMEN -->
     <div class="panel" id="p-resumen">
       <div id="est-resumen"></div>
+      <div class="card ob" id="rs-bajada"></div>
       <div class="card" id="rs-total"></div>
       <div class="card" id="rs-lista"></div>
       <div class="card" id="rs-comidas"></div>
@@ -441,7 +469,8 @@ var DISTR = {'2+1':['A',null,'B','C'], '2+2':['A','B',null,'C','D'], '3+2':['A',
 var SERIES = {
   'S-103':{tractoras:false, comp:'pref:1-3,caf:4,tur:5-8', pref:'2+1', tur:'2+2', filas:{pref:17,tur:18}, oficial:{
     nombres:{1:'Club',2:'Preferente',3:'Preferente'}, lados:['Madrid','Barcelona'],
-    1:{cols:['A',null,'B','C'], asientos:{A:'5-14',B:'5-14',C:'5-14'}},
+    // Filas 1–3: salita exclusiva (delante del asiento 5, lado cabina); la fila 4 no existe.
+    1:{cols:['A',null,'B','C'], asientos:{A:'1-3,5-14',B:'1-3,5-14',C:'1-3,5-14'}, salita:'1-3'},
     2:{cols:['A',null,'B','C'], asientos:{A:'2-17',B:'1-17',C:'1-17'}},
     3:{cols:['A',null,'B','C'], asientos:{A:'1-17',B:'1-18',C:'1-18'}},
     5:{cols:['A','B',null,'C','D'], asientos:{A:'1-16',B:'1-16',C:'1-16',D:'1-16'}, nota:'♿ Plazas para silla de ruedas: 11H y 12H'},
@@ -1038,8 +1067,10 @@ function pintarTipos(){
   var hS=TIPOS[tipo].map(function(s){
     return '<button class="chip'+(s===serie?' sel':'')+'" onclick="serie=\''+s+'\';pintarTipos()">'+s+'<small>'+(MODELO[s.replace(/\D/g,'').slice(0,3)]||'')+(SERIES[s]&&SERIES[s].oficial?' · plano oficial':'')+'</small></button>';}).join('')+
     '<button class="chip'+(!serie?' sel':'')+'" onclick="serie=\'\';pintarTipos()">No lo sé<small>plano genérico</small></button>';
-  var n=porCoche(), comp=composicion(n), S=serie&&SERIES[serie], raros=comp.filter(function(c){return c.raro}).map(function(c){return c.n});
-  var hC=compHTML(comp, n), hE=!serie?'<div class="encaja no">Sin serie: el mapa usa un plano genérico. Puedes elegirla después en el mapa.</div>':
+  var n0=porCoche(), n=nCoches(n0,false), na=nCoches(n0,true), comp=composicion(n), S=serie&&SERIES[serie], raros=comp.filter(function(c){return c.raro}).map(function(c){return c.n});
+  var compA=Object.keys(na).length?composicion(na):null;
+  if(compA) compA.filter(function(c){return c.raro}).forEach(function(c){ raros.push(c.n+' (acoplado)'); });
+  var hC=compHTML(comp, n)+(compA?'<div style="flex-basis:100%;font-size:10px;font-weight:900;color:#7DD3FC;margin:6px 0 2px">🔗 TREN ACOPLADO</div>'+compHTML(compA, na):''), hE=!serie?'<div class="encaja no">Sin serie: el mapa usa un plano genérico. Puedes elegirla después en el mapa.</div>':
     raros.length?'<div class="encaja no">⚠️ El MOL trae servicios en el coche '+raros.join(', ')+', que en la '+serie+' no es de viajeros. ¿Seguro que es esta serie?</div>':
     '<div class="encaja si">✅ Los coches del MOL encajan con la '+serie+(S&&S.oficial?' · plano oficial de Renfe':' · plano aproximado')+'.</div>';
   function poner(cls, h){ var l=document.querySelectorAll(cls); for(var i=0;i<l.length;i++) l[i].innerHTML=h; }
@@ -1096,6 +1127,14 @@ function porCoche(){
   var l=enCheck?LEIDO.filas.filter(function(r){return !r.aviso}):LISTA, n={};
   l.forEach(function(r){ if(r.coche>0) n[r.coche]=(n[r.coche]||0)+1; }); return n;
 }
+/* 🔗 Tren acoplado (unidad múltiple): en el MOL, un coche de 4 cifras (6001, 7002…) es de otro tren
+   que va enganchado, siempre de la misma serie. Las dos últimas cifras son su nº de coche. */
+function esAcop(c){ return c>=1000; }
+function cocheReal(c){ return c>=1000?c%100:c; }
+function hayAcop(){ return LISTA.some(function(r){ return esAcop(r.coche); }); }
+function nomCoche(c){ return esAcop(c)?cocheReal(c)+'<span class="acb">🔗 acoplado · '+c+'</span>':String(c); }
+// Servicios por coche de uno de los dos trenes (con el nº de coche de su tren).
+function nCoches(n, acop){ var o={}; Object.keys(n).forEach(function(k){ k=+k; if(esAcop(k)!==!!acop) return; var c=cocheReal(k); o[c]=(o[c]||0)+n[k]; }); return o; }
 // Coches de la serie elegida; si el MOL trae servicios en un coche que la serie no tiene de viajeros, manda el MOL.
 function composicion(n){
   var S=serie&&SERIES[serie], l=S?cochesDef(S.comp):[], hay={};
@@ -1126,14 +1165,17 @@ function sentidoMarcha(){
 }
 // Plano de un coche: oficial (asiento a asiento), aproximado (según la serie) o genérico (según el MOL).
 function planoCoche(c, enCoche){
-  var S=serie&&SERIES[serie], cc=S&&composicion(porCoche()).filter(function(x){return x.n===c})[0], of=S&&S.oficial&&S.oficial[c];
+  var cn=cocheReal(c), ac=esAcop(c);
+  var S=serie&&SERIES[serie], cc=S&&composicion(nCoches(porCoche(), ac)).filter(function(x){return x.n===cn})[0], of=S&&S.oficial&&S.oficial[cn];
   var P={cols:null, existe:null, tipo:'gen', esp:{}, mesa:{}, nota:'', sentido:null, nombre:cc?nombreCoche(cc):'Servicio a bordo', distr:''};
   if(of&&cc&&!cc.raro){
     P.tipo='oficial'; P.cols=of.cols.slice(); P.existe={}; P.nota=of.nota||''; P.distr=P.cols.length===4?'2+1':'2+2';
     Object.keys(of.asientos).forEach(function(l){ Object.keys(rangoF(of.asientos[l])).forEach(function(f){ P.existe[f+l]=1; }); });
-    P.lados=S.oficial.lados;
-    P.sentido=S.oficial.espaldas?sentidoMarcha():null;
-    if(P.sentido){ P.esp=setDe(S.oficial.espaldas[P.sentido][c]); P.mesa=setDe(S.oficial.mesas[P.sentido][c]); }
+    // En el tren acoplado no se sabe hacia dónde mira: sin lados ni espaldas/mesas.
+    P.lados=ac?null:S.oficial.lados;
+    P.sentido=S.oficial.espaldas&&!ac?sentidoMarcha():null;
+    if(P.sentido){ P.esp=setDe(S.oficial.espaldas[P.sentido][cn]); P.mesa=setDe(S.oficial.mesas[P.sentido][cn]); }
+    if(of.salita){ var sl=Object.keys(rangoF(of.salita)).map(Number); P.salita={min:Math.min.apply(null,sl), max:Math.max.apply(null,sl)}; }
   } else if(S&&cc){
     P.tipo='aprox'; P.distr=cc.clase==='pref'?S.pref:S.tur; P.cols=DISTR[P.distr].slice(); P.existe={};
     var F=S.filas[cc.clase==='pref'?'pref':'tur'];
@@ -1196,7 +1238,7 @@ function seatKey(r){ return r.coche+'-'+pad(r.fila)+r.letra; }
 function filaHTML(r, icono, onclick, extra){
   var m=COMIDAS[r.k], esp=r.especial?' <span style="color:var(--nar2)">⚠️</span>':'';
   return '<div class="ck-row'+(r.aviso?' warn':'')+(onclick?' tap':'')+(onclick&&extra&&subio[r.sid]==='no'?' nosube':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span>'+icono+'</span>'+
-    '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>Coche '+(r.coche||'?')+'</small></div>'+
+    '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>'+(esAcop(r.coche)?'🔗 Coche '+cocheReal(r.coche):'Coche '+(r.coche||'?'))+'</small></div>'+
     '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+(r.extra?'<span style="color:var(--green2);font-weight:900">➕ </span>':'')+'<b>'+m.e+' '+nombreTipo(r)+'</b>'+(textoMenu(r)?' · '+textoMenu(r)+esp:'')+'<br>'+
     estCorto(r.origen)+' → '+estCorto(r.destino)+(r.nombre?' · '+r.nombre:'')+(r.cumple&&r.k!=='cum'?' · 🎂':'')+
     (r.orig?'<br><span style="color:var(--acc3)">↪ antes '+r.orig.coche+'-'+pad(r.orig.fila)+r.orig.letra+'</span>':'')+'</div>'+
@@ -1206,10 +1248,12 @@ function mostrarComprobacion(){
   var F=LEIDO.filas, ok=F.filter(function(r){return !r.aviso}), coches={}, tipos={};
   ok.forEach(function(r){ coches[r.coche]=1; var n=nombreTipo(r); tipos[n]=(tipos[n]||0)+1; });
   var tren=(ok.filter(function(r){return r.tren})[0]||{}).tren;
+  var acopN=Object.keys(coches).map(Number).filter(esAcop).sort(function(a,b){return a-b}), acopC=acopN.map(cocheReal);
   document.getElementById('ck-head').innerHTML='<div class="card-t">📄 '+LEIDO.nombre+'</div>'+
     '<div style="font-size:15px;font-weight:800">He encontrado <span style="color:var(--acc3)">'+ok.length+' servicios</span>'+(F.length>ok.length?' y <span style="color:var(--nar2)">'+(F.length-ok.length)+' fila(s) a revisar</span>':'')+'</div>'+
-    '<div class="ck-sum" style="margin-top:8px">'+(tren?'<span>🚆 Tren '+tren+'</span>':'')+'<span>📅 '+(ok[0]?ok[0].fecha:'')+'</span><span>🚃 Coches '+Object.keys(coches).sort(function(a,b){return a-b}).join(', ')+'</span>'+
-    Object.keys(tipos).map(function(t){return '<span>'+t+' · '+tipos[t]+'</span>'}).join('')+'</div>';
+    '<div class="ck-sum" style="margin-top:8px">'+(tren?'<span>🚆 Tren '+tren+'</span>':'')+'<span>📅 '+(ok[0]?ok[0].fecha:'')+'</span><span>🚃 Coches '+Object.keys(coches).map(Number).filter(function(c){return !esAcop(c)}).sort(function(a,b){return a-b}).join(', ')+(acopC.length?' · 🔗 acoplado: '+acopC.join(', '):'')+'</span>'+
+    Object.keys(tipos).map(function(t){return '<span>'+t+' · '+tipos[t]+'</span>'}).join('')+'</div>'+
+    (acopC.length?'<div class="acnote">🔗 Este tren va <b>acoplado a otro</b> (unidad múltiple). Los coches de 4 cifras ('+acopN.join(', ')+') son del tren acoplado: misma serie, con sus propios coches 1, 2, 3…</div>':'');
   document.getElementById('i-num').value=tren||'';
   proponerSerie(tren||'');
   CICLO_MOL=LEIDO.ciclo||0; if(CICLO_MOL) CICLO=CICLO_MOL;
@@ -1265,6 +1309,11 @@ function ordenarEstaciones(){
     if(!lib.length) lib=[pend[0]];
     lib.forEach(function(s){ orden.push(s); pend.splice(pend.indexOf(s),1); });
   }
+  // En el corredor Madrid–Barcelona–Figueres se usa el orden real de la línea (el MOL solo no siempre lo sabe:
+  // p. ej. Lleida y Camp de Tarragona sin un tramo entre ellas).
+  var sm=sentidoMarcha();
+  if(sm&&orden.length&&orden.every(function(e){ return posCorredor(e)>-1; }))
+    orden.sort(function(a,b){ return sm==='ida'?posCorredor(a)-posCorredor(b):posCorredor(b)-posCorredor(a); });
   ORDEN={}; orden.forEach(function(s,i){ ORDEN[s]=i; });
 }
 function rangoEst(s){ return s in ORDEN?ORDEN[s]:99; }
@@ -1336,19 +1385,28 @@ function pintarMapa(){
     usados.map(function(k){var m=COMIDAS[k];return '<button class="chip'+(filtro===k?' sel':'')+'" onclick="filtro=\''+k+'\';pintarMapa()"><i class="dot" style="background:'+m.c+'"></i>'+m.n+' · '+cuenta(k)+'</button>';}).join('');
   var mv=MOVIENDO!==null&&filaPorSid(MOVIENDO);
   document.getElementById('mover-bar').innerHTML=mv?'<div class="mover-bar"><span>↔ Moviendo <b>'+COMIDAS[mv.k].e+' '+nombreTipo(mv)+'</b> de <b>'+mv.coche+'-'+pad(mv.fila)+mv.letra+'</b>. Toca el nuevo asiento'+(cochesMover().length>1?' (puedes cambiar de coche)':'')+'.</span><button onclick="cancelarMover()">Cancelar</button></div>':'';
-  document.getElementById('coches').innerHTML=(mv?cochesMover():COCHES).map(function(n){var k=cuenta(filtro,n);
-    return '<button class="coche prem'+(n===coche?' sel':'')+'" onclick="coche='+n+';pintarMapa()"><div class="k">'+(k?k+' 🍽':'')+'</div><div class="n">'+n+'</div><div class="c">'+nServidos(n)+'/'+cuenta(null,n)+' ✓</div></button>';}).join('');
+  var lc=mv?cochesMover():COCHES;
+  function bCoche(n){var k=cuenta(filtro,n);
+    return '<button class="coche prem'+(n===coche?' sel':'')+'" onclick="coche='+n+';pintarMapa()"><div class="k">'+(k?k+' 🍽':'')+'</div><div class="n">'+cocheReal(n)+'</div>'+(esAcop(n)?'<div class="u">'+n+'</div>':'<div class="c">'+nServidos(n)+'/'+cuenta(null,n)+' ✓</div>')+'</button>';}
+  var lA=lc.filter(esAcop), elC=document.getElementById('coches');
+  elC.classList.toggle('grp', !!lA.length);
+  elC.innerHTML=lA.length?'<div class="cgrp"><div class="cgt">🚆 Tren principal</div><div class="cgc">'+lc.filter(function(c){return !esAcop(c)}).map(bCoche).join('')+'</div></div>'+
+    '<div class="cgrp ac"><div class="cgt">🔗 Tren acoplado</div><div class="cgc">'+lA.map(bCoche).join('')+'</div></div>':lc.map(bCoche).join('');
   var enCoche=lista(function(r){return r.coche===coche});
   var P=planoCoche(coche, LISTA.filter(function(r){return r.coche===coche})), letras=ESPEJO?P.cols.slice().reverse():P.cols;
   document.getElementById('plano-info').innerHTML='🚆 <b>'+(serie||'Sin serie')+'</b>'+(P.tipo==='oficial'?'<span class="of">✅ Plano oficial de Renfe</span>':P.tipo==='aprox'?'<span class="ap">Plano aproximado</span>':'<span class="ap">Plano genérico</span>')+
     ' · 🍴 '+(CICLO?'Ciclo '+CICLO:'sin ciclo')+'<button onclick="abrirSerie()">🔁 Cambiar</button>';
   var cols='20px '+letras.map(function(l){return l?'1fr':'16px'}).join(' ');
-  var w='<div class="wtit"><span><b>Coche '+coche+'</b> · '+enCoche.length+' servicio'+(enCoche.length===1?'':'s')+'</span><span style="display:flex;align-items:center;gap:6px"><span class="tag">'+(P.tipo==='gen'?'SERVICIO A BORDO':limpio(P.nombre).toUpperCase()+' · '+P.distr)+'</span>'+
+  var w='<div class="wtit"><span><b>Coche '+nomCoche(coche)+'</b> · '+enCoche.length+' servicio'+(enCoche.length===1?'':'s')+'</span><span style="display:flex;align-items:center;gap:6px"><span class="tag">'+(P.tipo==='gen'?'SERVICIO A BORDO':limpio(P.nombre).toUpperCase()+' · '+P.distr)+'</span>'+
     '<button class="girar'+(ESPEJO?' on':'')+'" onclick="girarVista()" title="Ver al revés (izquierda ↔ derecha)">⇄</button></span></div>';
   w+='<div class="srow" style="grid-template-columns:'+cols+'"><span></span>'+letras.map(function(l){return '<span class="num">'+(l||'')+'</span>'}).join('')+'</div>';
   // Plano oficial: la fila 1 está del lado de Madrid; los números crecen hacia Barcelona.
   if(P.tipo==='oficial'&&P.lados) w+='<div class="lado">Lado '+P.lados[0]+(P.sentido==='vuelta'?' · ▲ sentido de la marcha':'')+'</div>';
   for(var f=P.min;f<=P.max;f++){
+    if(P.salita){
+      if(!letras.some(function(l){ return l&&P.existe&&P.existe[f+l]; })) continue; // fila que no existe (p. ej. la 4)
+      if(f===P.salita.min) w+='<div class="salita"><div class="stt"><span>🛋️ SALITA EXCLUSIVA</span><span>filas '+P.salita.min+'–'+P.salita.max+'</span></div>';
+    }
     w+='<div class="srow" style="grid-template-columns:'+cols+'"><span class="num">'+f+'</span>';
     letras.forEach(function(l){
       if(!l){ w+='<span></span>'; return; }
@@ -1373,6 +1431,7 @@ function pintarMapa(){
       w+='<button class="'+cls+'" style="'+st+'" onclick="tocarAsiento(\''+key+'\')"><span class="lb">'+pad(f)+l+'</span>'+badge+'</button>';
     });
     w+='</div>';
+    if(P.salita&&f===P.salita.max) w+='</div>';
   }
   if(P.tipo==='oficial'&&P.lados) w+='<div class="lado">'+(P.sentido==='ida'?'▼ sentido de la marcha · ':'')+(P.lados[1]==='otro extremo'?'Otro extremo':'Lado '+P.lados[1])+'</div>';
   if(P.nota) w+='<div class="lado">'+P.nota+'</div>';
@@ -1483,6 +1542,7 @@ function quePreparar(){
 function pintarResumen(){
   pintarEstaciones();
   var t=aServir().length, s=nServidos();
+  pintarBajada();
   document.getElementById('rs-total').innerHTML='<div class="card-t">✅ Servidos</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:900">'+s+'</span><span style="color:var(--tx2);font-weight:700">de '+t+' servicios'+(nEstado('no')?' <span style="color:var(--red2)">('+nEstado('no')+' no subieron)</span>':'')+'</span></div><div class="prog"><i style="width:'+(t?Math.round(s/t*100):0)+'%"></i></div>'+
     '<div class="est3"><div><b style="color:var(--green2)">'+nEstado('si')+'</b>🧍 A bordo</div><div><b style="color:var(--red2)">'+nEstado('no')+'</b>🚫 No subió</div><div><b>'+nEstado('nc')+'</b>❔ Sin comprobar</div></div>';
   var ex=aServir().filter(function(r){return r.extra});
@@ -1492,7 +1552,7 @@ function pintarResumen(){
     '<div class="card-t">🛤️ Por tramo</div>'+filasGrupo(grupo(function(r){ return estCorto(r.origen)+' → '+estCorto(r.destino); }, function(r){ return rangoEst(r.origen)*100+rangoEst(r.destino); }))+
     '<div class="card-t" style="margin-top:12px">🚉 Suben en</div>'+filasGrupo(grupo(function(r){ return estNombre(r.origen); }, function(r){ return rangoEst(r.origen); }))+
     '<div class="card-t" style="margin-top:12px">🏁 Bajan en</div>'+filasGrupo(grupo(function(r){ return estNombre(r.destino); }, function(r){ return rangoEst(r.destino); }))+
-    '<div class="card-t" style="margin-top:12px">🚃 Por coche</div>'+COCHES.map(function(c){return '<div class="rs-row"><div class="rs-n">Coche '+c+'<small>'+nServidos(c)+' de '+cuenta(null,c)+' servidos</small></div><button class="chip" onclick="coche='+c+';filtro=null;goP(\'mapa\')">Ver ›</button></div>';}).join('');
+    '<div class="card-t" style="margin-top:12px">🚃 Por coche</div>'+COCHES.map(function(c,i){return (hayAcop()&&(i===0||esAcop(c)&&!esAcop(COCHES[i-1]))?'<div style="font-size:11px;font-weight:900;color:'+(esAcop(c)?'#7DD3FC':'var(--tx2)')+';margin:6px 0 2px">'+(esAcop(c)?'🔗 TREN ACOPLADO':'🚆 TREN PRINCIPAL')+'</div>':'')+'<div class="rs-row"><div class="rs-n">Coche '+nomCoche(c)+'<small>'+nServidos(c)+' de '+cuenta(null,c)+' servidos</small></div><button class="chip" onclick="coche='+c+';filtro=null;goP(\'mapa\')">Ver ›</button></div>';}).join('');
   pintarListaResumen();
 }
 function pintarListaResumen(){
@@ -1504,6 +1564,25 @@ function pintarListaResumen(){
     '<div class="chips" style="margin-bottom:6px">'+
     [['todos','Todos · '+t],['pend','⏳ Por servir · '+pend],['serv','✅ Servidos · '+n],['no','🚫 No subió · '+nEstado('no')],['nc','❔ Sin comprobar · '+nEstado('nc')]].map(function(o){return '<button class="chip'+(verLista===o[0]?' sel':'')+'" onclick="verLista=\''+o[0]+'\';pintarListaResumen()">'+o[1]+'</button>';}).join('')+'</div>'+
     (F.length?F.map(function(r){ return filaHTML(r, subio[r.sid]==='no'?'🚫':servidos[r.sid]?'✅':'⏳', "ficha('"+seatKey(r)+"')", clipsHTML(r.sid)); }).join(''):'<div class="vacio">Nada en esta lista.</div>');
+}
+
+/* 🏁 Orden de bajada: cada parada (en el orden del recorrido) con quién baja en ella.
+   Resaltada, la primera que aún tiene a alguien por servir. */
+function pintarBajada(){
+  var d={}; lista(function(r){ return !!r.destino; }).forEach(function(r){ (d[r.destino]=d[r.destino]||[]).push(r); });
+  var est=Object.keys(d).sort(function(a,b){ return rangoEst(a)-rangoEst(b); }), prox=-1;
+  function porServir(r){ return !servidos[r.sid]&&subio[r.sid]!=='no'; }
+  est.forEach(function(e,i){ if(prox<0&&d[e].some(porServir)) prox=i; });
+  var h='<div class="card-t">🏁 Orden de bajada</div><div style="font-size:11.5px;color:var(--tx2);font-weight:600">En el orden del recorrido: primero quien baja antes.</div>';
+  est.forEach(function(e,i){
+    var l=d[e].sort(function(a,b){ return a.coche-b.coche||a.fila-b.fila||a.letra.localeCompare(b.letra); }), pend=l.filter(porServir).length;
+    h+='<div class="obs'+(i===prox?' next':'')+'"><div class="obh"><div class="obn">'+(i+1)+'</div><div class="obm">'+estNombre(e)+
+      '<small>'+(i===prox?'Próxima parada · ':'')+(pend?'⏳ '+pend+' por servir':'✅ todos servidos')+'</small></div><div class="obc">'+l.length+'</div></div>'+
+      '<div class="obcs">'+l.map(function(r){ var c=servidos[r.sid]?' ok':subio[r.sid]==='no'?' no':'';
+        return '<button class="obch'+c+'" onclick="ficha(\''+seatKey(r)+'\')">'+(esAcop(r.coche)?'🔗'+cocheReal(r.coche)+'-':r.coche+'-')+pad(r.fila)+r.letra+' '+COMIDAS[r.k].e+'</button>'; }).join('')+'</div></div>';
+  });
+  document.getElementById('rs-bajada').innerHTML=est.length?h:'';
+  document.getElementById('rs-bajada').style.display=est.length?'':'none';
 }
 
 /* ── Ficha del asiento (uno o varios servicios) ── */
@@ -1541,8 +1620,9 @@ function tarjetaMenu(r){
 function ficha(key){
   fichaAbierta=key;
   var p=key.split('-'), c=p[0], asiento=p[1], sv=ASIENTOS[key]||[], h='<div class="sh-handle"></div>';
-  h+='<div class="sh-hdr"><div class="sh-ico">💺</div><div style="flex:1"><div class="sh-tit">Asiento '+asiento+' · Coche '+c+'</div><div class="sh-sub">'+(sv.length?sv[0].fecha+(sv.length>1?' · '+sv.length+' servicios en este asiento':''):'Sin servicio')+'</div></div><button class="sh-close" onclick="cerrar()">✕</button></div>';
-  h+='<div class="sh-body" style="overflow-y:auto">'+(sv.length?sv.map(function(r){return bloqueServicio(r, sv.length>1)}).join('')+
+  var cN=parseInt(c,10), Pf=planoCoche(cN, LISTA.filter(function(r){return r.coche===cN})), fl=parseInt(asiento,10), enSalita=Pf.salita&&fl>=Pf.salita.min&&fl<=Pf.salita.max;
+  h+='<div class="sh-hdr"><div class="sh-ico">💺</div><div style="flex:1"><div class="sh-tit">Asiento '+asiento+' · Coche '+nomCoche(cN)+'</div><div class="sh-sub">'+(sv.length?sv[0].fecha+(sv.length>1?' · '+sv.length+' servicios en este asiento':''):'Sin servicio')+'</div></div><button class="sh-close" onclick="cerrar()">✕</button></div>';
+  h+='<div class="sh-body" style="overflow-y:auto">'+(enSalita?'<div class="sltag">🛋️ Salita exclusiva del coche '+(Pf.nombre||'')+' (filas '+Pf.salita.min+'–'+Pf.salita.max+')</div>':'')+(sv.length?sv.map(function(r){return bloqueServicio(r, sv.length>1)}).join('')+
       '<button class="x-add sec" onclick="abrirExtra(\''+key+'\')">➕ Añadir otro pasajero en este asiento (otro tramo)</button>':
     '<div class="vacio">Este pasaje <b>no tiene</b> servicio.</div>'+
       '<button class="x-add" onclick="abrirExtra(\''+key+'\')">➕ Añadir pasajero de último momento</button>'+
