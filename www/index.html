@@ -15006,6 +15006,7 @@ function _cambiarTipoAPMD(){
   _cambioTipoElegido = 'art5152';
   _abrirFormParaCambioTipo('dinero');
   F.articulo = 52; F.modoArt5152 = 'normal'; F.compArt5152 = 'dinero'; F.pmdDevolucion = null; F.pmdContarPisado = undefined;
+  var _fs = document.getElementById('form-sub'); if(_fs) _fs.textContent = 'Editando art. 52 · P.M.D.';
   if(typeof renderFormBody==='function') renderFormBody();
   toast('⚖️ Elige el día de compensación (de este mes) y guarda');
 }
