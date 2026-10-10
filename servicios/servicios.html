@@ -545,6 +545,7 @@ var ESTACIONES_DEF=[
   ['Sevilla-Santa Justa','Sevilla',/\bSEVILLA\b|\bSANTA JUSTA\b/],
   ['Córdoba-Julio Anguita','Córdoba',/\bCORDOBA\b|\bJULIO ANGUITA\b/],
   ['Málaga-María Zambrano','Málaga',/\bMALAGA\b|\bMARIA ZAMBRANO\b/],
+  ['València-Estació del Nord','València Nord',/\bESTACIO DEL NORD\b|\bVALENCIA NORD\b/,['VLC']],
   ['València-Joaquín Sorolla','València',/\bVALENCIA\b|\bSOROLLA\b/,['VLN']],
   ['Alicante','Alicante',/\bALICANTE\b|\bALACANT\b/,['ALC']],
   ['Camp de Tarragona','Camp de Tarragona',/\bCAMP\b/],
@@ -740,11 +741,18 @@ async function ocrTabla(worker, canvas, gris, original, esc){
     if(iD<0){ if(/COCHE/i.test(L.txt)&&/ASIEN/i.test(L.txt)) cab=L; return; }
     filas.push({L:L, fecha:L.w[iD].s.match(/\d{2}\/\d{2}\/\d{4}/)[0], resto:L.w.slice(iD+1)});
   });
+  // Nº de coche partido en dos trozos de cifras muy juntos ("2" + "013" = coche 2013): se juntan.
+  filas.forEach(function(f){ var a=f.resto[0], b=f.resto[1], c=f.resto[2];
+    if(!a||!b||!c||!/^\d+$/.test(a.s)||!/^\d+$/.test(b.s)||(a.s+b.s).length>4) return;
+    if(b.x0-a.x1>0.35*Math.max(a.y1-a.y0, b.y1-b.y0)) return; // separados: son coche y asiento
+    f.resto.splice(0,2,{s:a.s+b.s, x0:a.x0, x1:b.x1, y0:Math.min(a.y0,b.y0), y1:Math.max(a.y1,b.y1), c:Math.min(a.c,b.c), junto:1}); });
   // Coche y asiento pegados en una sola palabra ("107C" = coche 1 + asiento 07C): pasa en las
   // filas repetidas de la tabla dinámica (mismo asiento en otro tramo, sin ⊟ ni negrita).
   // Se separan (el asiento son siempre 2 cifras + letra) para que no se corran las columnas.
   filas.forEach(function(f){ var w=f.resto[0], s=w&&w.s.replace(/[^0-9A-Za-z]/g,'');
     if(!s||!/^\d{1,3}[0-9OoQD]\d[A-Fa-f8630Oo]$/.test(s)) return; // la letra puede salir como 8, 6, 3, 0 ("1078" = 1 + 07B)
+    // Solo si lo siguiente ya es el tipo de servicio (falta el asiento); si no, es un coche de 4 cifras (2013).
+    if(w.junto||!(f.resto[1]&&/^\W*(desay|aperit|almuer|comida|merien|cena|cortes|box|cumple)/i.test(f.resto[1].s))) return;
     var corte=w.x0+Math.round((w.x1-w.x0)*(s.length-3)/s.length);
     f.resto.splice(0,1,{s:s.slice(0,-3),x0:w.x0,x1:corte-2,y0:w.y0,y1:w.y1,c:w.c},{s:s.slice(-3),x0:corte,x1:w.x1,y0:w.y0,y1:w.y1,c:w.c}); });
   // coche y asiento: recortes de la COLUMNA entera (mismo ancho en todas las filas)
@@ -850,7 +858,7 @@ function columnasImagen(t, ancho){
 var VOC_TIPO=['Desayuno','Aperitivo','Almuerzo','Comida','Merienda','Cena','Cortesía','Box Caliente','Box Clásico','Box del Norte','Box Frío','Cumpleaños'];
 var VOC_MENU=['Menú sin preferencia','Menú sin posibilidad de elección','Menú último minuto','Menú Cortesía','Desayuno frío','Desayuno caliente','Fruta y yogur','De la granja','De la barca','Del molino','Salado','Mixto','Sin elección','Especial'];
 var VOC_EST=['MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES','MADRID-CHAMARTÍN-CLARA CAMPOAMOR','BARCELONA-SANTS','ZARAGOZA DELICIAS','CAMP DE TARRAGONA','LLEIDA-PIRINEUS','GIRONA','FIGUERES-VILAFANT',
-  'SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','MÁLAGA-MARÍA ZAMBRANO','VALÈNCIA-JOAQUÍN SOROLLA','ALICANTE-TERMINAL','GUADALAJARA-YEBES','CALATAYUD','CIUDAD REAL','PUERTOLLANO',
+  'SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','MÁLAGA-MARÍA ZAMBRANO','VALÈNCIA-JOAQUÍN SOROLLA','VALÈNCIA-ESTACIÓ DEL NORD','ALICANTE-TERMINAL','GUADALAJARA-YEBES','CALATAYUD','CIUDAD REAL','PUERTOLLANO',
   'ANTEQUERA-SANTA ANA','CUENCA-FERNANDO ZÓBEL','ALBACETE-LOS LLANOS','SEGOVIA-GUIOMAR','VALLADOLID-CAMPO GRANDE','OURENSE','LEÓN','PALENCIA','ZAMORA','HUESCA','GRANADA','MURCIA DEL CARMEN','ELCHE AV','ORIHUELA','CASTELLÓ','TOLEDO'];
 function sinAcento(s){ return (s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
 function distancia(a,b){ var m=a.length,n=b.length,d=[],i,j; for(i=0;i<=m;i++){ d[i]=[i]; } for(j=0;j<=n;j++) d[0][j]=j;
@@ -1026,7 +1034,7 @@ function deCeldas(c, txt){
   limpiarFila(r); r.aviso=validar(r); return r;
 }
 // Formato antiguo (tabla sin columnas claras): se reconoce la fila por su forma.
-var ESTACIONES=['SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','CORDOBA-JULIO ANGUITA','ZARAGOZA DELICIAS','BARCELONA-SANTS','MADRID-PUERTA DE ATOCHA','MADRID-CHAMARTIN','MÁLAGA-MARÍA ZAMBRANO','CAMP TARRAGONA','LLEIDA','VALENCIA JOAQUIN SOROLLA','ALICANTE','GIRONA','FIGUERES VILAFANT'];
+var ESTACIONES=['SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','CORDOBA-JULIO ANGUITA','ZARAGOZA DELICIAS','BARCELONA-SANTS','MADRID-PUERTA DE ATOCHA','MADRID-CHAMARTIN','MÁLAGA-MARÍA ZAMBRANO','CAMP TARRAGONA','LLEIDA','VALENCIA JOAQUIN SOROLLA','VALENCIA-ESTACIO DEL NORD','VALÈNCIA-ESTACIÓ DEL NORD','ALICANTE','GIRONA','FIGUERES VILAFANT'];
 function leerTextoMOL(linea){
   linea=linea.replace(/\s+/g,' ').trim();
   var m=linea.match(/^(\d{2}\/\d{2}\/\d{4}) (?:\d{3,5} )?(\d{1,3}) B?(\d{1,2})\s?([A-Z]) (.*)$/i);
