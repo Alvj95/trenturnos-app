@@ -5003,6 +5003,39 @@ function megafoniaDingDong(ctx, t){
         </div>
       </div>
 
+      <!-- NUEVO — ACORDEÓN: Copia de seguridad en archivo. Descarga un
+           archivo con todos los datos de este móvil y lo carga en otro
+           (o en la app de Google Play). No usa ninguna nube. -->
+      <div class="aj-acc-item" id="aj-acc-copia">
+        <div class="aj-acc-hdr" onclick="toggleAjAcc('aj-acc-copia');copiaPintarUltima()">
+          <span class="aj-acc-hdr-ico">📦</span>
+          <span class="aj-acc-hdr-tit">Copia de seguridad en archivo</span>
+          <span class="aj-acc-hdr-arr">›</span>
+        </div>
+        <div class="aj-acc-body">
+<div class="aj-card">
+        <div class="aj-card-hdr c-blue">
+          <div class="aj-card-hdr-ico">📦</div>
+          <div class="aj-card-hdr-txt">
+            <div class="aj-card-hdr-tit">Copia de seguridad en archivo</div>
+            <div class="aj-card-hdr-sub">Para cambiar de móvil o pasar de la web a la app</div>
+          </div>
+        </div>
+        <div class="aj-card-body" style="padding:10px 14px 12px">
+          <div style="font-size:11.5px;line-height:1.45;color:var(--tx2);margin-bottom:10px">Guarda en un archivo todo lo que tienes en la app desde que la usas. Luego lo cargas en otro móvil o en la app de Google Play y queda todo igual. No se sube a ninguna nube.</div>
+          <button class="m-save" style="width:100%;margin-bottom:8px" onclick="copiaDescargar()">⬇️ Descargar mi copia</button>
+          <button class="copia-sec" onclick="copiaElegirArchivo()">⬆️ Cargar una copia</button>
+          <input type="file" id="copiaArchivoInput" accept=".json,application/json,text/plain" style="display:none" onchange="copiaArchivoElegido(this)">
+          <div id="copiaEstado" class="estado-archivo" style="margin-top:8px;display:none"></div>
+          <div style="font-size:10.5px;line-height:1.5;color:var(--tx2);background:var(--s2);border-radius:10px;padding:8px 10px;margin-top:10px"><b>Incluye:</b> turnos y calendario · horario individual · ajustes y tarifas · Art. 51/52 y días de compensación · nóminas y cómputo Excel · agenda de compañeros · servicios frecuentes · alarmas</div>
+          <div style="font-size:10.5px;line-height:1.45;color:var(--amber2);margin-top:8px">🔒 Lleva tus datos personales (nombre, matrícula, turnos, nóminas). Guárdala solo para ti.</div>
+          <div id="copiaUltima" style="font-size:10px;color:var(--tx3);margin-top:8px">Última copia: nunca</div>
+          <button id="copiaDeshacerBtn" class="copia-sec" style="margin-top:8px;display:none" onclick="copiaDeshacer()">↩️ Volver a como estaba antes de cargar</button>
+        </div>
+      </div>
+        </div>
+      </div>
+
       <!-- ── ACORDEÓN: Ayuda y Conceptos ── -->
       <!-- OCULTO A PETICIÓN — display:none, sin borrar código ni funciones. -->
       <div class="aj-acc-item" id="aj-acc-ayuda" style="display:none">
@@ -7181,6 +7214,40 @@ function megafoniaDingDong(ctx, t){
         <div id="estadoHorarioNubeUsr" class="estado-archivo sin-archivo" style="margin-top:8px">Aún no se ha guardado nada en este dispositivo.</div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<style>.copia-sec{display:block;width:100%;padding:12px;border-radius:12px;background:var(--s2);border:1px solid var(--div);color:var(--tx);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.copia-sec:active{opacity:.8}</style>
+<!-- NUEVO — OV: Cargar una copia de seguridad (archivo). Enseña qué trae
+     el archivo y pregunta antes de tocar nada. -->
+<div class="ov" id="ov-copia-cargar" onclick="if(event.target===this)closeOv('ov-copia-cargar')">
+  <div class="sh" onclick="event.stopPropagation()" style="max-height:90vh;overflow-y:auto">
+    <div class="sh-hdr">
+      <div class="sh-ico">⬆️</div>
+      <div>
+        <div class="sh-tit">Cargar una copia</div>
+        <div class="sh-sub">Revisa lo que trae antes de cargarla</div>
+      </div>
+      <button class="sh-close" onclick="closeOv('ov-copia-cargar')">✕</button>
+    </div>
+    <div style="padding:14px 16px 18px">
+      <div id="copiaResumen" style="font-size:12px;line-height:1.7;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin-bottom:10px"></div>
+      <div id="copiaAvisoOtra" style="display:none;font-size:11px;line-height:1.45;color:var(--amber2);border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.08);border-radius:10px;padding:8px 10px;margin-bottom:10px"></div>
+      <label class="copia-modo" style="display:block;border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer">
+        <input type="radio" name="copiaModo" value="sustituir" checked style="margin-right:6px">
+        <b style="font-size:12.5px">🔄 Sustituir todo</b>
+        <div style="font-size:10.5px;color:var(--tx2);margin-top:2px">Lo de este móvil se cambia por lo de la copia (recomendado al estrenar móvil o app)</div>
+      </label>
+      <label class="copia-modo" style="display:block;border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin-bottom:10px;cursor:pointer">
+        <input type="radio" name="copiaModo" value="anadir" style="margin-right:6px">
+        <b style="font-size:12.5px">➕ Añadir solo lo que falte</b>
+        <div style="font-size:10.5px;color:var(--tx2);margin-top:2px">Mantiene lo de este móvil y añade de la copia los días y datos que no tenga</div>
+      </label>
+      <div style="font-size:11px;line-height:1.45;color:var(--amber2);border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.08);border-radius:10px;padding:8px 10px;margin-bottom:12px">⚠️ Antes de cargar se guarda una copia automática de lo que hay ahora en este móvil, por si quieres volver atrás.</div>
+      <button class="m-save" id="copiaBtnCargar" style="width:100%;margin-bottom:8px" onclick="copiaAplicar()">Cargar la copia</button>
+      <button class="copia-sec" onclick="closeOv('ov-copia-cargar')">Cancelar</button>
+      <div id="copiaEstadoCarga" class="estado-archivo" style="margin-top:8px;display:none"></div>
     </div>
   </div>
 </div>
@@ -37143,5 +37210,259 @@ window.__svSyncTema = function(){
 })();
 </script>
 <!-- PRIVACIDAD:FIN -->
+<script>
+/* ═══════════════════════════════════════════════════════════
+   COPIA DE SEGURIDAD EN ARCHIVO — módulo aditivo, sin nube.
+   «Descargar mi copia» guarda en un archivo .json todos los datos de
+   la persona que viven en este móvil (localStorage). «Cargar una
+   copia» los pone en otro móvil o en la app de Google Play.
+   Solo entran las claves de datos personales (lista de abajo): nunca
+   las de acceso/sesión (portal, matrícula validada, admin,
+   interventor), para que cargar una copia no se salte la entrada.
+   Antes de cargar se guarda lo que había, para poder volver atrás.
+═══════════════════════════════════════════════════════════ */
+(function(){
+  var CLAVES = ['tv5','aj5','sf5','comp5','agenda5','tv2_extra','htdl_correos',
+    'art5152_dias','art5152_uso','art5152_uso_anual','dias_compe_manual',
+    'nomina_real_por_mes','nomina_valores_manuales','nomina_aviso_visto_fecha',
+    'computoExcelPorMes','appTurnoBasesGuardadas','pdfEstMap',
+    'diasLibresPrevistosIndice','diasLibresCodigosPersonalizados',
+    'horarios:index','tourCompletado','hw_aviso_visto',
+    'trenturnosServiciosAbordo','trenturnosServiciosSerie',
+    'trenturnosServiciosEspejo','trenturnosServiciosMatricula'];
+  var PREFIJOS = ['horario:','cambiosTurnoVisual_'];
+  var K_ULTIMA = 'ttCopiaUltimaDescarga', K_ANTES = 'ttCopiaAntesDeCargar';
+  var copiaLeida = null;
+
+  function entra(k){
+    if(CLAVES.indexOf(k) >= 0) return true;
+    for(var i=0;i<PREFIJOS.length;i++) if(k.indexOf(PREFIJOS[i]) === 0) return true;
+    return false;
+  }
+  function leerLocal(){
+    var d = {};
+    try{
+      for(var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if(k && entra(k)){ var v = localStorage.getItem(k); if(v !== null) d[k] = v; }
+      }
+    }catch(e){}
+    return d;
+  }
+  function json(v, def){ try{ var r = JSON.parse(v); return (r === null || r === undefined) ? def : r; }catch(e){ return def; } }
+  function hoy(){ var d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  function nomMes(ym){ var p = ym.split('-'); return MESES[+p[1]-1] + ' ' + p[0]; }
+  function fechaHora(iso){
+    var d = new Date(iso); if(isNaN(d)) return '—';
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+', '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+  function tamano(n){ return n < 1024 ? n+' B' : n < 1048576 ? Math.round(n/1024)+' KB' : (n/1048576).toFixed(1)+' MB'; }
+
+  function resumen(datos){
+    var tv = json(datos.tv5, {}), dias = Object.keys(tv).filter(function(k){ return /^\d{4}-\d{2}-\d{2}$/.test(k); }).sort();
+    var aj = json(datos.aj5, {}) || {};
+    var nom = json(datos.nomina_real_por_mes, {}), a52 = json(datos.art5152_dias, {}), ag = json(datos.agenda5, []);
+    return {
+      turnos: dias.length,
+      desde: dias.length ? dias[0].slice(0,7) : null,
+      hasta: dias.length ? dias[dias.length-1].slice(0,7) : null,
+      nominas: nom && typeof nom === 'object' ? Object.keys(nom).length : 0,
+      art: a52 && typeof a52 === 'object' ? Object.keys(a52).length : 0,
+      agenda: Array.isArray(ag) ? ag.length : 0,
+      nombre: aj.nombrePila || aj.nombre || '',
+      matricula: aj.matricula || '',
+      base: aj.base || ''
+    };
+  }
+  function estado(id, html, ok){
+    var el = document.getElementById(id); if(!el) return;
+    el.style.display = html ? 'block' : 'none';
+    el.innerHTML = html || '';
+    el.style.color = ok === false ? 'var(--red2)' : ok ? 'var(--green2)' : '';
+  }
+
+  function bajar(obj, nombre){
+    var blob = new Blob([JSON.stringify(obj)], {type:'application/json'});
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = nombre; document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ document.body.removeChild(a); URL.revokeObjectURL(url); }catch(e){} }, 4000);
+    return blob.size;
+  }
+  function crearCopia(){
+    var datos = leerLocal(), r = resumen(datos);
+    return { app:'TrenTurnos', tipo:'copia', v:1, creada:new Date().toISOString(),
+      origen: (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? 'app' : 'web',
+      matricula: r.matricula, nombre: r.nombre, datos: datos };
+  }
+  function nombreArchivo(c, pre){
+    return (pre || 'TrenTurnos-copia') + (c.matricula ? '-' + String(c.matricula).replace(/[^0-9A-Za-z]/g,'') : '') + '-' + hoy() + '.json';
+  }
+
+  window.copiaPintarUltima = function(){
+    var el = document.getElementById('copiaUltima'); if(!el) return;
+    var u = null; try{ u = localStorage.getItem(K_ULTIMA); }catch(e){}
+    el.textContent = 'Última copia: ' + (u ? fechaHora(u) : 'nunca');
+    antesLeer().then(function(a){
+      var b = document.getElementById('copiaDeshacerBtn');
+      if(b) b.style.display = a ? 'block' : 'none';
+    });
+  };
+
+  window.copiaDescargar = function(){
+    try{
+      var c = crearCopia(), r = resumen(c.datos);
+      if(!Object.keys(c.datos).length){ estado('copiaEstado', 'Todavía no hay datos en este móvil para guardar.', false); return; }
+      var n = bajar(c, nombreArchivo(c));
+      try{ localStorage.setItem(K_ULTIMA, c.creada); }catch(e){}
+      copiaPintarUltima();
+      var nativa = c.origen === 'app';
+      estado('copiaEstado', '✅ <b>Copia creada</b> · ' + tamano(n) + ' · ' + r.turnos + ' turnos' +
+        (r.desde ? ' · desde ' + nomMes(r.desde) : '') + '.<br>' +
+        (nativa ? 'Elige dónde guardarla o mándala a WhatsApp, Drive o al correo.' : 'Se ha guardado en Descargas. Pásala al otro móvil por WhatsApp, Drive o correo.'), true);
+    }catch(e){ estado('copiaEstado', 'No se pudo crear la copia: ' + esc(e && e.message || e), false); }
+  };
+
+  window.copiaElegirArchivo = function(){
+    var i = document.getElementById('copiaArchivoInput'); if(!i) return;
+    i.value = ''; i.click();
+  };
+  window.copiaArchivoElegido = function(inp){
+    var f = inp && inp.files && inp.files[0]; if(!f) return;
+    var lector = new FileReader();
+    lector.onload = function(){
+      var c = json(String(lector.result || ''), null);
+      if(!c || c.app !== 'TrenTurnos' || c.tipo !== 'copia' || !c.datos || typeof c.datos !== 'object'){
+        estado('copiaEstado', 'Ese archivo no es una copia de TrenTurnos.', false); return;
+      }
+      var datos = {};
+      Object.keys(c.datos).forEach(function(k){ if(entra(k) && typeof c.datos[k] === 'string') datos[k] = c.datos[k]; });
+      if(!Object.keys(datos).length){ estado('copiaEstado', 'La copia está vacía.', false); return; }
+      copiaLeida = {datos: datos, creada: c.creada};
+      var r = resumen(datos);
+      document.getElementById('copiaResumen').innerHTML =
+        '📄 <b>' + esc(f.name) + '</b><br>' +
+        (r.nombre || r.matricula ? '👤 <b>' + esc(r.nombre || '—') + '</b>' + (r.matricula ? ' · matrícula <b>' + esc(r.matricula) + '</b>' : '') + (r.base ? ' · ' + esc(r.base) : '') + '<br>' : '') +
+        '📅 <b>' + r.turnos + ' turnos</b>' + (r.desde ? ' (' + nomMes(r.desde) + ' → ' + nomMes(r.hasta) + ')' : '') + '<br>' +
+        '💶 ' + r.nominas + ' nóminas · ⚖️ ' + r.art + ' Art. 51/52 · 👥 ' + r.agenda + ' compañeros<br>' +
+        '🕒 Copia del ' + fechaHora(c.creada);
+      var mia = (typeof AJ !== 'undefined' && AJ && AJ.matricula) ? String(AJ.matricula) : '';
+      var otra = mia && r.matricula && String(r.matricula) !== mia;
+      var av = document.getElementById('copiaAvisoOtra');
+      av.style.display = otra ? 'block' : 'none';
+      av.innerHTML = otra ? '⚠️ Esta copia es de la matrícula <b>' + esc(r.matricula) + '</b> y en este móvil estás con la <b>' + esc(mia) + '</b>. Comprueba que es tu copia.' : '';
+      var radios = document.getElementsByName('copiaModo'); if(radios[0]) radios[0].checked = true;
+      estado('copiaEstadoCarga', '');
+      document.getElementById('copiaBtnCargar').disabled = false;
+      openOv('ov-copia-cargar');
+    };
+    lector.onerror = function(){ estado('copiaEstado', 'No se pudo leer el archivo.', false); };
+    lector.readAsText(f);
+  };
+
+  // ── Copia automática de lo que había antes de cargar (IndexedDB; si no hay, localStorage) ──
+  function idb(){
+    return new Promise(function(res){
+      try{
+        if(typeof indexedDB === 'undefined' || !indexedDB){ res(null); return; }
+        var t = setTimeout(function(){ res(null); }, 4000);
+        var q = indexedDB.open('trenturnos_copia', 1);
+        q.onupgradeneeded = function(){ q.result.createObjectStore('antes'); };
+        q.onsuccess = function(){ clearTimeout(t); res(q.result); };
+        q.onerror = q.onblocked = function(){ clearTimeout(t); res(null); };
+      }catch(e){ res(null); }
+    });
+  }
+  function idbOp(modo, fn){
+    return idb().then(function(db){
+      if(!db) return null;
+      return new Promise(function(res){
+        try{
+          var tx = db.transaction('antes', modo), st = tx.objectStore('antes'), r = fn(st), out = null;
+          if(r) r.onsuccess = function(){ out = r.result; };
+          tx.oncomplete = function(){ res(modo === 'readwrite' ? true : out); };
+          tx.onerror = tx.onabort = function(){ res(null); };
+        }catch(e){ res(null); }
+      });
+    });
+  }
+  function antesGuardar(obj){
+    return idbOp('readwrite', function(st){ return st.put(obj, 'ultima'); }).then(function(ok){
+      if(ok) return true;
+      try{ localStorage.setItem(K_ANTES, JSON.stringify(obj)); return true; }catch(e){ return false; }
+    });
+  }
+  function antesLeer(){
+    return idbOp('readonly', function(st){ return st.get('ultima'); }).then(function(v){
+      if(v) return v;
+      try{ return json(localStorage.getItem(K_ANTES), null); }catch(e){ return null; }
+    });
+  }
+
+  function mezclar(loc, cop){
+    var a = json(loc, undefined), b = json(cop, undefined);
+    if(Array.isArray(a) && Array.isArray(b)){
+      var vistos = {}, ids = {};
+      a.forEach(function(x){ vistos[JSON.stringify(x)] = 1; if(x && typeof x === 'object' && x.id != null) ids[x.id] = 1; });
+      b.forEach(function(x){
+        if(vistos[JSON.stringify(x)]) return;
+        if(x && typeof x === 'object' && x.id != null && ids[x.id]) return;
+        a.push(x);
+      });
+      return JSON.stringify(a);
+    }
+    if(a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)){
+      Object.keys(b).forEach(function(k){ if(!(k in a)) a[k] = b[k]; });
+      return JSON.stringify(a);
+    }
+    return loc;
+  }
+  function escribir(datos, sustituir){
+    var actual = leerLocal();
+    Object.keys(datos).forEach(function(k){
+      var v = (!sustituir && k in actual) ? mezclar(actual[k], datos[k]) : datos[k];
+      localStorage.setItem(k, v);
+    });
+    if(sustituir) Object.keys(actual).forEach(function(k){ if(!(k in datos)) localStorage.removeItem(k); });
+  }
+
+  window.copiaAplicar = function(){
+    if(!copiaLeida) return;
+    var btn = document.getElementById('copiaBtnCargar'); btn.disabled = true;
+    var sel = document.querySelector('input[name="copiaModo"]:checked');
+    var sustituir = !sel || sel.value !== 'anadir';
+    var antes = crearCopia();
+    estado('copiaEstadoCarga', 'Guardando lo que hay ahora en este móvil…');
+    antesGuardar(antes).then(function(ok){
+      // Si este móvil no deja guardarla dentro, se descarga como archivo.
+      if(!ok) bajar(antes, nombreArchivo(antes, 'TrenTurnos-antes-de-cargar'));
+      try{ escribir(copiaLeida.datos, sustituir); }
+      catch(e){
+        try{ escribir(antes.datos, true); }catch(e2){}
+        estado('copiaEstadoCarga', 'No se pudo cargar (¿móvil sin espacio?). No se ha cambiado nada.', false);
+        btn.disabled = false; return;
+      }
+      var r = resumen(leerLocal());
+      estado('copiaEstadoCarga', '✅ <b>Hecho:</b> ' + r.turnos + ' turnos y tus ajustes ya están en este móvil. Recargando…', true);
+      setTimeout(function(){ location.reload(); }, 1600);
+    });
+  };
+
+  window.copiaDeshacer = function(){
+    antesLeer().then(function(a){
+      if(!a || !a.datos){ estado('copiaEstado', 'No hay nada que deshacer.', false); return; }
+      if(!confirm('¿Volver a como estaba este móvil antes de cargar la copia del ' + fechaHora(a.creada) + '?')) return;
+      try{ escribir(a.datos, true); }
+      catch(e){ estado('copiaEstado', 'No se pudo volver atrás: ' + esc(e && e.message || e), false); return; }
+      try{ localStorage.removeItem(K_ANTES); }catch(e){}
+      estado('copiaEstado', '✅ Listo, todo está como antes de cargar. Recargando…', true);
+      idbOp('readwrite', function(st){ return st.delete('ultima'); }).then(function(){
+        setTimeout(function(){ location.reload(); }, 1200);
+      });
+    });
+  };
+})();
+</script>
 </body>
 </html>
