@@ -30,6 +30,8 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // Widgets de la pantalla de inicio (ver TTWidgetPlugin).
         registerPlugin(TTWidgetPlugin.class);
+        // Aviso de versión nueva de Google Play (ver TTActualizarPlugin).
+        registerPlugin(TTActualizarPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();
