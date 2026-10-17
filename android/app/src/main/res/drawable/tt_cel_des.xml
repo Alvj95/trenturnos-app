@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generado por el script de widgets: celda del calendario -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#3316A34A" />
+    <corners android:radius="8dp" />
+</shape>
