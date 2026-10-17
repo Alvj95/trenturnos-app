@@ -11,6 +11,7 @@
  *   - pantalla fija: la página no se desplaza, el menú inferior no se mueve
  *   - botón "atrás" de Android: no cierra la app de golpe (ver index.html)
  *   - widgets de la pantalla de inicio (calendario y próximos turnos)
+ *   - aviso de versión nueva de Google Play, con descarga en segundo plano
  *
  * En el navegador normal (web/PWA) no hace nada.
  */
@@ -334,6 +335,106 @@
       setTimeout(wgIrAFecha, 4600);
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) wgEnviar(); else wgIrAFecha(); });
+  }
+
+  // ── 🆕 Aviso de versión nueva (Google Play) ─────────────────
+  // Al abrir la app se pregunta a Google Play si hay una versión más nueva. Si la hay,
+  // sale un aviso con las novedades (las que el admin escribe en su panel, solo si son
+  // de ESA versión) y «Actualizar ahora» / «Más tarde». La descarga va en segundo plano
+  // con una barra abajo; al terminar, «Reiniciar» instala. «Más tarde» = hasta mañana.
+  var TTAct = P.TTActualizar;
+  if (TTAct) {
+    var K_MAS_TARDE = 'ttActMasTarde', actCss = false;
+    function actHoy() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    function actEsc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+    function actEstilos() {
+      if (actCss) return; actCss = true;
+      var st = document.createElement('style');
+      st.textContent =
+        '#tt-act-fondo{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}' +
+        '#tt-act-hoja{width:100%;max-width:520px;background:var(--s1,#0D1B2E);border-top:1px solid var(--div,#1E3350);border-radius:24px 24px 0 0;padding:18px 16px 22px;color:var(--tx,#F8FAFC);font-family:inherit}' +
+        '#tt-act-hoja .a-ico{font-size:40px;text-align:center}#tt-act-hoja .a-t1{text-align:center;font-weight:900;font-size:19px;margin-top:4px}' +
+        '#tt-act-hoja .a-t2{text-align:center;color:var(--tx2,#94A3B8);font-size:12.5px;margin-top:3px}' +
+        '#tt-act-hoja .a-nov{background:var(--s2,#132236);border-radius:14px;padding:10px 12px;margin-top:14px;font-size:12.5px;line-height:1.7}' +
+        '#tt-act-hoja .a-nov b{display:block;font-size:10.5px;letter-spacing:.6px;color:var(--tx2,#94A3B8);margin-bottom:2px}' +
+        '#tt-act-hoja button{display:block;width:100%;border-radius:14px;padding:14px;font:inherit;font-weight:800;font-size:14.5px;margin-top:12px;cursor:pointer;color:var(--tx,#F8FAFC)}' +
+        '#tt-act-hoja .a-si{background:#3B7FFF;border:0}#tt-act-hoja .a-no{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);margin-top:8px;font-size:13.5px}' +
+        '#tt-act-hoja .a-pie{text-align:center;color:var(--tx3,#64748B);font-size:11px;margin-top:10px}' +
+        '#tt-act-barra{position:fixed;left:12px;right:12px;bottom:86px;z-index:10040;max-width:500px;margin:0 auto;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:16px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);color:var(--tx,#F8FAFC);font-size:13px}' +
+        '#tt-act-barra .r{display:flex;align-items:center;gap:10px}#tt-act-barra .r b{flex:1}' +
+        '#tt-act-barra .pr{height:6px;border-radius:4px;background:var(--div,#1E3350);margin-top:9px;overflow:hidden}#tt-act-barra .pr i{display:block;height:100%;background:#3B7FFF;transition:width .3s}' +
+        '#tt-act-barra button{border:0;background:#16A34A;color:#fff;border-radius:10px;padding:8px 13px;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer}';
+      document.head.appendChild(st);
+    }
+    function actQuitarBarra() { var b = document.getElementById('tt-act-barra'); if (b) b.remove(); }
+    function actBarra(html) {
+      actEstilos();
+      var b = document.getElementById('tt-act-barra');
+      if (!b) { b = document.createElement('div'); b.id = 'tt-act-barra'; document.body.appendChild(b); }
+      b.innerHTML = html;
+      return b;
+    }
+    function actDescargando(pct) {
+      actBarra('<div class="r">⬇️ <b>Descargando actualización…</b><span style="color:var(--tx2,#94A3B8)">' + (pct == null ? '' : pct + ' %') + '</span></div><div class="pr"><i style="width:' + (pct || 3) + '%"></i></div>');
+    }
+    function actLista() {
+      var b = actBarra('<div class="r">✅ <b>Actualización lista</b><button type="button">Reiniciar</button></div>');
+      b.querySelector('button').onclick = function () { this.disabled = true; this.textContent = 'Instalando…'; TTAct.completar().catch(function () {}); };
+    }
+    // Novedades que el admin escribió para ESTA versión (si son de otra, no se enseñan).
+    function actNovedades(version) {
+      var sb = window.sbAdmin;
+      if (!sb || !version) return Promise.resolve([]);
+      return sb.from('config_global').select('nombre_servicio,nombre_archivo').eq('tipo', 'novedades_app').maybeSingle().then(function (r) {
+        var f = r && r.data;
+        if (!f || String(f.nombre_servicio || '').trim() !== version) return [];
+        return String(f.nombre_archivo || '').split(/\n+/).map(function (l) { return l.replace(/^\s*[•\-*·]\s*/, '').trim(); }).filter(Boolean).slice(0, 6);
+      }, function () { return []; });
+    }
+    function actHoja(version, lineas) {
+      if (document.getElementById('tt-act-fondo')) return;
+      actEstilos();
+      var f = document.createElement('div'); f.id = 'tt-act-fondo';
+      f.innerHTML = '<div id="tt-act-hoja" role="dialog" aria-label="Nueva versión de TrenTurnos">' +
+        '<div class="a-ico">🆕</div><div class="a-t1">Nueva versión de TrenTurnos</div>' +
+        '<div class="a-t2">' + (version ? 'v' + actEsc(version) + ' · ' : '') + 'disponible en Google Play</div>' +
+        (lineas.length ? '<div class="a-nov"><b>NOVEDADES</b>' + lineas.map(function (l) { return '• ' + actEsc(l); }).join('<br>') + '</div>' : '') +
+        '<button type="button" class="a-si">⬇️ Actualizar ahora</button><button type="button" class="a-no">Más tarde</button>' +
+        '<div class="a-pie">Tus turnos y ajustes no se tocan al actualizar</div></div>';
+      document.body.appendChild(f);
+      function cerrar() { f.remove(); }
+      f.querySelector('.a-no').onclick = function () { try { localStorage.setItem(K_MAS_TARDE, actHoy()); } catch (e) {} cerrar(); };
+      f.onclick = function (e) { if (e.target === f) f.querySelector('.a-no').onclick(); };
+      f.querySelector('.a-si').onclick = function () {
+        cerrar();
+        TTAct.iniciar().then(function (r) {
+          if (r && r.aceptado) actDescargando(null);
+          else { try { localStorage.setItem(K_MAS_TARDE, actHoy()); } catch (e) {} }
+        }).catch(function () { if (window.toast) toast('⚠️ No se pudo abrir Google Play'); });
+      };
+    }
+    // auto = al abrir la app: respeta «Más tarde» (hasta mañana).
+    function actComprobar(auto) {
+      TTAct.comprobar().then(function (r) {
+        if (!r) return;
+        if (r.estado === 'descargada') return actLista();
+        if (r.estado === 'descargando' || r.estado === 'pendiente') return actDescargando(null);
+        if (!r.disponible) return;
+        var masTarde = null; try { masTarde = localStorage.getItem(K_MAS_TARDE); } catch (e) {}
+        if (auto && masTarde === actHoy()) return;
+        return actNovedades(r.version).then(function (l) { actHoja(r.version, l); });
+      }).catch(function () {});
+    }
+    window.__actualizacionComprobar = function () { actComprobar(false); };
+    TTAct.addListener('estado', function (e) {
+      if (!e) return;
+      if (e.estado === 'descargando') actDescargando(e.total > 0 ? Math.min(100, Math.round(e.descargado * 100 / e.total)) : null);
+      else if (e.estado === 'descargada') actLista();
+      else if (e.estado === 'fallo' || e.estado === 'cancelada') { actQuitarBarra(); if (e.estado === 'fallo' && window.toast) toast('⚠️ No se pudo descargar la actualización'); }
+    });
+    // Tras la pantalla de carga y el portal; y al volver a la app (por si terminó la descarga).
+    window.addEventListener('load', function () { setTimeout(function () { actComprobar(true); }, 6500); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) actComprobar(true); });
   }
 
   // ── Notificaciones push (Firebase) ──────────────────────────

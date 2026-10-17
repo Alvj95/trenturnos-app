@@ -7433,6 +7433,26 @@ function megafoniaDingDong(ctx, t){
       <div id="nadmListaHistorial"><div class="estado-archivo sin-archivo">Toca "Actualizar lista" para ver las notificaciones enviadas.</div></div>
     </div>
 
+    <!-- NUEVO — Novedades de la app de Google Play: salen en el aviso de
+         «Nueva versión» dentro de la app, SOLO si el número coincide con
+         la versión que ofrece Google Play (si no, el aviso sale sin lista).
+         Se guardan en config_global (tipo 'novedades_app'). -->
+    <div class="admin-card">
+      <div class="admin-card-hdr">
+        <div class="admin-card-ico" style="background:rgba(59,127,255,.15);color:var(--acc2)">🆕</div>
+        <div>
+          <div class="admin-card-tit">Novedades de la app (Google Play)</div>
+          <div class="admin-card-sub">Salen en el aviso de actualización de la app. Solo se enseñan si el número es el de la versión que ofrece Google Play.</div>
+        </div>
+      </div>
+      <label class="field-lbl">1. Versión</label>
+      <input class="field-inp" id="novAppVersion" placeholder="Por ejemplo 5.0.54" maxlength="12" inputmode="decimal" onfocus="cargarNovedadesAppAdmin()">
+      <label class="field-lbl">2. Novedades (una por línea)</label>
+      <textarea class="field-inp" id="novAppTexto" placeholder="Widgets en la pantalla de inicio&#10;Copia de seguridad en archivo" maxlength="400" style="min-height:80px;resize:vertical" onfocus="cargarNovedadesAppAdmin()"></textarea>
+      <button class="m-save" id="novAppBtn" style="width:100%;margin-top:12px" onclick="guardarNovedadesApp()">Guardar novedades</button>
+      <div class="estado-archivo sin-archivo" id="novAppEstado">Escribe la versión y sus novedades, y pulsa guardar.</div>
+    </div>
+
       </div>
     </div>
 
@@ -13499,6 +13519,42 @@ function buscarTurnoPorFecha(k){
 
   // Caso 3: día realmente sin turno
   return {k:k, t:null};
+}
+
+// NUEVO — Novedades de la app de Google Play (aviso «Nueva versión», ver native-bridge.js).
+var _novAppCargadas = false;
+async function cargarNovedadesAppAdmin(){
+  if(_novAppCargadas || typeof sbAdmin==='undefined' || !sbAdmin) return;
+  _novAppCargadas = true;
+  try{
+    var r = await sbAdmin.from('config_global').select('nombre_servicio,nombre_archivo,fecha_subida').eq('tipo','novedades_app').maybeSingle();
+    var f = r && r.data, est = document.getElementById('novAppEstado');
+    if(!f) return;
+    var v = document.getElementById('novAppVersion'), t = document.getElementById('novAppTexto');
+    if(v && !v.value) v.value = f.nombre_servicio || '';
+    if(t && !t.value) t.value = f.nombre_archivo || '';
+    if(est){ est.classList.remove('sin-archivo'); est.innerHTML = 'Guardadas para la versión <b>'+_escNovApp(f.nombre_servicio||'—')+'</b>'+(f.fecha_subida ? ' · '+new Date(f.fecha_subida).toLocaleString('es-ES') : ''); }
+  }catch(e){ _novAppCargadas = false; }
+}
+function _escNovApp(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+async function guardarNovedadesApp(){
+  var v = (document.getElementById('novAppVersion').value||'').trim();
+  var t = (document.getElementById('novAppTexto').value||'').trim();
+  var est = document.getElementById('novAppEstado');
+  if(!/^\d+\.\d+\.\d+$/.test(v)){ est.classList.add('sin-archivo'); est.textContent = 'Escribe el número de versión, por ejemplo 5.0.54.'; return; }
+  if(!t){ est.classList.add('sin-archivo'); est.textContent = 'Escribe al menos una novedad.'; return; }
+  if(typeof sbAdmin==='undefined' || !sbAdmin || typeof perfilAdminActual==='undefined' || !perfilAdminActual){ est.textContent = 'Inicia sesión como administrador.'; return; }
+  var btn = document.getElementById('novAppBtn'); btn.disabled = true;
+  var r = await sbAdmin.from('config_global').upsert({
+    tipo: 'novedades_app', nombre_servicio: v, nombre_archivo: t, url_archivo: '',
+    fecha_subida: new Date().toISOString(), subido_por: perfilAdminActual.id, subido_por_email: perfilAdminActual.email || ''
+  });
+  btn.disabled = false;
+  if(r.error){ est.classList.add('sin-archivo'); est.textContent = 'No se pudo guardar: ' + r.error.message; return; }
+  _novAppCargadas = true;
+  est.classList.remove('sin-archivo');
+  est.innerHTML = '✅ Guardadas para la versión <b>'+_escNovApp(v)+'</b>. Saldrán en el aviso cuando Google Play ofrezca esa versión.';
+  if(typeof toast==='function') toast('✅ Novedades guardadas');
 }
 
 function clickDia(d,k,t){
