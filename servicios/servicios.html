@@ -794,13 +794,43 @@ async function ocrTabla(worker, canvas, gris, original, esc){
     if(f.resto.length<2){ f.mal=true; return; }
     var cc=[arreglarCoche(f.resto[0].s), arreglarCoche(enFila(c6,f)), arreglarCoche(enFila(c4,f))];
     var ca=[arreglarAsiento(f.resto[1].s), arreglarAsiento(enFila(a6,f)), arreglarAsiento(enFila(a4,f))];
+    ca=ca.map(function(a){ return a&&parseInt(a,10)<=30?a:''; }); // no hay filas de asientos por encima de la 30
     var vc=votar(cc), va=votar(ca);
-    f.coche=vc.v; f.asiento=va.v; f.dudoso=!(vc.n>=2&&va.n>=2); f.crudo=cc.join('/')+' · '+ca.join('/');
+    f.coche=vc.v; f.asiento=va.v; f.cc=cc; f.ca=ca; f.cocheOk=vc.n>=2; f.asiOk=va.n>=2; f.crudo=cc.join('/')+' · '+ca.join('/');
     f.celdasW=f.resto.slice(2);
   });
+  resolverPorOrden(filas.filter(function(f){return !f.mal;}));
+  filas.forEach(function(f){ if(!f.mal) f.dudoso=!(f.cocheOk&&f.asiOk); });
   return {filas:filas, cab:cab, lineas:lineas};
 }
 
+// El MOL va ordenado por coche y, dentro de cada coche, por asiento. Cuando las tres lecturas
+// de una casilla no coinciden, se elige la que encaja con las filas de al lado:
+// · un «21» entre filas del coche 11 es el 11; un «55» después del coche 5 es el 5;
+// · un coche de 4 cifras leído entero (7011) gana al recorte que se quedó corto (11);
+// · un asiento leído una sola vez vale si cae justo entre el de arriba y el de abajo.
+// (Un mismo asiento puede salir dos veces: un pasajero hasta Zaragoza y otro desde Zaragoza.)
+function resolverPorOrden(vf){
+  function uniq(a){ var o=[]; a.forEach(function(x){ if(x&&o.indexOf(x)<0) o.push(x); }); return o; }
+  vf.forEach(function(f){ var cs=uniq(f.cc), largo=cs.filter(function(c){return c.length===4;})[0];
+    if(largo&&cs.some(function(c){return c!==largo&&largo.slice(-c.length)===c;})){ f.coche=largo; f.cocheOk=true; } });
+  function vecino(i, paso, ok){ for(var j=i+paso;j>=0&&j<vf.length;j+=paso) if(vf[j][ok]) return vf[j]; return null; }
+  vf.forEach(function(f,i){ if(f.cocheOk) return;
+    var a=vecino(i,-1,'cocheOk'), b=vecino(i,1,'cocheOk'), cs=uniq(f.cc);
+    var igual=cs.filter(function(c){ return (a&&c===a.coche)||(b&&c===b.coche); });
+    if(igual.length===1){ f.coche=igual[0]; f.cocheOk=true; return; }
+    if(cs.length===1&&(!a||+cs[0]>=+a.coche)&&(!b||+cs[0]<=+b.coche)){ f.coche=cs[0]; f.cocheOk=true; } });
+  function cl(s){ return parseInt(s,10)*10+(s.charCodeAt(2)-64); }
+  vf.forEach(function(f,i){ if(f.asiOk||!f.cocheOk) return;
+    var a=null, b=null, j;
+    for(j=i-1;j>=0;j--){ if(vf[j].coche!==f.coche) break; if(vf[j].asiOk){ a=vf[j]; break; } }
+    for(j=i+1;j<vf.length;j++){ if(vf[j].coche!==f.coche) break; if(vf[j].asiOk){ b=vf[j]; break; } }
+    var cs=uniq(f.ca), caben=cs.filter(function(s){ return (!a||cl(s)>=cl(a.asiento))&&(!b||cl(s)<=cl(b.asiento)); });
+    if(!a&&!b) return;
+    if(caben.length===1){ f.asiento=caben[0]; f.asiOk=true; }
+    else if(caben.length>1){ f.asiento=f.ca[1]&&caben.indexOf(f.ca[1])>-1?f.ca[1]:caben[0]; } // la duda queda en naranja
+  });
+}
 // El lector de imágenes se prepara en cuanto pulsas "Elegir PDF o imagen" (mientras eliges
 // el archivo) y se queda listo para la siguiente imagen: así no se espera a que arranque.
 var LECTOR=null;
@@ -870,12 +900,26 @@ function ajustar(t, voc, prefijo){
     var s=1-distancia(u,c)/Math.max(u.length,c.length); if(s>sim){ sim=s; mejor=v; } });
   return sim>=0.72?mejor:t;
 }
+// Estaciones de una fila de la imagen, sin depender de las columnas: se buscan las palabras
+// que empiezan como una estación conocida (con una letra de margen: «BARCELOMA» → Barcelona)
+// y se toma la primera como origen y la segunda como destino.
+var EST_PRIMERA=VOC_EST.map(function(v){ return sinAcento(v).split(/[^A-Z]+/)[0]; });
+function esInicioEst(w){ var t=sinAcento(w).split(/[^A-Z]+/).filter(Boolean)[0]||''; if(t.length<4) return false;
+  return EST_PRIMERA.some(function(e){ return e===t||(e.length>=6&&t.length>=5&&distancia(e,t.slice(0,e.length+1))<=1&&distancia(e,t)<=1); }); }
+function estacionesFila(ws){
+  var alt=ws.map(function(w){return w.y1-w.y0;}).sort(function(a,b){return a-b;}), hueco=(alt[Math.floor(alt.length/2)]||20)*1.2, out=[], i=0;
+  while(i<ws.length){ if(!esInicioEst(ws[i].s)){ i++; continue; }
+    var txt=ws[i].s, j=i+1;
+    while(j<ws.length&&ws[j].x0-ws[j-1].x1<=hueco&&!esInicioEst(ws[j].s)&&!/^(SI|SÍ|NO|N0)$/i.test(ws[j].s)){ txt+=' '+ws[j].s; j++; }
+    out.push(ajustar(txt.replace(/:/g,'-'), VOC_EST, true)); i=j; }
+  return out;
+}
 // Las filas de la tabla van ordenadas por asiento dentro de cada coche: un asiento que rompe
 // ese orden (p. ej. "01D" entre "09A" y "11A") casi seguro está mal leído → se marca.
 function revisarOrden(filas){
   function clave(r){ return r.fila*10+(r.letra.charCodeAt(0)-64); }
   var i=0; while(i<filas.length){ var j=i; while(j<filas.length&&filas[j].coche===filas[i].coche) j++;
-    var g=filas.slice(i,j).filter(function(r){return r.fila>0&&r.letra}); 
+    var g=filas.slice(i,j).filter(function(r){return r.fila>0&&r.letra&&!r.aviso}); // los dudosos ya van en naranja: no cuentan para el orden 
     if(g.length>=4){ var n=g.length, lon=[], prev=[], k, q, mejor=0, fin=-1;
       for(k=0;k<n;k++){ lon[k]=1; prev[k]=-1; for(q=0;q<k;q++) if(clave(g[q])<=clave(g[k])&&lon[q]+1>lon[k]){ lon[k]=lon[q]+1; prev[k]=q; } if(lon[k]>mejor){ mejor=lon[k]; fin=k; } }
       if(mejor>=n*0.7){ var en={}; for(k=fin;k>=0;k=prev[k]) en[k]=1; g.forEach(function(r,k){ if(!en[k]&&!r.aviso) r.aviso='Asiento fuera de orden en la imagen: compruébalo'; }); } }
@@ -905,6 +949,9 @@ async function leerCapturas(imgs, nombre, que){
       if(celda.menu) celda.menu=ajustar(celda.menu, VOC_MENU);
       if(celda.origen) celda.origen=ajustar(celda.origen, VOC_EST, true);
       if(celda.destino) celda.destino=ajustar(celda.destino, VOC_EST, true);
+      var estF=estacionesFila(f.celdasW||[]);
+      if(estF.length>=2){ celda.origen=estF[0]; celda.destino=estF[1]; }
+      else if(estF.length===1&&!celda.origen&&!celda.destino) celda.destino=estF[0];
       if(celda.nombre&&/bl[a4]nc[o0]|^\(?\s*en\W{0,3}b?l\W?.?nc[o0]/i.test(celda.nombre)) celda.nombre='';
       var r=deCeldas(celda, f.fecha+' '+(f.crudo||''));
       if(!r.aviso&&f.dudoso) r.aviso='Asiento dudoso en la imagen: compruébalo';
