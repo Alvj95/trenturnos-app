@@ -20589,26 +20589,21 @@ function calculateEarnings(ks){
           importe:Math.round(hTotalHTDL*HTDL*100)/100
         });
       }
-      var nTrab1=cn(t.hF,t.hL), nTrab2=cn(t.hF2,t.hL2);
-      // FIX — mismo problema que en jornada ordinaria: la nocturnidad
-      // de los tramos de Continuidad no se calculaba. Se suma aquí
-      // igual, para HTDL.
-      var nTrabContIda = 0, nTrabContVuelta = 0;
-      if(t.continuidad && t.continuidad.length){
-        t.continuidad.forEach(function(c){ if(c.horaInicio && c.horaFin) nTrabContIda += cn(c.horaInicio, c.horaFin); });
-      }
-      // NUEVO — en pernocta, la nocturnidad de la vuelta (nTrab2 y su
-      // continuidadVuelta) se mueve a la rama 'vuelta-pernocta' — se
-      // cuenta ahí, en el día real de llegada.
-      if(!esPernoctaDinero && t.continuidadVuelta && t.continuidadVuelta.length){
-        t.continuidadVuelta.forEach(function(c){ if(c.horaInicio && c.horaFin) nTrabContVuelta += cn(c.horaInicio, c.horaFin); });
-      }
-      var nTrab = esPernoctaDinero ? (nTrab1+nTrabContIda) : (nTrab1+nTrab2+nTrabContIda+nTrabContVuelta);
-      if(nTrab>0&&t.nocturno){
-        tN+=nTrab*NOC;
-        dN.push({lbl:dL,tren:t.numTren||'',hF1:t.hF,hL1:t.hL,hF2:t.hF2,hL2:t.hL2,hNoc:nTrab,importe:Math.round(nTrab*NOC*100)/100});
-      }
+      // Nocturnidad: en HTDL NO se paga aparte — ya va incluida en el importe
+      // del HTDL (confirmado por Alex). Solo cuenta en Ordinario y Art. 52 (P.M.D.).
       if(t.plusAct){tA+=P_ACT;dA.push(dL);}if(t.plusJT){tJ+=P_JT;dJ.push(dL);}if(t.plusIntlAuto){tI+=P_INTL;dI.push(dL);}
+    }
+    // NUEVO — Art. 52 (P.M.D.): la nocturnidad SÍ se paga aparte (en HTDL y
+    // Art. 51 no, ya va en el concepto). Mismo cálculo que en Ordinario: en
+    // pernocta aquí solo la ida; la vuelta se cuenta en su día de llegada.
+    if(t.tipo==='art5152' && esPMD(t) && t.nocturno){
+      var nPmd = cn(t.hF,t.hL) + (esPernoctaDinero ? 0 : cn(t.hF2,t.hL2));
+      (t.continuidad||[]).forEach(function(c){ if(c.horaInicio && c.horaFin) nPmd += cn(c.horaInicio, c.horaFin); });
+      if(!esPernoctaDinero) (t.continuidadVuelta||[]).forEach(function(c){ if(c.horaInicio && c.horaFin) nPmd += cn(c.horaInicio, c.horaFin); });
+      if(nPmd>0){
+        tN+=nPmd*NOC;
+        dN.push({lbl:dL,tren:t.numTren||'',hF1:t.hF,hL1:t.hL,hF2:t.hF2,hL2:t.hL2,hNoc:nPmd,importe:Math.round(nPmd*NOC*100)/100});
+      }
     }
     if(t.tipo==='vuelta-pernocta'){
       // NUEVO — Confirmado por Alex (Opción A del dinero, mismo
@@ -20633,8 +20628,9 @@ function calculateEarnings(ks){
         }
         var hRetT2b = Math.round(minRetT2b/60*100)/100;
 
-        // ── Nocturnidad de la vuelta (aplica igual a Ordinario y a HTDL/Art.51-52) ──
-        if(origenDinero2.nocturno){
+        // ── Nocturnidad de la vuelta: solo Ordinario y Art. 52 (P.M.D.). En HTDL y
+        // Art. 51 ya va pagada dentro del concepto (confirmado por Alex). ──
+        if(origenDinero2.nocturno && (origenDinero2.tipo==='ordinario' || esPMD(origenDinero2))){
           var nVuelta2 = cn(origenDinero2.hF2, origenDinero2.hL2);
           var nVueltaCont = 0;
           if(origenDinero2.continuidadVuelta && origenDinero2.continuidadVuelta.length){
@@ -20788,7 +20784,8 @@ function calculateEarnings(ks){
           importe: Math.round(hComputableEx*HTDL*100)/100,
           esAdicional: true
         });
-        if(ex.nocturno){
+        // Nocturnidad: solo Art. 52 (P.M.D.); en HTDL y Art. 51 ya va en el concepto.
+        if(ex.nocturno && esPMD(ex)){
           var nEx = cn(ex.hF, ex.hL) + cn(ex.hF2, ex.hL2);
           if(nEx>0){
             tN += nEx*NOC;
