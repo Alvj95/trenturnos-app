@@ -10,6 +10,7 @@
  *   - window.Notification → notificaciones locales del sistema
  *   - pantalla fija: la página no se desplaza, el menú inferior no se mueve
  *   - botón "atrás" de Android: no cierra la app de golpe (ver index.html)
+ *   - widgets de la pantalla de inicio (calendario y próximos turnos)
  *
  * En el navegador normal (web/PWA) no hace nada.
  */
@@ -253,6 +254,86 @@
       setInterval(alProgramar, 30 * 60000);
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) alProgramar(); else alPronto(); });
+  }
+
+  // ── 📅 Widgets de la pantalla de inicio ─────────────────────
+  // Android pinta los widgets (calendario del mes y próximos turnos) con lo que se le
+  // pasa aquí: cada día ya resumido (color, texto corto y el detalle de la ventana que
+  // sale al tocarlo). Se manda al abrir la app, al cambiar turnos y al salir de ella.
+  // «Abrir en TrenTurnos» desde la ventana del día abre la app en ese día.
+  var TTWidget = P.TTWidget;
+  if (TTWidget) {
+    var wgTimer = null, wgUltimo = '';
+    var WG_CORTO = { ordinario: 'ORD', reserva: 'RES', descanso: 'L', baja: 'BAJA', trabajado: 'TRAB', comp: 'COMP',
+      vacaciones: 'VAC', dop: 'DOP', 'vuelta-pernocta': '🌙', 'pernocta3-intermedio': '🌙' };
+    var WG_TITULO = { comp: 'Compensación', 'vuelta-pernocta': 'Vuelta de pernocta' };
+    function wgClave(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    function wgMin(h) { var m = /^(\d{1,2}):(\d{2})/.exec(String(h || '')); return m ? +m[1] * 60 + +m[2] : null; }
+    function wgDuracion(t) {
+      var a = wgMin(t.hF), b = wgMin(t.hL);
+      var min = (typeof t.horas === 'number' && t.horas > 0) ? Math.round(t.horas * 60) : (a !== null && b !== null ? (b - a + 1440) % 1440 : 0);
+      return min ? Math.floor(min / 60) + ' h' + (min % 60 ? ' ' + (min % 60) + ' min' : '') : '';
+    }
+    function wgDia(t) {
+      var TI = (typeof TIPO_INFO !== 'undefined' && TIPO_INFO) || {};
+      var info = TI[t.tipo] || {};
+      var pmd = typeof esPMD === 'function' && esPMD(t);
+      var k = pmd ? 'pmd' : String(info.cls || '').replace(/^dc-/, '').replace('art5152', 'art') || 'nada';
+      var titulo = pmd ? 'Art. 52 · P.M.D.' : t.tipo === 'art5152' ? 'Art. ' + (t.articulo === 52 ? 52 : 51) : (WG_TITULO[t.tipo] || info.lbl || t.tipo || 'Turno');
+      var tren = t.numTren ? String(t.numTren) : '';
+      var corto = tren || (t.tipo === 'art5152' ? (t.articulo === 52 ? 'A52' : 'A51') : (WG_CORTO[t.tipo] || String(titulo).slice(0, 4).toUpperCase()));
+      var vuelta = t.numTrenVuelta && String(t.numTrenVuelta) !== tren ? String(t.numTrenVuelta) : '';
+      var trayecto = t.sal && t.lle ? t.sal + ' → ' + t.lle : (t.sal || t.lle || '');
+      var f = [];
+      if (trayecto) f.push(['Trayecto', trayecto]);
+      if (t.hF) f.push(['Presentación', t.hF]);
+      if (t.hL) f.push(['Fin', t.hL]);
+      var dur = wgDuracion(t); if (dur) f.push(['Horas', dur]);
+      if (vuelta) f.push(['Tren de vuelta', vuelta]);
+      if (t.turnoPisado && t.turnoPisado.numTren) f.push(['Turno debajo', 'Tren ' + t.turnoPisado.numTren + (t.contarPisado ? ' · cuenta' : '')]);
+      return { k: k, c: corto, i: info.ico || '📅', t: titulo,
+        s: tren ? 'Tren ' + tren + (vuelta ? ' / ' + vuelta : '') + (t.linea ? ' · ' + t.linea : '') : titulo,
+        r: trayecto || titulo, h: t.hF || '', f: f, n: t.notas ? String(t.notas) : '' };
+    }
+    function wgDatos() {
+      var TV = window.TV || {}, dias = {};
+      var desde = new Date(); desde.setDate(desde.getDate() - 62);
+      var hasta = new Date(); hasta.setDate(hasta.getDate() + 400);
+      var a = wgClave(desde), b = wgClave(hasta);
+      Object.keys(TV).forEach(function (k) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || k < a || k > b || !TV[k] || !TV[k].tipo) return;
+        try { dias[k] = wgDia(TV[k]); } catch (e) {}
+      });
+      return JSON.stringify({ v: 1, dias: dias });
+    }
+    function wgEnviar() {
+      clearTimeout(wgTimer);
+      var datos; try { datos = wgDatos(); } catch (e) { return; }
+      if (datos === wgUltimo) return;
+      TTWidget.guardar({ datos: datos }).then(function () { wgUltimo = datos; }).catch(function () {});
+    }
+    function wgPronto() { clearTimeout(wgTimer); wgTimer = setTimeout(wgEnviar, 1500); }
+    window.__widgetActualizar = wgPronto;
+    function wgIrAFecha() {
+      TTWidget.fechaPendiente().then(function (r) {
+        var f = r && r.fecha, p = f && f.split('-').map(Number);
+        if (!p || p.length !== 3) return;
+        try {
+          if (typeof goP === 'function') goP('cal');
+          selDay = null; curM = new Date(p[0], p[1] - 1, 1);
+          renderCal();
+          if (typeof clickDia === 'function') clickDia(p[2], f, (window.TV || {})[f]);
+        } catch (e) {}
+      }).catch(function () {});
+    }
+    window.addEventListener('load', function () {
+      var orig = window.saveTV;
+      if (typeof orig === 'function') window.saveTV = function () { var r = orig.apply(this, arguments); wgPronto(); return r; };
+      setTimeout(wgEnviar, 2000);
+      // Tras la pantalla de carga (3,5 s), por si se abrió desde «Abrir en TrenTurnos».
+      setTimeout(wgIrAFecha, 4600);
+    });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) wgEnviar(); else wgIrAFecha(); });
   }
 
   // ── Notificaciones push (Firebase) ──────────────────────────

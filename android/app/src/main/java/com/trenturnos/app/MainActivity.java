@@ -28,6 +28,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Widgets de la pantalla de inicio (ver TTWidgetPlugin).
+        registerPlugin(TTWidgetPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();

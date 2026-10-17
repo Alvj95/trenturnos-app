@@ -4,4 +4,9 @@
     <string name="title_activity_main">TrenTurnos</string>
     <string name="package_name">com.trenturnos.app</string>
     <string name="custom_url_scheme">com.trenturnos.app</string>
+    <!-- Widgets de la pantalla de inicio -->
+    <string name="tt_widget_calendario">Calendario de turnos</string>
+    <string name="tt_widget_calendario_desc">Tu mes con los turnos. Toca un día para ver el turno.</string>
+    <string name="tt_widget_proximos">Próximos turnos</string>
+    <string name="tt_widget_proximos_desc">Hoy y los próximos días de un vistazo.</string>
 </resources>
