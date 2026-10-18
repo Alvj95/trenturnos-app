@@ -885,7 +885,7 @@ function columnasImagen(t, ancho){
   return {cols:cols, filas:filas};
 }
 // Vocabulario del MOL: lo leído de una imagen se ajusta a la palabra conocida más parecida.
-var VOC_TIPO=['Desayuno','Aperitivo','Almuerzo','Comida','Merienda','Cena','Cortesía','Box Caliente','Box Clásico','Box del Norte','Box Frío','Cumpleaños'];
+var VOC_TIPO=['Desayuno','Aperitivo','Almuerzo','Comida','Merienda','Cena','Cortesía','Box Caliente','Box Clásico','Box Ibérico','Box del Norte','Box Frío','Cumpleaños'];
 var VOC_MENU=['Menú sin preferencia','Menú sin posibilidad de elección','Menú último minuto','Menú Cortesía','Desayuno frío','Desayuno caliente','Fruta y yogur','De la granja','De la barca','Del molino','Salado','Mixto','Sin elección','Especial'];
 var VOC_EST=['MADRID-PUERTA DE ATOCHA-ALMUDENA GRANDES','MADRID-CHAMARTÍN-CLARA CAMPOAMOR','BARCELONA-SANTS','ZARAGOZA DELICIAS','CAMP DE TARRAGONA','LLEIDA-PIRINEUS','GIRONA','FIGUERES-VILAFANT',
   'SEVILLA-SANTA JUSTA','CÓRDOBA-JULIO ANGUITA','MÁLAGA-MARÍA ZAMBRANO','VALÈNCIA-JOAQUÍN SOROLLA','VALÈNCIA-ESTACIÓ DEL NORD','ALICANTE-TERMINAL','GUADALAJARA-YEBES','CALATAYUD','CIUDAD REAL','PUERTOLLANO',
@@ -1127,8 +1127,8 @@ function pintarTipos(){
     '<button class="chip'+(!serie?' sel':'')+'" onclick="serie=\'\';pintarTipos()">No lo sé<small>plano genérico</small></button>';
   var n0=porCoche(), n=nCoches(n0,false), na=nCoches(n0,true), comp=composicion(n), S=serie&&SERIES[serie], raros=comp.filter(function(c){return c.raro}).map(function(c){return c.n});
   var compA=Object.keys(na).length?composicion(na):null;
-  if(compA) compA.filter(function(c){return c.raro}).forEach(function(c){ raros.push(c.n+' (acoplado)'); });
-  var hC=compHTML(comp, n)+(compA?'<div style="flex-basis:100%;font-size:10px;font-weight:900;color:#7DD3FC;margin:6px 0 2px">🔗 TREN ACOPLADO</div>'+compHTML(compA, na):''), hE=!serie?'<div class="encaja no">Sin serie: el mapa usa un plano genérico. Puedes elegirla después en el mapa.</div>':
+  if(compA) compA.filter(function(c){return c.raro}).forEach(function(c){ raros.push(es103()?String(c.n+10):c.n+' (acoplado)'); });
+  var hC=compHTML(comp, n)+(compA?'<div style="flex-basis:100%;font-size:10px;font-weight:900;color:#7DD3FC;margin:6px 0 2px">'+(es103()?'🔗 UNIDAD 2 · RAMA SECUNDARIA':'🔗 TREN ACOPLADO')+'</div>'+compHTML(compA, na, es103()?10:0):''), hE=!serie?'<div class="encaja no">Sin serie: el mapa usa un plano genérico. Puedes elegirla después en el mapa.</div>':
     raros.length?'<div class="encaja no">⚠️ El MOL trae servicios en el coche '+raros.join(', ')+', que en la '+serie+' no es de viajeros. ¿Seguro que es esta serie?</div>':
     '<div class="encaja si">✅ Los coches del MOL encajan con la '+serie+(S&&S.oficial?' · plano oficial de Renfe':' · plano aproximado')+'.</div>';
   function poner(cls, h){ var l=document.querySelectorAll(cls); for(var i=0;i<l.length;i++) l[i].innerHTML=h; }
@@ -1187,10 +1187,18 @@ function porCoche(){
 }
 /* 🔗 Tren acoplado (unidad múltiple): en el MOL, un coche de 4 cifras (6001, 7002…) es de otro tren
    que va enganchado, siempre de la misma serie. Las dos últimas cifras son su nº de coche. */
-function esAcop(c){ return c>=1000; }
-function cocheReal(c){ return c>=1000?c%100:c; }
+// S-103 en doble: la rama secundaria va numerada del 11 al 18 (11 = su coche 1, 15 = su coche 5…).
+// Un coche de 4 cifras es de la rama secundaria: 7011 y 6001 son el coche 11, 2013 el 13.
+// Solo en el S-103: cada serie numera distinto (en las demás, 4 cifras = tren acoplado).
+function es103(){ return serie==='S-103'; }
+function cocheNum(c){ if(c<1000) return c; var n=c%100; return es103()&&n>=1&&n<=8?n+10:n; }
+function esAcop(c){ return es103()?cocheNum(c)>=11:c>=1000; }
+function cocheReal(c){ var n=cocheNum(c); return es103()&&n>=11?n-10:n; } // nº de coche dentro de su tren (para el plano)
+function cocheVer(c){ return es103()?cocheNum(c):cocheReal(c); }      // nº que se enseña
 function hayAcop(){ return LISTA.some(function(r){ return esAcop(r.coche); }); }
-function nomCoche(c){ return esAcop(c)?cocheReal(c)+'<span class="acb">🔗 acoplado · '+c+'</span>':String(c); }
+function nomCoche(c){ return esAcop(c)?cocheVer(c)+'<span class="acb">🔗 '+(es103()?'rama secundaria':'acoplado · '+c)+'</span>':String(c); }
+// En el S-103, un coche de 4 cifras se junta con el de 2 de la rama secundaria (7011 → 11): son el mismo coche.
+function unirCoches103(filas){ if(es103()) filas.forEach(function(r){ if(r.coche>=1000) r.coche=cocheNum(r.coche); }); }
 // Servicios por coche de uno de los dos trenes (con el nº de coche de su tren).
 function nCoches(n, acop){ var o={}; Object.keys(n).forEach(function(k){ k=+k; if(esAcop(k)!==!!acop) return; var c=cocheReal(k); o[c]=(o[c]||0)+n[k]; }); return o; }
 // Coches de la serie elegida; si el MOL trae servicios en un coche que la serie no tiene de viajeros, manda el MOL.
@@ -1204,10 +1212,10 @@ function nombreCoche(c){
   var S=serie&&SERIES[serie], nm=S&&((S.oficial&&S.oficial.nombres&&S.oficial.nombres[c.n])||(S.nombres&&S.nombres[c.n]));
   return nm||(c.clase==='caf'?'Cafetería':c.clase==='pref'?'Preferente':'Turista');
 }
-function compHTML(comp, n){
+function compHTML(comp, n, suma){ // suma: +10 en la rama secundaria del S-103 (coches 11–18)
   var S=serie&&SERIES[serie], loco=S&&S.tractoras;
   return (loco?'<div class="car loco">🚂</div>':'')+comp.map(function(c){
-    return '<div class="car '+c.clase+(c.raro?' raro':'')+'"><span class="n">'+numCoche(c.n)+'</span><span class="c">'+(c.clase==='caf'?'☕':({Club:'CLUB',Preferente:'PREF',Confort:'CONF',Turista:'TUR'})[nombreCoche(c)]||'TUR')+'</span>'+(n[c.n]?'<span class="b">'+n[c.n]+'</span>':'')+'</div>'; }).join('')+
+    return '<div class="car '+c.clase+(c.raro?' raro':'')+'"><span class="n">'+numCoche(c.n+(suma||0))+'</span><span class="c">'+(c.clase==='caf'?'☕':({Club:'CLUB',Preferente:'PREF',Confort:'CONF',Turista:'TUR'})[nombreCoche(c)]||'TUR')+'</span>'+(n[c.n]?'<span class="b">'+n[c.n]+'</span>':'')+'</div>'; }).join('')+
     (loco?'<div class="car loco der">🚂</div>':'');
 }
 /* Sentido de la marcha en el corredor Madrid–Barcelona–Figueres (el del plano oficial de la S-103):
@@ -1296,22 +1304,23 @@ function seatKey(r){ return r.coche+'-'+pad(r.fila)+r.letra; }
 function filaHTML(r, icono, onclick, extra){
   var m=COMIDAS[r.k], esp=r.especial?' <span style="color:var(--nar2)">⚠️</span>':'';
   return '<div class="ck-row'+(r.aviso?' warn':'')+(onclick?' tap':'')+(onclick&&extra&&subio[r.sid]==='no'?' nosube':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span>'+icono+'</span>'+
-    '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>'+(esAcop(r.coche)?'🔗 Coche '+cocheReal(r.coche):'Coche '+(r.coche||'?'))+'</small></div>'+
+    '<div class="pos">'+(r.fila>0?pad(r.fila)+r.letra:'?')+'<small>'+(esAcop(r.coche)?'🔗 Coche '+cocheVer(r.coche):'Coche '+(r.coche||'?'))+'</small></div>'+
     '<div class="det">'+(r.aviso?'<div class="why">'+r.aviso+'</div>':'')+(r.extra?'<span style="color:var(--green2);font-weight:900">➕ </span>':'')+'<b>'+m.e+' '+nombreTipo(r)+'</b>'+(textoMenu(r)?' · '+textoMenu(r)+esp:'')+'<br>'+
     estCorto(r.origen)+' → '+estCorto(r.destino)+(r.nombre?' · '+r.nombre:'')+(r.cumple&&r.k!=='cum'?' · 🎂':'')+
     (r.orig?'<br><span style="color:var(--acc3)">↪ antes '+r.orig.coche+'-'+pad(r.orig.fila)+r.orig.letra+'</span>':'')+'</div>'+
     (extra?'<div class="clipwrap">'+extra+'</div>':'')+'</div>';
 }
 function mostrarComprobacion(){
+  unirCoches103(LEIDO.filas);
   var F=LEIDO.filas, ok=F.filter(function(r){return !r.aviso}), coches={}, tipos={};
   ok.forEach(function(r){ coches[r.coche]=1; var n=nombreTipo(r); tipos[n]=(tipos[n]||0)+1; });
   var tren=(ok.filter(function(r){return r.tren})[0]||{}).tren;
-  var acopN=Object.keys(coches).map(Number).filter(esAcop).sort(function(a,b){return a-b}), acopC=acopN.map(cocheReal);
+  var acopN=Object.keys(coches).map(Number).filter(esAcop).sort(function(a,b){return a-b}), acopC=acopN.map(cocheVer);
   document.getElementById('ck-head').innerHTML='<div class="card-t">📄 '+LEIDO.nombre+'</div>'+
     '<div style="font-size:15px;font-weight:800">He encontrado <span style="color:var(--acc3)">'+ok.length+' servicios</span>'+(F.length>ok.length?' y <span style="color:var(--nar2)">'+(F.length-ok.length)+' fila(s) a revisar</span>':'')+'</div>'+
-    '<div class="ck-sum" style="margin-top:8px">'+(tren?'<span>🚆 Tren '+tren+'</span>':'')+'<span>📅 '+(ok[0]?ok[0].fecha:'')+'</span><span>🚃 Coches '+Object.keys(coches).map(Number).filter(function(c){return !esAcop(c)}).sort(function(a,b){return a-b}).join(', ')+(acopC.length?' · 🔗 acoplado: '+acopC.join(', '):'')+'</span>'+
+    '<div class="ck-sum" style="margin-top:8px">'+(tren?'<span>🚆 Tren '+tren+'</span>':'')+'<span>📅 '+(ok[0]?ok[0].fecha:'')+'</span><span>🚃 Coches '+Object.keys(coches).map(Number).filter(function(c){return !esAcop(c)}).sort(function(a,b){return a-b}).join(', ')+(acopC.length?' · 🔗 '+(es103()?'rama secundaria':'acoplado')+': '+acopC.join(', '):'')+'</span>'+
     Object.keys(tipos).map(function(t){return '<span>'+t+' · '+tipos[t]+'</span>'}).join('')+'</div>'+
-    (acopC.length?'<div class="acnote">🔗 Este tren va <b>acoplado a otro</b> (unidad múltiple). Los coches de 4 cifras ('+acopN.join(', ')+') son del tren acoplado: misma serie, con sus propios coches 1, 2, 3…</div>':'');
+    (acopC.length?'<div class="acnote">'+(es103()?'🔗 Este tren va <b>en doble</b>: '+(acopC.length===1?'el coche '+acopC[0]+' es':'los coches '+acopC.join(', ')+' son')+' de la <b>rama secundaria</b> (11–18, iguales que el 1–8; un coche de 4 cifras como el 7011 o el 6001 es el 11).':'🔗 Este tren va <b>acoplado a otro</b> (unidad múltiple). Los coches de 4 cifras ('+acopN.join(', ')+') son del tren acoplado: misma serie, con sus propios coches 1, 2, 3…')+'</div>':'');
   document.getElementById('i-num').value=tren||'';
   proponerSerie(tren||'');
   CICLO_MOL=LEIDO.ciclo||0; if(CICLO_MOL) CICLO=CICLO_MOL;
@@ -1335,6 +1344,7 @@ function confirmarCarga(){
 }
 // Prepara mapa y listas a partir de los servicios (al cargar un PDF o al volver a abrir).
 function montar(lista){
+  unirCoches103(lista);
   LISTA=lista;
   ordenarEstaciones();
   reindexar();
@@ -1445,11 +1455,11 @@ function pintarMapa(){
   document.getElementById('mover-bar').innerHTML=mv?'<div class="mover-bar"><span>↔ Moviendo <b>'+COMIDAS[mv.k].e+' '+nombreTipo(mv)+'</b> de <b>'+mv.coche+'-'+pad(mv.fila)+mv.letra+'</b>. Toca el nuevo asiento'+(cochesMover().length>1?' (puedes cambiar de coche)':'')+'.</span><button onclick="cancelarMover()">Cancelar</button></div>':'';
   var lc=mv?cochesMover():COCHES;
   function bCoche(n){var k=cuenta(filtro,n);
-    return '<button class="coche prem'+(n===coche?' sel':'')+'" onclick="coche='+n+';pintarMapa()"><div class="k">'+(k?k+' 🍽':'')+'</div><div class="n">'+cocheReal(n)+'</div>'+(esAcop(n)?'<div class="u">'+n+'</div>':'<div class="c">'+nServidos(n)+'/'+cuenta(null,n)+' ✓</div>')+'</button>';}
+    return '<button class="coche prem'+(n===coche?' sel':'')+'" onclick="coche='+n+';pintarMapa()"><div class="k">'+(k?k+' 🍽':'')+'</div><div class="n">'+cocheVer(n)+'</div>'+(esAcop(n)&&!es103()?'<div class="u">'+n+'</div>':'<div class="c">'+nServidos(n)+'/'+cuenta(null,n)+' ✓</div>')+'</button>';}
   var lA=lc.filter(esAcop), elC=document.getElementById('coches');
   elC.classList.toggle('grp', !!lA.length);
-  elC.innerHTML=lA.length?'<div class="cgrp"><div class="cgt">🚆 Tren principal</div><div class="cgc">'+lc.filter(function(c){return !esAcop(c)}).map(bCoche).join('')+'</div></div>'+
-    '<div class="cgrp ac"><div class="cgt">🔗 Tren acoplado</div><div class="cgc">'+lA.map(bCoche).join('')+'</div></div>':lc.map(bCoche).join('');
+  elC.innerHTML=lA.length?'<div class="cgrp"><div class="cgt">'+(es103()?'🚆 Unidad 1 · coches 1–8':'🚆 Tren principal')+'</div><div class="cgc">'+lc.filter(function(c){return !esAcop(c)}).map(bCoche).join('')+'</div></div>'+
+    '<div class="cgrp ac"><div class="cgt">'+(es103()?'🔗 Unidad 2 · coches 11–18':'🔗 Tren acoplado')+'</div><div class="cgc">'+lA.map(bCoche).join('')+'</div></div>':lc.map(bCoche).join('');
   var enCoche=lista(function(r){return r.coche===coche});
   var P=planoCoche(coche, LISTA.filter(function(r){return r.coche===coche})), letras=ESPEJO?P.cols.slice().reverse():P.cols;
   document.getElementById('plano-info').innerHTML='🚆 <b>'+(serie||'Sin serie')+'</b>'+(P.tipo==='oficial'?'<span class="of">✅ Plano oficial de Renfe</span>':P.tipo==='aprox'?'<span class="ap">Plano aproximado</span>':'<span class="ap">Plano genérico</span>')+
@@ -1610,7 +1620,7 @@ function pintarResumen(){
     '<div class="card-t">🛤️ Por tramo</div>'+filasGrupo(grupo(function(r){ return estCorto(r.origen)+' → '+estCorto(r.destino); }, function(r){ return rangoEst(r.origen)*100+rangoEst(r.destino); }))+
     '<div class="card-t" style="margin-top:12px">🚉 Suben en</div>'+filasGrupo(grupo(function(r){ return estNombre(r.origen); }, function(r){ return rangoEst(r.origen); }))+
     '<div class="card-t" style="margin-top:12px">🏁 Bajan en</div>'+filasGrupo(grupo(function(r){ return estNombre(r.destino); }, function(r){ return rangoEst(r.destino); }))+
-    '<div class="card-t" style="margin-top:12px">🚃 Por coche</div>'+COCHES.map(function(c,i){return (hayAcop()&&(i===0||esAcop(c)&&!esAcop(COCHES[i-1]))?'<div style="font-size:11px;font-weight:900;color:'+(esAcop(c)?'#7DD3FC':'var(--tx2)')+';margin:6px 0 2px">'+(esAcop(c)?'🔗 TREN ACOPLADO':'🚆 TREN PRINCIPAL')+'</div>':'')+'<div class="rs-row"><div class="rs-n">Coche '+nomCoche(c)+'<small>'+nServidos(c)+' de '+cuenta(null,c)+' servidos</small></div><button class="chip" onclick="coche='+c+';filtro=null;goP(\'mapa\')">Ver ›</button></div>';}).join('');
+    '<div class="card-t" style="margin-top:12px">🚃 Por coche</div>'+COCHES.map(function(c,i){return (hayAcop()&&(i===0||esAcop(c)&&!esAcop(COCHES[i-1]))?'<div style="font-size:11px;font-weight:900;color:'+(esAcop(c)?'#7DD3FC':'var(--tx2)')+';margin:6px 0 2px">'+(esAcop(c)?(es103()?'🔗 UNIDAD 2 · RAMA SECUNDARIA':'🔗 TREN ACOPLADO'):(es103()?'🚆 UNIDAD 1':'🚆 TREN PRINCIPAL'))+'</div>':'')+'<div class="rs-row"><div class="rs-n">Coche '+nomCoche(c)+'<small>'+nServidos(c)+' de '+cuenta(null,c)+' servidos</small></div><button class="chip" onclick="coche='+c+';filtro=null;goP(\'mapa\')">Ver ›</button></div>';}).join('');
   pintarListaResumen();
 }
 function pintarListaResumen(){
@@ -1630,7 +1640,7 @@ var RS_MAS=false;
 function pintarParadas(){
   var modo=estFiltro.modo==='baja'?'baja':'sube', campo=modo==='sube'?'origen':'destino', d={};
   LISTA.forEach(function(r){ if(r[campo]) (d[r[campo]]=d[r[campo]]||[]).push(r); });
-  function asi(r){ return (esAcop(r.coche)?'🔗'+cocheReal(r.coche):r.coche)+'-'+pad(r.fila)+r.letra; }
+  function asi(r){ return (esAcop(r.coche)?'🔗'+cocheVer(r.coche):r.coche)+'-'+pad(r.fila)+r.letra; }
   var h='<div class="sx"><button class="'+(modo==='sube'?'on':'')+'" onclick="setEst(\'sube\',null)">⬆️ Suben</button>'+
     '<button class="'+(modo==='baja'?'on':'')+'" onclick="setEst(\'baja\',null)">⬇️ Bajan</button></div>';
   Object.keys(d).sort(function(a,b){ return rangoEst(a)-rangoEst(b); }).forEach(function(e,i){
