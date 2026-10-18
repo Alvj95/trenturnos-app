@@ -4462,6 +4462,8 @@ function megafoniaDingDong(ctx, t){
       <div id="htdl-dias-stats-box"></div>
       <div id="cs-info-adicional-box"></div>
       <div id="cs-total-pagar-box"></div>
+      <!-- NUEVO — las 3 comparaciones de Nómina, aquí con el mes de Stats (ver cmpPintarStats) -->
+      <div id="stats-cmp-slot"></div>
 
     </div>
   </div>
@@ -4482,7 +4484,8 @@ function megafoniaDingDong(ctx, t){
     </div>
     <div id="nomina-pub-body"></div>
 
-    <div class="nom-extras-tit">¿Quieres comprobarlo mejor?</div>
+    <div id="nomina-cmp-slot"><div id="cmp-extras">
+    <div class="nom-extras-tit" id="cmp-extras-tit">¿Quieres comprobarlo mejor?</div>
 
     <div class="nom-extra-btn" onclick="_nominaToggleExtra('nomina-auditoria-wrap')">
       <div class="nom-extra-ico">🔍</div>
@@ -4515,6 +4518,7 @@ function megafoniaDingDong(ctx, t){
     <div id="nomina-real-wrap-outer" class="nom-extra-content" style="display:none">
       <div id="nomina-real-pub-wrap"></div>
     </div>
+    </div></div>
   </div>
 
   <!-- AJUSTES -->
@@ -9262,8 +9266,8 @@ function renderNominaReal(){
   if(origen==='publica'){
     var wrap = document.getElementById('nomina-real-pub-wrap');
     if(!wrap) return;
-    var anioPub = nomM ? nomM.getFullYear() : undefined;
-    var mesPub = nomM ? (nomM.getMonth()+1) : undefined;
+    var mnPub = _cmpMesNomina(); // Nómina: el mes que se cobra · Stats: el mes que se ve
+    var anioPub = mnPub.anio, mesPub = mnPub.mes;
     wrap.innerHTML = _construirCardReal(anioPub, mesPub, 'publica');
     return;
   }
@@ -9666,6 +9670,7 @@ function _nominaArt5152Importe(ks){
 function renderNominaPublica(){
   var body = document.getElementById('nomina-pub-body');
   if(!body) return;
+  cmpColocar(false);
   if(!nomM) nomM = new Date();
   var anio = nomM.getFullYear(), mes = nomM.getMonth()+1; // 1-12, mes que se cobra
   document.getElementById('nom-pub-mlbl').textContent = MESES[mes-1]+' '+anio;
@@ -19390,6 +19395,8 @@ function renderStats(){
 
   // QUITADO — la Comparativa con Cómputo Excel también se movió a
   // Nómina (renderNominaPublica); ya no se llama aquí.
+  // NUEVO — las 3 comparaciones (horas, Excel oficial, nómina real) del mes que se ve en Stats
+  var _pSt=document.getElementById('p-stats'); if(_pSt&&_pSt.classList.contains('on')) cmpPintarStats();
 }
 
 function chSM(d){statsM.setMonth(statsM.getMonth()+d);renderStats();}
@@ -23851,12 +23858,32 @@ function _minToHoras(mins){
 // dentro de la pantalla de Nómina, comparando el mes TRABAJADO (el
 // mismo mes que ya usan HTDL/Nocturnidad/Art.51-52 ahí, por pagarse a
 // mes vencido) — no el mes de cobro que se está viendo.
+// NUEVO — «Comparar tus horas», «Excel oficial» y «nómina real» salen en Nómina (con el mes
+// trabajado = el anterior, a mes vencido) y también al final de Stats (con el mes que se ve).
+// Es el mismo bloque: se mueve de una pantalla a otra y CMP_STATS dice de qué mes son los datos.
+var CMP_STATS = false;
+function _cmpMesTrabajado(){ if(CMP_STATS) return {anio:statsM.getFullYear(), mes:statsM.getMonth()+1}; if(!nomM) nomM=new Date(); return _nominaMesAnterior(nomM.getFullYear(), nomM.getMonth()+1); }
+function _cmpMesNomina(){ if(CMP_STATS) return {anio:statsM.getFullYear(), mes:statsM.getMonth()+1}; if(!nomM) nomM=new Date(); return {anio:nomM.getFullYear(), mes:nomM.getMonth()+1}; }
+function cmpColocar(enStats){
+  var bloque=document.getElementById('cmp-extras'), slot=document.getElementById(enStats?'stats-cmp-slot':'nomina-cmp-slot');
+  if(!bloque||!slot) return;
+  CMP_STATS=!!enStats;
+  if(bloque.parentNode!==slot) slot.appendChild(bloque);
+  var t=document.getElementById('cmp-extras-tit');
+  if(t) t.textContent = enStats ? '¿Quieres comprobar '+MESES[statsM.getMonth()].toLowerCase()+'?' : '¿Quieres comprobarlo mejor?';
+}
+function cmpPintarStats(){
+  cmpColocar(true);
+  try{ renderAuditoriaHoras(); }catch(e){}
+  try{ renderComparativaComputoExcel(); }catch(e){}
+  var w=document.getElementById('nomina-real-pub-wrap');
+  if(w){ var mn=_cmpMesNomina(); try{ w.innerHTML=_construirCardReal(mn.anio, mn.mes, 'publica'); }catch(e){} }
+}
 async function renderAuditoriaHoras(){
   var panel = document.getElementById('nomina-auditoria-box');
   if(!panel) return;
 
-  if(!nomM) nomM = new Date();
-  var mesTrab = _nominaMesAnterior(nomM.getFullYear(), nomM.getMonth()+1);
+  var mesTrab = _cmpMesTrabajado(); // Nómina: mes anterior · Stats: el mes que se ve
   var y = mesTrab.anio, m = mesTrab.mes;
   var mesVisibleLbl = MESES[m-1]+' '+y;
   var fechaRefMes = new Date(y, m-1, 1);
@@ -24141,8 +24168,7 @@ function renderComparativaComputoExcel(){
   // Buscado directamente en el almacén persistente por mes — así
   // sobrevive a recargar la página y aparece solo, sin volver a
   // subir nada, en cuanto navegas a ESE mes trabajado.
-  if(!nomM) nomM = new Date();
-  var mesTrabExcel = _nominaMesAnterior(nomM.getFullYear(), nomM.getMonth()+1);
+  var mesTrabExcel = _cmpMesTrabajado(); // Nómina: mes anterior · Stats: el mes que se ve
   var yVisible=mesTrabExcel.anio, mVisible=mesTrabExcel.mes;
   var claveMes = yVisible+'-'+pad(mVisible);
   var datos = _computoExcelPorMes[claveMes];
