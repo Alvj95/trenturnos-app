@@ -742,31 +742,51 @@ async function ocrTabla(worker, canvas, gris, original, esc){
     if(iD<0){ if(/COCHE/i.test(L.txt)&&/ASIEN/i.test(L.txt)) cab=L; return; }
     filas.push({L:L, fecha:L.w[iD].s.match(/\d{2}\/\d{2}\/\d{4}/)[0], resto:L.w.slice(iD+1)});
   });
+  // Lo que va ENCIMA de los títulos no son filas (p. ej. el filtro «FECHA_VIAJE 20/10/2026»).
+  if(cab){ var yCab=Math.min.apply(null,cab.w.map(function(w){return w.y0;}));
+    filas=filas.filter(function(f){ return Math.min.apply(null,f.L.w.map(function(w){return w.y0;}))>yCab; }); }
+  // Tabla dinámica sin fecha en cada fila (Prestaciones): coche, asiento y tipo solo salen en la
+  // primera fila de cada grupo; las de debajo, en blanco, son del mismo coche/asiento/tipo.
+  var piv=!filas.length&&cab?filasPivote(lineas, cab):null;
+  if(piv) filas=piv;
+  filas.forEach(function(f){ var ws=f.L.w; f.y0=Math.min.apply(null,ws.map(function(w){return w.y0;})); f.y1=Math.max.apply(null,ws.map(function(w){return w.y1;}));
+    if(f.resto[0]&&f.resto[1]){ f.y0=Math.min(f.resto[0].y0,f.resto[1].y0); f.y1=Math.max(f.resto[0].y1,f.resto[1].y1); }
+    else if(f.resto[1]){ f.y0=f.resto[1].y0; f.y1=f.resto[1].y1; } });
   // Nº de coche partido en dos trozos de cifras muy juntos ("2" + "013" = coche 2013): se juntan.
   filas.forEach(function(f){ var a=f.resto[0], b=f.resto[1], c=f.resto[2];
-    if(!a||!b||!c||!/^\d+$/.test(a.s)||!/^\d+$/.test(b.s)||(a.s+b.s).length>4) return;
+    if(f.pivote||!a||!b||!c||!/^\d+$/.test(a.s)||!/^\d+$/.test(b.s)||(a.s+b.s).length>4) return;
     if(b.x0-a.x1>0.35*Math.max(a.y1-a.y0, b.y1-b.y0)) return; // separados: son coche y asiento
     f.resto.splice(0,2,{s:a.s+b.s, x0:a.x0, x1:b.x1, y0:Math.min(a.y0,b.y0), y1:Math.max(a.y1,b.y1), c:Math.min(a.c,b.c), junto:1}); });
   // Coche y asiento pegados en una sola palabra ("107C" = coche 1 + asiento 07C): pasa en las
   // filas repetidas de la tabla dinámica (mismo asiento en otro tramo, sin ⊟ ni negrita).
   // Se separan (el asiento son siempre 2 cifras + letra) para que no se corran las columnas.
-  filas.forEach(function(f){ var w=f.resto[0], s=w&&w.s.replace(/[^0-9A-Za-z]/g,'');
+  filas.forEach(function(f){ var w=f.resto[0], s=!f.pivote&&w&&w.s.replace(/[^0-9A-Za-z]/g,'');
     if(!s||!/^\d{1,3}[0-9OoQD]\d[A-Fa-f8630Oo]$/.test(s)) return; // la letra puede salir como 8, 6, 3, 0 ("1078" = 1 + 07B)
     // Solo si lo siguiente ya es el tipo de servicio (falta el asiento); si no, es un coche de 4 cifras (2013).
     if(w.junto||!(f.resto[1]&&/^\W*(desay|aperit|almuer|comida|merien|cena|cortes|box|cumple)/i.test(f.resto[1].s))) return;
     var corte=w.x0+Math.round((w.x1-w.x0)*(s.length-3)/s.length);
     f.resto.splice(0,1,{s:s.slice(0,-3),x0:w.x0,x1:corte-2,y0:w.y0,y1:w.y1,c:w.c},{s:s.slice(-3),x0:corte,x1:w.x1,y0:w.y0,y1:w.y1,c:w.c}); });
   // coche y asiento: recortes de la COLUMNA entera (mismo ancho en todas las filas)
-  var okF=filas.filter(function(f){return f.resto.length>=2});
+  var okF=filas.filter(function(f){return f.resto[0]&&f.resto[1]});
+  if(!okF.length) okF=filas.filter(function(f){return f.resto[1]});
+  if(!okF.length) return {filas:[], cab:cab, lineas:lineas};
   function rango(i){ var xs0=okF.map(function(f){return f.resto[i].x0}).sort(function(a,b){return a-b}), xs1=okF.map(function(f){return f.resto[i].x1}).sort(function(a,b){return a-b});
     return [xs0[Math.floor(xs0.length*0.1)], xs1[Math.floor(xs1.length*0.9)]]; }
-  var rc=rango(0), ra=rango(1), sig=okF.map(function(f){return f.resto[2]?f.resto[2].x0:9e9}).sort(function(a,b){return a-b})[0];
-  var cocheX0=rc[0]-10, cocheX1=Math.min(rc[1]+6, ra[0]-2), asiX0=Math.max(ra[0]-8, cocheX1+1), asiX1=Math.min(ra[1]+12, sig-4);
+  var cocheX0, cocheX1, asiX0, asiX1;
+  if(piv){ // columnas por los datos que sí están (los títulos llevan delante el botón del filtro)
+    var cw=filas.filter(function(f){return f.resto[0];}).map(function(f){return f.resto[0];}), aw=filas.filter(function(f){return f.resto[1];}).map(function(f){return f.resto[1];});
+    var mn=function(a,k){ return Math.min.apply(null,a.map(function(w){return w[k];})); }, mx=function(a,k){ return Math.max.apply(null,a.map(function(w){return w[k];})); };
+    var sig2=Math.min.apply(null,filas.map(function(f){return f.resto[2]?f.resto[2].x0:9e9;}));
+    // justo delante de cada número va el cuadradito ⊟ de la tabla: no se coge (se leería como un 1)
+    asiX0=mn(aw,'x0')-4; if(cw.length) asiX0=Math.max(asiX0, mx(cw,'x1')+3);
+    cocheX0=cw.length?mn(cw,'x0')-3:asiX0-120; cocheX1=asiX0-1; asiX1=Math.min(mx(aw,'x1')+12, sig2-4); }
+  else { var rc=rango(0), ra=rango(1), sig=okF.map(function(f){return f.resto[2]?f.resto[2].x0:9e9}).sort(function(a,b){return a-b})[0];
+    cocheX0=rc[0]-10; cocheX1=Math.min(rc[1]+6, ra[0]-2); asiX0=Math.max(ra[0]-8, cocheX1+1); asiX1=Math.min(ra[1]+12, sig-4); }
   function votar(c){ var n={}, mejor='', m=0; c.forEach(function(v){ if(!v) return; n[v]=(n[v]||0)+1; if(n[v]>m){m=n[v]; mejor=v;} }); return {v:mejor, unanime: m===c.filter(Boolean).length && m>0, n:m}; }
   // Una lectura por COLUMNA (no por casilla): dos lecturas distintas de cada columna
   // + lo leído en la pasada general = tres votos por casilla.
-  var yTop=Math.min.apply(null,okF.map(function(f){return Math.min(f.resto[0].y0,f.resto[1].y0)}))-8;
-  var yBot=Math.max.apply(null,okF.map(function(f){return Math.max(f.resto[0].y1,f.resto[1].y1)}))+8;
+  var yTop=Math.min.apply(null,filas.map(function(f){return f.y0}))-8;
+  var yBot=Math.max.apply(null,filas.map(function(f){return f.y1}))+8;
   // Franja de una columna, ampliada desde la imagen ORIGINAL (como con lupa) para que las
   // letras midan ~48 px: así se distingue mejor un 8 de un 6 o una B de un 8.
   var altos=okF.map(function(f){return f.resto[1].y1-f.resto[1].y0}).sort(function(a,b){return a-b});
@@ -790,7 +810,7 @@ async function ocrTabla(worker, canvas, gris, original, esc){
   function votarSegundo(c, primero){ var n={}, m=0; c.forEach(function(v){ if(v&&v!==primero){ n[v]=(n[v]||0)+1; if(n[v]>m) m=n[v]; } }); return m; }
   // Una casilla (coche o asiento de una fila) recortada de la imagen original y muy ampliada.
   async function casilla(x0,x1,f,lista){
-    var y0=Math.min(f.resto[0].y0,f.resto[1].y0)-6, y1=Math.max(f.resto[0].y1,f.resto[1].y1)+6;
+    var y0=f.y0-6, y1=f.y1+6;
     var alto=(y1-y0)/esc, k=Math.max(2, 90/alto), m=20;
     var sw=Math.round((x1-x0)/esc*k)+2*m, sh=Math.round(alto*k)+2*m;
     var c=document.createElement('canvas'); c.width=sw; c.height=sh; var cx=c.getContext('2d'); cx.imageSmoothingQuality='high';
@@ -807,39 +827,81 @@ async function ocrTabla(worker, canvas, gris, original, esc){
         var t=(await worker.recognize(c)).data.text||''; out.push(t.trim()); } }
     return out;
   }
-  function enFila(lin, f){ var c=(Math.min(f.resto[0].y0,f.resto[1].y0)+Math.max(f.resto[0].y1,f.resto[1].y1))/2, alto=f.resto[1].y1-f.resto[1].y0, m=null, d=1e9;
+  function enFila(lin, f){ var c=(f.y0+f.y1)/2, alto=f.y1-f.y0, m=null, d=1e9;
     lin.forEach(function(l){ var dd=Math.abs(l.y-c); if(dd<d){ d=dd; m=l; } }); return m&&d<=alto*0.7?m.t:''; }
   var c6=await franja(cocheX0,cocheX1,'0123456789','6','bin'), c4=await franja(cocheX0,cocheX1,'0123456789','11','gris');
   var a6=await franja(asiX0,asiX1,'0123456789ABCDEF','6','bin'), a4=await franja(asiX0,asiX1,'0123456789ABCDEF','11','gris');
   filas.forEach(function(f){
     if(f.resto.length<2){ f.mal=true; return; }
-    var cc=[arreglarCoche(f.resto[0].s), arreglarCoche(enFila(c6,f)), arreglarCoche(enFila(c4,f))];
-    var ca=[arreglarAsiento(f.resto[1].s), arreglarAsiento(enFila(a6,f)), arreglarAsiento(enFila(a4,f))];
+    var cc=f.pivote&&!f.resto[0]?[]:[arreglarCoche(f.resto[0].s), arreglarCoche(enFila(c6,f)), arreglarCoche(enFila(c4,f))];
+    var ca=f.pivote&&!f.resto[1]?[]:[arreglarAsiento(f.resto[1].s), arreglarAsiento(enFila(a6,f)), arreglarAsiento(enFila(a4,f))];
     ca=ca.map(function(a){ return a&&parseInt(a,10)<=30?a:''; }); // no hay filas de asientos por encima de la 30
     var vc=votar(cc), va=votar(ca);
     f.coche=vc.v; f.asiento=va.v; f.cc=cc; f.ca=ca; f.cocheOk=vc.n>=2; f.asiOk=va.n>=2; f.crudo=cc.join('/')+' · '+ca.join('/');
     f.celdasW=f.resto.slice(2);
   });
+  if(piv) heredarPivote(filas);
   resolverPorOrden(filas.filter(function(f){return !f.mal;}));
+  if(piv) heredarPivote(filas);
   // Segunda oportunidad para las casillas que siguen dudosas: se recorta SOLO esa casilla de la
   // imagen original, muy ampliada, y se lee de varias formas (gris y con tres contrastes; como
   // palabra suelta y como línea). Gana la lectura que más se repite y encaja con el orden del MOL.
-  var dudas=filas.filter(function(f){ return !f.mal&&f.resto.length>=2&&(!f.asiOk||!f.cocheOk); });
+  var dudas=filas.filter(function(f){ return !f.mal&&f.resto.length>=2&&(!f.asiOk&&f.resto[1]||!f.cocheOk&&f.resto[0]); });
   if(dudas.length&&dudas.length<=20){
     for(var di=0;di<dudas.length;di++){ var fd=dudas[di];
-      if(!fd.asiOk){ var la=(await casilla(asiX0,asiX1,fd,'0123456789ABCDEF')).map(arreglarAsiento).filter(function(a){return a&&parseInt(a,10)<=30;});
+      if(!fd.asiOk&&fd.resto[1]){ var la=(await casilla(asiX0,asiX1,fd,'0123456789ABCDEF')).map(arreglarAsiento).filter(function(a){return a&&parseInt(a,10)<=30;});
         fd.ca=fd.ca.concat(la); var va2=votar(fd.ca), seg=votarSegundo(fd.ca, va2.v);
         if(va2.n>=3&&va2.n>=seg+2){ fd.asiento=va2.v; fd.asiOk=true; } else if(va2.v) fd.asiento=va2.v; }
-      if(!fd.cocheOk){ var lc2=(await casilla(cocheX0,cocheX1,fd,'0123456789')).map(arreglarCoche).filter(Boolean);
+      if(!fd.cocheOk&&fd.resto[0]){ var lc2=(await casilla(cocheX0,cocheX1,fd,'0123456789')).map(arreglarCoche).filter(Boolean);
         fd.cc=fd.cc.concat(lc2); var vc2=votar(fd.cc), segc=votarSegundo(fd.cc, vc2.v);
         if(vc2.n>=3&&vc2.n>=segc+2){ fd.coche=vc2.v; fd.cocheOk=true; } }
     }
     resolverPorOrden(filas.filter(function(f){return !f.mal;}));
+    if(piv) heredarPivote(filas);
   }
   filas.forEach(function(f){ if(!f.mal) f.dudoso=!(f.cocheOk&&f.asiOk); });
   return {filas:filas, cab:cab, lineas:lineas};
 }
 
+// Tabla dinámica «Prestaciones» (sin fecha en cada fila): las columnas se toman de los títulos
+// (COCHE, ASIENTO, TIPO_REST, NUM_SELECCION, ESTAC_ORIGEN, ESTAC_DESTINO) y cada fila de datos
+// es una línea entre los títulos y «Total general». La fecha va arriba, en «FECHA_VIAJE».
+function filasPivote(lineas, cab){
+  var tit=[]; cab.w.forEach(function(w){ var u=sinAcento(w.s);
+    for(var j=0;j<COLS.length;j++) if(COLS[j][1].test(u)&&!tit.some(function(t){return t.k===COLS[j][0];})){ tit.push({k:COLS[j][0], x:w.x0}); break; } });
+  tit.sort(function(a,b){return a.x-b.x;});
+  var iC=-1, iA=-1; tit.forEach(function(t,i){ if(t.k==='coche') iC=i; if(t.k==='asiento') iA=i; });
+  if(iC<0||iA!==iC+1||tit.length<4) return null;
+  var alto=cab.w.map(function(w){return w.y1-w.y0;}).sort(function(a,b){return a-b;})[Math.floor(cab.w.length/2)]||20, tol=alto*0.8;
+  var xC=tit[iC].x, xA=tit[iA].x, xT=tit[iA+1]?tit[iA+1].x:9e9;
+  var ys=cab.w.map(function(w){return (w.y0+w.y1)/2;}).sort(function(a,b){return a-b;}), yCab=ys[Math.floor(ys.length/2)]+alto*0.6;
+  var fecha=''; lineas.some(function(L){ var m=/FECHA/i.test(L.txt)&&L.txt.match(/\d{2}\/\d{2}\/\d{4}/); if(m) fecha=m[0]; return m; });
+  var out=[], fin=false;
+  lineas.forEach(function(L){
+    if(fin||!L.w.length) return;
+    var yc=L.w.map(function(w){return (w.y0+w.y1)/2;}).sort(function(a,b){return a-b;}); if(yc[Math.floor(yc.length/2)]<=yCab) return;
+    if(/^\W*TOTAL/i.test(L.txt)){ fin=true; return; }
+    var c=null, a=null, resto=[];
+    L.w.forEach(function(w){ var s=w.s.replace(/[⊟⊞□■]/g,''); if(!s.trim()) return;
+      if(w.x0<xC-tol) return; // nombre del archivo (Source.Name)
+      if(w.x0<xA-tol){ if(arreglarCoche(s)) c=w; return; }
+      if(w.x0<xT-tol){ if(arreglarAsiento(s)) a=w; return; }
+      resto.push(w); });
+    if(!resto.length&&!a) return;
+    out.push({L:L, fecha:fecha, pivote:true, resto:[c,a].concat(resto)});
+  });
+  if(!out.length) return null;
+  return out;
+}
+// En la tabla dinámica, una casilla en blanco es la de arriba: coche, y si falta el asiento,
+// el mismo asiento (otro pasajero en otro tramo).
+function heredarPivote(filas){
+  var prev=null;
+  filas.forEach(function(f){ if(f.mal) return;
+    if(prev&&!f.resto[0]){ f.coche=prev.coche; f.cocheOk=prev.cocheOk; f.cc=[prev.coche]; }
+    if(prev&&!f.resto[1]){ f.asiento=prev.asiento; f.asiOk=prev.asiOk; f.ca=[prev.asiento]; f.coche=prev.coche; f.cocheOk=prev.cocheOk; }
+    prev=f; });
+}
 // El MOL va ordenado por coche y, dentro de cada coche, por asiento. Cuando las tres lecturas
 // de una casilla no coinciden, se elige la que encaja con las filas de al lado:
 // · un «21» entre filas del coche 11 es el 11; un «55» después del coche 5 es el 5;
@@ -978,9 +1040,11 @@ async function leerCapturas(imgs, nombre, que){
     var t=await ocrTabla(w, pr.canvas, pr.gris, pr.original, pr.escala); barra(85);
     var c=columnasImagen(t, pr.canvas.width), deEsta=[];
     textos=textos.concat(t.lineas.map(function(L){return L.txt}));
+    var tipoAnt='';
     c.filas.forEach(function(f){
       var celda={fecha:f.fecha, coche:f.coche||'', asiento:f.asiento||''};
       c.cols.forEach(function(col,i){ if(col.k&&f.porCol[i]) celda[col.k]=limpiarCelda(f.porCol[i]); });
+      if(f.pivote){ if(!celda.tipo&&tipoAnt) celda.tipo=tipoAnt; tipoAnt=celda.tipo||tipoAnt; }
       if(celda.tipo) celda.tipo=ajustar(celda.tipo, VOC_TIPO);
       if(celda.menu) celda.menu=ajustar(celda.menu, VOC_MENU);
       if(celda.origen) celda.origen=ajustar(celda.origen, VOC_EST, true);
@@ -1065,8 +1129,9 @@ function recortarBlanco(cv){
   return o;
 }
 function interpretar(filas){
-  var cab=null, res=[];
+  var cab=null, res=[], piv=[], fin=false, fechaCab='';
   filas.forEach(function(f){
+    var fc=/FECHA/i.test(f.txt)&&f.txt.match(/\d{2}\/\d{2}\/\d{4}/); if(fc&&!cab) fechaCab=fc[0];
     var up=f.txt.toUpperCase();
     if(/COCHE/.test(up)&&/ASIENTO|PLAZA/.test(up)&&!/\d{2}\/\d{2}\/\d{4}/.test(up)){
       var cols=[];
@@ -1078,7 +1143,7 @@ function interpretar(filas){
       });
       if(cols.length>=4) cab=cols.sort(function(a,b){return a.x-b.x}); return;
     }
-    if(!/^\d{2}\/\d{2}\/\d{4}/.test(f.txt)) return;
+    if(!/^\d{2}\/\d{2}\/\d{4}/.test(f.txt)){ if(cab&&!fin){ if(/^\W*TOTAL/i.test(f.txt)) fin=true; else piv.push(f); } return; }
     var r=null;
     if(cab){
       r=deCeldas(repartir(f.t,cab,'centro'), f.txt);
@@ -1087,7 +1152,27 @@ function interpretar(filas){
     if(!r||r.aviso){ var t=leerTextoMOL(f.txt); if(t&&!t.aviso) r=t; else if(!r) r=t; }
     if(r) res.push(r);
   });
+  if(!res.length&&cab&&piv.length) res=interpretarPivote(piv, cab, fechaCab, filas);
   res.forEach(function(r,i){ r.sid=i; });
+  return res;
+}
+// PDF de la tabla dinámica «Prestaciones»: las casillas en blanco son las de arriba.
+function interpretarPivote(piv, cab, fecha, todas){
+  var x0=cab[0].x-5, ant={}, res=[], mt=null;
+  todas.some(function(f){ mt=f.txt.match(/TREN\D{0,20}?(\d{3,5})\b/i); return mt; });
+  piv.forEach(function(f){
+    var t=f.t.filter(function(x){ return x.x>=x0; }).map(function(x){ return {x:x.x,y:x.y,w:x.w,s:x.s.replace(/[⊟⊞□■]/g,'').trim()}; }).filter(function(x){ return x.s; });
+    if(!t.length) return;
+    function fila(modo){ var c=repartir(t,cab,modo);
+      if(!c.coche) c.coche=ant.coche||'';
+      if(!c.asiento){ c.asiento=ant.asiento||''; c.coche=ant.coche||c.coche; }
+      if(!c.tipo) c.tipo=ant.tipo||'';
+      c.fecha=c.fecha||fecha; if(mt&&!c.tren) c.tren=mt[1]; return c; }
+    var c=fila('izq'), r=deCeldas(c, f.txt);
+    if(r.aviso){ var c2=fila('centro'), r2=deCeldas(c2, f.txt); if(!r2.aviso){ r=r2; c=c2; } }
+    ant={coche:c.coche, asiento:c.asiento, tipo:c.tipo};
+    res.push(r);
+  });
   return res;
 }
 function repartir(trozos, cab, modo){
@@ -1100,6 +1185,9 @@ function repartir(trozos, cab, modo){
   });
   return celda;
 }
+// Dietas especiales escritas dentro del menú (sin columna «especial» aparte).
+var DIETAS=/SIN GLUTEN|GLUTEN FREE|CELIAC[OA]|SIN LACTOSA|VEGETARIAN[OA]|VEGAN[OA]|HALAL|KOSHER|DIABETIC[OA]/;
+function dietaEn(t){ var m=sinAcento(t||'').match(DIETAS); return m?capital(m[0]):''; }
 function deCeldas(c, txt){
   var coche=(c.coche||'').trim(), asi=(c.asiento||'').trim().toUpperCase();
   // "21 B03C" o "3 04C" juntos en una celda → coche y asiento por separado
@@ -1112,6 +1200,7 @@ function deCeldas(c, txt){
     origen:(c.origen||'').trim(), destino:(c.destino||'').trim(), opcion:(c.opcion||'').trim(),
     nombre:(c.nombre||'').trim()};
   r.k=tipoComida(r.tipoTxt, r.opcion);
+  if(!r.especial) r.especial=dietaEn(r.menu); // «DESAYUNO SIN GLUTEN» en la columna del menú
   r.cumple=/^S/i.test((c.cumple||'').trim())||/CUMPLE/i.test(r.opcion)||r.k==='cum';
   if(/^\(?en blanco\)?$/i.test(r.nombre)) r.nombre='';
   limpiarFila(r); r.aviso=validar(r); return r;
@@ -1177,7 +1266,7 @@ function pintarTipos(){
    Con el ciclo de la semana (1–4), además el plato. Cartas: «Renfe AVE Prémium · Ciclos de
    restauración»; lo que ese documento no trae (null) se queda en el tipo de menú. */
 var MENU_ELEGIDO=[
-  {re:/FRUTA.*YOG|YOGUR/,t:'FRUTA Y YOGUR',i:'🍓',k:'fyy'},{re:/CALIENTE/,t:'CALIENTE',i:'🔥',k:'cal'},{re:/FRIO/,t:'FRÍO',i:'🧊',k:'fri'},
+  {re:/FRUTA.*YOG|YOGUR/,t:'FRUTA Y YOGUR',i:'🍓',k:'fyy'},{re:/CALIENTE|\bHOT\b/,t:'CALIENTE',i:'🔥',k:'cal'},{re:/FRIO|\bCOLD\b/,t:'FRÍO',i:'🧊',k:'fri'},
   {re:/GRANJA|CARNE/,t:'CARNE',i:'🍗',k:'car'},{re:/BARCA|PESCADO/,t:'PESCADO',i:'🐟',k:'pes'},{re:/MOLINO|PASTA/,t:'PASTA',i:'🍝',k:'pas'},
   {re:/SALAD/,t:'SALADO',i:'🥨',k:'sal'},{re:/MIXT/,t:'MIXTO',i:'🧀',k:'mix'},{re:/FRUTA/,t:'FRUTA',i:'🍎',k:'fru'}];
 function menuElegido(r){
