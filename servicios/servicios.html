@@ -227,6 +227,7 @@ button{font-family:inherit}
 .seat.nosube{background:repeating-linear-gradient(135deg,#3a1c22 0 6px,#2a141a 6px 12px)!important;color:var(--red2);text-decoration:line-through}
 .seat.nosube .e{display:none}
 .seat.nosube::before{content:"🚫";position:absolute;top:-7px;left:-5px;font-size:12px}
+.seat .ns{position:absolute;top:-7px;left:-5px;font-size:11px;line-height:1;z-index:1}
 .clipbar{display:flex;align-items:center;gap:10px;background:rgba(13,27,46,.85);border:1px solid var(--div);border-radius:14px;padding:9px 12px;margin-bottom:10px}
 .clipbar .txt{flex:1;font-size:11.5px;color:var(--tx2);font-weight:600;line-height:1.35}
 .clipbar .txt b{color:var(--tx);font-size:12.5px}
@@ -1519,17 +1520,23 @@ function pintarMapa(){
       else if(!sv.length&&venidoDe(key)) cls+=' ghost';
       if(sv.length){
         var svE=sv.filter(pasaEst); if(svE.length) sv=svE;
+        // Con un filtro de comida puesto, el asiento solo mira ese servicio:
+        // si quien lo tenía no subió, sale oscuro aunque tenga otro tramo.
+        var svF=filtro?sv.filter(function(r){return r.k===filtro}):sv; if(svF.length) sv=svF;
         var vivos=sv.filter(function(r){return subio[r.sid]!=='no'}), pend=vivos.filter(function(r){return !servidos[r.sid]});
+        // «No subió» que ya ocupa otra persona en el mismo tramo: no cuenta.
+        var tapado=function(r){ return subio[r.sid]==='no'&&vivos.some(function(v){ return solapa(r,v); }); };
+        var nVer=sv.filter(function(r){ return !tapado(r); }).length, hayNo=vivos.length&&sv.some(function(r){ return subio[r.sid]==='no'&&!tapado(r); });
         var ver=pend[0]||vivos[0]||sv[0];
         cls+=' has'; st='background:'+COMIDAS[ver.k].c;
         if(vivos.length&&!pend.length) cls+=' done';
         if(!vivos.length) cls+=' nosube'; else if(sv.some(function(r){return subio[r.sid]==='si'})) cls+=' sube';
-        if((filtro&&!sv.some(function(r){return r.k===filtro}))||!svE.length) cls+=' dim';
+        if((filtro&&!svF.length)||!svE.length) cls+=' dim';
         var me=menuElegido(ver);
         if(sv.some(function(r){return r.extra})) cls+=' extra';
-        badge=(sv.some(function(r){return r.extra})?'<span class="nv">＋</span>':'')+'<span class="e">'+COMIDAS[ver.k].e+'</span>'+(sv.length>1?'<span class="x2">×'+sv.length+'</span>':'')+
+        badge=(sv.some(function(r){return r.extra})?'<span class="nv">＋</span>':'')+(hayNo?'<span class="ns">🚫</span>':'')+'<span class="e">'+COMIDAS[ver.k].e+'</span>'+(nVer>1?'<span class="x2">×'+nVer+'</span>':'')+
           (me?'<span class="ml'+(me.esp?' esp':'')+'">'+me.t+'</span>':'')+
-          (ver.orig&&sv.length===1?'<span class="mv">de '+(ver.orig.coche!==coche?ver.orig.coche+'-':'')+pad(ver.orig.fila)+ver.orig.letra+'</span>':'');
+          (ver.orig&&nVer===1?'<span class="mv">de '+(ver.orig.coche!==coche?ver.orig.coche+'-':'')+pad(ver.orig.fila)+ver.orig.letra+'</span>':'');
       } else if(filtro) cls+=' dim';
       w+='<button class="'+cls+'" style="'+st+'" onclick="tocarAsiento(\''+key+'\')"><span class="lb">'+pad(f)+l+'</span>'+badge+'</button>';
     });
@@ -1572,7 +1579,8 @@ function filaPorSid(sid){ for(var i=0;i<LISTA.length;i++) if(LISTA[i].sid===sid)
 function venidoDe(key){ for(var i=0;i<LISTA.length;i++){ var o=LISTA[i].orig; if(o&&o.coche+'-'+pad(o.fila)+o.letra===key) return LISTA[i]; } return null; }
 // ¿Algún servicio de ese asiento coincide en el tramo con el que se mueve?
 function solapa(a,b){ if(!a.origen||!a.destino||!b.origen||!b.destino) return true; return rangoEst(a.origen)<rangoEst(b.destino)&&rangoEst(b.origen)<rangoEst(a.destino); }
-function choque(r, sv){ return sv.filter(function(x){ return x.sid!==r.sid&&solapa(r,x); })[0]||null; }
+// Un servicio marcado «No subió» deja el asiento libre en su tramo.
+function choque(r, sv){ return sv.filter(function(x){ return x.sid!==r.sid&&subio[x.sid]!=='no'&&solapa(r,x); })[0]||null; }
 function cochesMover(){
   var l=COCHES.slice(), S=serie&&SERIES[serie];
   if(S) composicion(porCoche()).forEach(function(c){ if(c.clase!=='caf'&&l.indexOf(c.n)<0) l.push(c.n); });
@@ -1696,7 +1704,7 @@ function bloqueServicio(r, varios){
   return (varios?'<div class="seg-t" style="margin-top:4px">🛤️ '+estCorto(r.origen)+' → '+estCorto(r.destino)+'</div>':'')+
     (r.extra?'<div class="x-tag">➕ Añadido a bordo · no venía en el MOL</div>':'')+
     (r.orig?'<div class="movido">↪ Se cambió de asiento: en el MOL iba en el '+r.orig.coche+'-'+pad(r.orig.fila)+r.orig.letra+'</div>':'')+
-    '<div class="big-meal" style="background:'+m.c+'"><span class="e">'+m.e+'</span><div><b>'+nombreTipo(r)+'</b><span>'+(su==='no'?'🚫 No subió · no se da servicio':servidos[sid]?'✅ Servido':'⏳ Pendiente de servir')+'</span></div></div>'+
+    '<div class="big-meal" style="background:'+m.c+'"><span class="e">'+m.e+'</span><div><b>'+nombreTipo(r)+'</b><span>'+(su==='no'?'🚫 No subió · asiento libre en este tramo':servidos[sid]?'✅ Servido':'⏳ Pendiente de servir')+'</span></div></div>'+
     tarjetaMenu(r)+
     (r.especial?'<div class="alerg" style="margin:0 0 10px">⚠️ Menú especial: '+capital(r.especial)+'</div>':'')+
     (r.cumple?'<div class="alerg" style="background:rgba(219,39,119,.12);border-color:rgba(219,39,119,.4);color:#F9A8D4;margin:0 0 10px">🎂 ¡Hoy es su cumpleaños!'+(r.nombre?' · '+r.nombre:'')+'</div>':'')+
