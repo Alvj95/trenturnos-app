@@ -199,6 +199,20 @@ button{font-family:inherit}
 .man-cnt{font-size:11.5px;line-height:1.6;color:var(--tx2);margin-top:8px}.man-cnt b{color:var(--tx)}
 #p-mapa.man-ed #est-mapa,#p-mapa.man-ed #sum,#p-mapa.man-ed #clipbar{display:none}
 .wagon .seat{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.seat .ml.se{background:#CBD5E1;color:#1E293B}
+#p-mapa.man-ed #coches{position:sticky;top:0;z-index:6;background:var(--bg);box-shadow:0 6px 14px rgba(0,0,0,.45)}
+.coche.man-add{border:1.5px dashed var(--green2);color:var(--green2);background:transparent}
+/* poniendo a mano: todos los coches a la vista (en varias líneas, más pequeños) */
+#p-mapa.man-ed .coches{flex-wrap:wrap;overflow:visible;gap:5px;padding:6px 10px;margin:0 -16px 10px}
+#p-mapa.man-ed .cgrp{flex:1 1 100%;padding:4px 6px 6px}
+#p-mapa.man-ed .cgrp .cgt{margin-bottom:4px;font-size:9px}
+#p-mapa.man-ed .cgrp .cgc{flex-wrap:wrap;gap:4px}
+#p-mapa.man-ed .coche{width:35px;padding:3px 1px}
+#p-mapa.man-ed .coche .k{min-height:0;font-size:8.5px}
+#p-mapa.man-ed .coche .n{font-size:13px}
+.ac-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ac-grid button{border:1px solid var(--div);background:var(--s2);color:var(--tx);border-radius:10px;padding:10px 0;font:900 14px Inter,sans-serif;cursor:pointer}
+.ac-grid button.ya{opacity:.35}.ac-grid button.sel{border-color:var(--green2);background:rgba(22,163,74,.18);color:var(--green2)}
 .seat .tr{display:block;font-size:7.5px;font-weight:900;line-height:1;margin-top:1px;opacity:.95}
 .mc-sel{border-color:var(--green2)!important;background:rgba(22,163,74,.18)!important;color:var(--green2)!important}
 .mc-baja{border-color:#F87171!important;background:rgba(220,38,38,.18)!important;color:var(--red2)!important}
@@ -1621,6 +1635,7 @@ function pintarMapa(){
   elC.classList.toggle('grp', !!lA.length);
   elC.innerHTML=lA.length?'<div class="cgrp"><div class="cgt">'+(es103()?'🚆 Unidad 1 · coches 1–8':'🚆 Tren principal')+'</div><div class="cgc">'+lc.filter(function(c){return !esAcop(c)}).map(bCoche).join('')+'</div></div>'+
     '<div class="cgrp ac"><div class="cgt">'+(es103()?'🔗 Unidad 2 · coches 11–18':'🔗 Tren acoplado')+'</div><div class="cgc">'+lA.map(bCoche).join('')+'</div></div>':lc.map(bCoche).join('');
+  if(MANUAL&&MANUAL.editando&&!mv){ var gs=elC.querySelectorAll('.cgc'); (gs.length?gs[gs.length-1]:elC).insertAdjacentHTML('beforeend','<button class="coche man-add" onclick="abrirAnadirCoche()"><div class="k"></div><div class="n">＋</div><div class="c">coche</div></button>'); }
   var enCoche=lista(function(r){return r.coche===coche});
   var P=planoCoche(coche, LISTA.filter(function(r){return r.coche===coche})), letras=ESPEJO?P.cols.slice().reverse():P.cols;
   document.getElementById('plano-info').innerHTML='🚆 <b>'+(serie||'Sin serie')+'</b>'+(P.tipo==='oficial'?'<span class="of">✅ Plano oficial de Renfe</span>':P.tipo==='aprox'?'<span class="ap">Plano aproximado</span>':'<span class="ap">Plano genérico</span>')+
@@ -1660,7 +1675,7 @@ function pintarMapa(){
         var me=menuElegido(ver);
         if(sv.some(function(r){return r.extra})) cls+=' extra';
         badge=(sv.some(function(r){return r.extra})?'<span class="nv">＋</span>':'')+(hayNo?'<span class="ns">🚫</span>':'')+'<span class="e">'+COMIDAS[ver.k].e+'</span>'+(nVer>1?'<span class="x2">×'+nVer+'</span>':'')+
-          (me?'<span class="ml'+(me.esp?' esp':'')+'">'+me.t+'</span>':'')+
+          (me?'<span class="ml'+(me.esp?' esp':'')+'">'+me.t+'</span>':ver.manual&&/SIN ELEC/i.test(sinAcento(ver.menu))?'<span class="ml se">SIN ELECCIÓN</span>':'')+
           (MANUAL&&MANUAL.editando&&ver.manual?'<span class="tr">'+sigla(ver.origen)+'›'+sigla(ver.destino)+'</span>':'')+
           (ver.orig&&nVer===1?'<span class="mv">de '+(ver.orig.coche!==coche?ver.orig.coche+'-':'')+pad(ver.orig.fila)+ver.orig.letra+'</span>':'');
       } else if(filtro&&!(MANUAL&&MANUAL.editando)) cls+=' dim'; // poniendo a mano: los libres se ven bien
@@ -1689,7 +1704,10 @@ function pintarMapa(){
    4. Pulsación larga en un asiento: su tramo, menú, dieta, nombre y nota.
    Lo puesto son servicios normales: servido, embarque, resumen y compartir funcionan igual. */
 var MANUAL=null, SETUP=null, EDM=null;
-var MENUS_MAN={des:['Desayuno caliente','Desayuno frío','Fruta y yogur'], ape:['Salado','Mixto','Fruta'], mer:['Salado','Mixto','Fruta'], alm:['Carne','Pescado','Pasta'], cen:['Carne','Pescado','Pasta']};
+// «Sin elección» primero: es lo más habitual.
+var MENUS_MAN={des:['Sin elección','Desayuno caliente','Desayuno frío','Fruta y yogur'], ape:['Sin elección','Salado','Mixto','Fruta'], mer:['Sin elección','Salado','Mixto','Fruta'],
+  alm:['Sin elección','Carne','Pescado','Pasta'], cen:['Sin elección','Carne','Pescado','Pasta']};
+function iconoMenu(m){ var me=menuElegido({menu:m}); return me?me.i+' ':/SIN ELEC/i.test(sinAcento(m))?'➖ ':''; }
 var SV_MAN=['des','ape','mer','alm','cen'];
 var M_ATO='Madrid-Puerta de Atocha-Almudena Grandes', M_CHA='Madrid-Chamartín-Clara Campoamor';
 // Líneas con sus paradas en orden (sirven en los dos sentidos; se pueden quitar o añadir paradas).
@@ -1795,6 +1813,7 @@ function estadoManual(){
 function cochesManual(){
   var l=cochesMover(), c;
   if(MANUAL.doble&&es103()) for(c=11;c<=18;c++) if(l.indexOf(c)<0) l.push(c);
+  (MANUAL.extraCoches||[]).forEach(function(x){ if(l.indexOf(x)<0) l.push(x); });
   if(!l.length) for(c=1;c<=10;c++) l.push(c);
   return l.sort(function(a,b){return a-b;});
 }
@@ -1812,6 +1831,20 @@ function tocarManual(key){
     LISTA.push(nuevo); }
   reindexar(); guardar(); estadoManual(); pintarMapa();
 }
+// «＋ coche»: añadir un coche que no sale (p. ej. el 11 cuando no se marcó «en doble»).
+var AC_SEL=null;
+function abrirAnadirCoche(){ AC_SEL=null; hoja='coche'; fichaAbierta=null; pintarAnadirCoche(); document.getElementById('ov-asiento').classList.add('on'); }
+function pintarAnadirCoche(){
+  function grid(a,b){ var h='<div class="ac-grid">'; for(var c=a;c<=b;c++){ var ya=COCHES.indexOf(c)>-1; h+='<button class="'+(ya?'ya':AC_SEL===c?'sel':'')+'"'+(ya?' disabled':' onclick="AC_SEL='+c+';pintarAnadirCoche()"')+'>'+c+'</button>'; } return h+'</div>'; }
+  var h=cabHoja('＋','Añadir coche','Toca el número del coche donde va el pasajero')+'<div class="sh-body" style="overflow-y:auto">'+
+    '<div class="card-t">🚆 '+(es103()?'Unidad 1':'Coches')+'</div>'+grid(1,es103()?10:20)+
+    (es103()?'<div class="card-t" style="margin-top:12px">🔗 2.ª unidad (tren en doble)</div>'+grid(11,18)+
+      (COCHES.indexOf(11)<0?'<div class="pdf-btns"><button onclick="anadirCoches(11,18)">🔗 Añadir los 11–18 de una vez</button></div>':''):'')+'</div>'+
+    '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok"'+(AC_SEL?' onclick="anadirCoches('+AC_SEL+','+AC_SEL+')"':' disabled')+'>✓ '+(AC_SEL?'Añadir el coche '+AC_SEL:'Elige un coche')+'</button></div>';
+  document.getElementById('sh-asiento').innerHTML=h;
+}
+function anadirCoches(a,b){ MANUAL.extraCoches=MANUAL.extraCoches||[]; for(var c=a;c<=b;c++) if(MANUAL.extraCoches.indexOf(c)<0) MANUAL.extraCoches.push(c);
+  reindexar(); coche=a; guardar(); cerrar(); pintarMapa(); }
 function tocarParada(i){
   var k=MANUAL.svs[MANUAL.act], t=MANUAL.tramo[k], n=MANUAL.ruta.length;
   if(!MANUAL.paso||i<=t[0]){ if(i>=n-1){ t[0]=n-2; t[1]=n-1; MANUAL.paso=0; } else { t[0]=i; if(t[1]<=i) t[1]=n-1; MANUAL.paso=1; } }
@@ -1834,7 +1867,7 @@ function pintarManual(){
     '<div class="man-tabs">'+MANUAL.svs.map(function(x,i){ return '<button class="'+(i===MANUAL.act?'on':'')+'" style="'+(i===MANUAL.act?'background:'+COMIDAS[x].c:'')+'" onclick="actManual('+i+')">'+COMIDAS[x].e+' '+COMIDAS[x].n+' · '+cuenta(x)+'</button>'; }).join('')+'</div>'+
     lineaHTML(R,t[0],t[1],'tocarParada')+
     '<div class="man-tr">🟢 '+estCorto(R[t[0]])+' → 🔴 '+estCorto(R[t[1]])+' <small>'+(MANUAL.paso?'· ahora toca dónde baja':'· toca una parada para cambiar el tramo')+'</small></div>'+
-    '<div class="man-ley">'+ops.map(function(m,i){ var me=menuElegido({menu:m}); return '<span>'+(i+1)+'× '+(me?me.i+' ':'')+m+'</span>'; }).join('')+'<span>'+(ops.length+1)+'× ✕ quitar</span></div>'+
+    '<div class="man-ley">'+ops.map(function(m,i){ return '<span>'+(i+1)+'× '+iconoMenu(m)+m+'</span>'; }).join('')+'<span>'+(ops.length+1)+'× ✕ quitar</span></div>'+
     '<div class="man-cnt">'+MANUAL.svs.map(cnt).join('<br>')+'<br><span style="font-size:10.5px">Mantén pulsado un asiento para cambiar su tramo, menú o dieta.</span></div></div>';
 }
 // Ficha de un asiento en el modo manual (pulsación larga).
@@ -1860,7 +1893,7 @@ function pintarFichaManual(){
     '<div class="card-t">🍽️ Servicio</div><div class="chips">'+tipos.map(function(x){ return ch(E.k===x, COMIDAS[x].e+' '+COMIDAS[x].n, 'edm(\'k\',\''+x+'\')'); }).join('')+'</div>'+
     '<div class="card-t" style="margin-top:10px">🟢 Sube en</div><div class="chips">'+R.slice(0,-1).map(function(e,i){ return ch(E.o===i, estCorto(e), 'edm(\'o\','+i+')', 'mc-sel'); }).join('')+'</div>'+
     '<div class="card-t" style="margin-top:10px">🔴 Baja en</div><div class="chips">'+R.map(function(e,i){ return i?ch(E.d===i, estCorto(e), 'edm(\'d\','+i+')', 'mc-baja'):''; }).join('')+'</div>'+
-    (MENUS_MAN[E.k]?'<div class="card-t" style="margin-top:10px">🍴 Menú</div><div class="chips">'+MENUS_MAN[E.k].map(function(m,i){ var me=menuElegido({menu:m}); return ch(E.menu===m, (me?me.i+' ':'')+m, 'edm(\'menu\',MENUS_MAN[\''+E.k+'\']['+i+'])'); }).join('')+'</div>':'')+
+    (MENUS_MAN[E.k]?'<div class="card-t" style="margin-top:10px">🍴 Menú</div><div class="chips">'+MENUS_MAN[E.k].map(function(m,i){ return ch(E.menu===m, iconoMenu(m)+m, 'edm(\'menu\',MENUS_MAN[\''+E.k+'\']['+i+'])'); }).join('')+'</div>':'')+
     '<div class="card-t" style="margin-top:10px">⚠️ Dieta</div><div class="chips">'+['Sin gluten','Sin lactosa','Vegetariano','Vegano'].map(function(v){ return ch(E.esp===v, v, 'edmDieta(\''+v+'\')'); }).join('')+
       ch(E.esp&&['Sin gluten','Sin lactosa','Vegetariano','Vegano'].indexOf(E.esp)<0, E.esp&&['Sin gluten','Sin lactosa','Vegetariano','Vegano'].indexOf(E.esp)<0?limpio(E.esp):'Otra…', 'edmDieta(\'?\')')+'</div>'+
     '<div class="row2" style="margin-top:10px"><div><div class="f-lbl">Nombre (opcional)</div><input class="inp" id="em-nom" value="'+limpio(E.nombre)+'"></div><div><div class="f-lbl">Nota (opcional)</div><input class="inp" id="em-nota" value="'+limpio(E.nota)+'"></div></div>'+
