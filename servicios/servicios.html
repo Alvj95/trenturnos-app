@@ -1704,6 +1704,12 @@ function pintarMapa(){
    4. Pulsación larga en un asiento: su tramo, menú, dieta, nombre y nota.
    Lo puesto son servicios normales: servido, embarque, resumen y compartir funcionan igual. */
 var MANUAL=null, SETUP=null, EDM=null;
+// Redibuja una hoja SIN volver arriba: cada toque (serie, estación, menú…) deja la vista donde estaba.
+function ponerHoja(h, cual, despues){
+  var el=document.getElementById('sh-asiento'), b=el.querySelector('.sh-body'), y=(b&&el.dataset.hoja===cual)?b.scrollTop:0;
+  el.innerHTML=h; el.dataset.hoja=cual; if(despues) despues(); // lo que rellena la hoja, antes de volver a su sitio
+  var b2=el.querySelector('.sh-body'); if(b2&&y) b2.scrollTop=y;
+}
 // «Sin elección» primero: es lo más habitual.
 var MENUS_MAN={des:['Sin elección','Desayuno caliente','Desayuno frío','Fruta y yogur'], ape:['Sin elección','Salado','Mixto','Fruta'], mer:['Sin elección','Salado','Mixto','Fruta'],
   alm:['Sin elección','Carne','Pescado','Pasta'], cen:['Sin elección','Carne','Pescado','Pasta']};
@@ -1750,7 +1756,7 @@ async function abrirManual(){
   if(cargado&&(LISTA.length||MANUAL)&&!confirm('Ya tienes un servicio cargado. ¿Lo borras y empiezas uno a mano?')) return;
   if(cargado&&COMPARTIDO) await dejarCompartir(true);
   SETUP={num:valor('i-num')||'', a:'', b:'', quitadas:{}, extras:[], n:1, s1:'ape', s2:'alm', mas:false, doble:false};
-  hoja='manual'; fichaAbierta=null; pintarSetup();
+  document.getElementById('sh-asiento').dataset.hoja=''; hoja='manual'; fichaAbierta=null; pintarSetup();
   document.getElementById('ov-asiento').classList.add('on');
 }
 function setupNum(v){ SETUP.num=v.replace(/\D/g,'').slice(0,5); var m=memRutas()[SETUP.num]; if(!m) return;
@@ -1784,7 +1790,7 @@ function pintarSetup(){
     (S.n===2?'<div class="f-lbl" style="margin-top:8px">2.º servicio</div>'+chipsSv('s2'):'')+
     '<div class="err" id="m-err" style="margin-top:8px"></div></div>'+
     '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok" onclick="empezarManual()">✓ Empezar</button></div>';
-  document.getElementById('sh-asiento').innerHTML=h; pintarTipos();
+  ponerHoja(h,'manual',pintarTipos);
 }
 function lineaHTML(ruta, i0, i1, accion){
   return '<div class="metro">'+ruta.map(function(e,i){ var c=(i===i0?' s':i===i1?' b':'')+(i>i0&&i<=i1?' l':'')+(i>=i0&&i<i1?' r':'');
@@ -1833,7 +1839,7 @@ function tocarManual(key){
 }
 // «＋ coche»: añadir un coche que no sale (p. ej. el 11 cuando no se marcó «en doble»).
 var AC_SEL=null;
-function abrirAnadirCoche(){ AC_SEL=null; hoja='coche'; fichaAbierta=null; pintarAnadirCoche(); document.getElementById('ov-asiento').classList.add('on'); }
+function abrirAnadirCoche(){ AC_SEL=null; document.getElementById('sh-asiento').dataset.hoja=''; hoja='coche'; fichaAbierta=null; pintarAnadirCoche(); document.getElementById('ov-asiento').classList.add('on'); }
 function pintarAnadirCoche(){
   function grid(a,b){ var h='<div class="ac-grid">'; for(var c=a;c<=b;c++){ var ya=COCHES.indexOf(c)>-1; h+='<button class="'+(ya?'ya':AC_SEL===c?'sel':'')+'"'+(ya?' disabled':' onclick="AC_SEL='+c+';pintarAnadirCoche()"')+'>'+c+'</button>'; } return h+'</div>'; }
   var h=cabHoja('＋','Añadir coche','Toca el número del coche donde va el pasajero')+'<div class="sh-body" style="overflow-y:auto">'+
@@ -1841,7 +1847,7 @@ function pintarAnadirCoche(){
     (es103()?'<div class="card-t" style="margin-top:12px">🔗 2.ª unidad (tren en doble)</div>'+grid(11,18)+
       (COCHES.indexOf(11)<0?'<div class="pdf-btns"><button onclick="anadirCoches(11,18)">🔗 Añadir los 11–18 de una vez</button></div>':''):'')+'</div>'+
     '<div class="mfoot"><button class="m-sec" onclick="cerrar()">Cancelar</button><button class="m-ok"'+(AC_SEL?' onclick="anadirCoches('+AC_SEL+','+AC_SEL+')"':' disabled')+'>✓ '+(AC_SEL?'Añadir el coche '+AC_SEL:'Elige un coche')+'</button></div>';
-  document.getElementById('sh-asiento').innerHTML=h;
+  ponerHoja(h,'coche');
 }
 function anadirCoches(a,b){ MANUAL.extraCoches=MANUAL.extraCoches||[]; for(var c=a;c<=b;c++) if(MANUAL.extraCoches.indexOf(c)<0) MANUAL.extraCoches.push(c);
   reindexar(); coche=a; guardar(); cerrar(); pintarMapa(); }
@@ -1877,6 +1883,7 @@ function fichaManual(key, sid){
   function ix(e,def){ var i=R.indexOf(e); return i<0?def:i; }
   EDM=r?{key:key, sid:r.sid, k:r.k, o:ix(r.origen,0), d:ix(r.destino,R.length-1), menu:r.menu, esp:r.especial||'', nombre:r.nombre||'', nota:r.nota||''}
        :{key:key, sid:null, k:k, o:t[0], d:t[1], menu:MENUS_MAN[k][0], esp:'', nombre:'', nota:''};
+  if(hoja!=='manual-ficha') document.getElementById('sh-asiento').dataset.hoja='';
   hoja='manual-ficha'; fichaAbierta=null; pintarFichaManual();
   document.getElementById('ov-asiento').classList.add('on');
 }
@@ -1900,7 +1907,7 @@ function pintarFichaManual(){
     '<div class="err" id="em-err" style="margin-top:8px"></div></div>'+
     '<div class="mfoot">'+(E.sid?'<button class="m-sec" style="color:var(--red2)" onclick="quitarManual()">🗑 Quitar</button>':'<button class="m-sec" onclick="cerrar()">Cancelar</button>')+
     '<button class="m-ok" onclick="guardarManual()">✓ Guardar</button></div>';
-  document.getElementById('sh-asiento').innerHTML=h;
+  ponerHoja(h,'manual-ficha');
 }
 function guardarManual(){
   leerEDM(); var E=EDM, R=MANUAL.ruta, p=partesKey(E.key), o=R[E.o], d=R[E.d];
@@ -2120,7 +2127,7 @@ function refrescar(){
 }
 function cerrar(){
   if(hoja==='serie'&&hojaSerieAntes){ tipo=hojaSerieAntes.tipo; serie=hojaSerieAntes.serie; var cc=CICLO!==hojaSerieAntes.ciclo; CICLO=hojaSerieAntes.ciclo; hojaSerieAntes=null; if(cc) setTimeout(refrescarSiCargado,0); }
-  document.getElementById('ov-asiento').classList.remove('on'); fichaAbierta=null; hoja=null; }
+  document.getElementById('ov-asiento').classList.remove('on'); document.getElementById('sh-asiento').dataset.hoja=''; fichaAbierta=null; hoja=null; }
 /* ── Guardado en el móvil ──
    El servicio cargado (y lo marcado: servido, subió / no subió) se guarda
    en este móvil para no perderlo si se cierra la app. Lleva nombres de
