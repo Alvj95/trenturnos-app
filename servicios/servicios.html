@@ -2716,12 +2716,13 @@ ficha=function(key){
 var _cerrarOrig=cerrar; cerrar=function(){ SX.full=null; document.getElementById('sh-asiento').classList.remove('sx-setup'); document.getElementById('sh-asiento').dataset.sx=''; _cerrarOrig(); };
 
 // Qué filas del asiento son «de ahora»: las del servicio que se ve en el mapa; si no hay,
-// las que aún no han bajado en la parada actual.
+// las de quien va a bordo en este tramo (si no, las que aún no han bajado).
 function sxAhora(sv){
   if(sv.length<2) return sv.slice();
   var l=filtro?sv.filter(function(r){ return r.k===filtro; }):[];
-  if(!l.length&&cargado){ var P=sxParadas(), i=sxParadaIdx(), e=P[Math.min(i,P.length-1)];
-    if(i>0&&e) l=sv.filter(function(r){ return !(ORDEN[r.destino]<=ORDEN[e]); }); }
+  if(!l.length&&cargado){ var P=sxParadas(), e=P[Math.min(sxParadaIdx(),P.length-1)];
+    if(e){ l=sv.filter(function(r){ return ORDEN[r.origen]<=ORDEN[e]&&ORDEN[r.destino]>ORDEN[e]; }); // va a bordo ahora
+      if(!l.length) l=sv.filter(function(r){ return !(ORDEN[r.destino]<=ORDEN[e]); }); } }
   return l.length?l:sv.slice();
 }
 
