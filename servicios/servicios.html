@@ -367,6 +367,108 @@ button{font-family:inherit}
 .rc-row:first-of-type{border-top:0}
 .rc-row .txt{flex:1;font-size:12.5px;font-weight:700}
 .rc-row .txt small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}
+/* ═══ Diseño sencillo: letra y botones grandes, pocas cosas por pantalla ═══ */
+.sx-h1{font-size:26px;font-weight:900;margin:6px 0 4px;line-height:1.2}
+.sx-sub{font-size:15px;color:#CBD5E1;margin-bottom:16px;line-height:1.4}
+.sx-gbtn{display:flex;align-items:center;gap:14px;width:100%;border:0;border-radius:20px;padding:20px 18px;font:900 21px Inter,sans-serif;margin-bottom:14px;cursor:pointer;text-align:left}
+.sx-gbtn span{font-size:34px}.sx-gbtn small{display:block;font-size:14px;font-weight:600;opacity:.9;margin-top:3px}
+.sx-or{background:#F59E0B;color:#111}.sx-gr{background:#16A34A;color:#fff}.sx-az{background:#1E3A8A;color:#fff}
+.sx-mas{display:block;width:100%;background:none;border:0;color:#94A3B8;font:800 15px Inter,sans-serif;padding:12px;cursor:pointer;margin-top:4px}
+.sx-tren{background:#132236;border-radius:20px;padding:18px;border:2px solid #2a4466;margin-bottom:14px}
+.sx-tren .n{font-size:26px;font-weight:900}.sx-tren .r{font-size:15px;color:#CBD5E1;margin-top:2px}
+.sx-tren .big{font-size:44px;font-weight:900;margin-top:12px;line-height:1}.sx-tren .big small{font-size:18px;color:#CBD5E1}
+.sx-bar{height:16px;border-radius:9px;background:#334155;overflow:hidden;margin-top:10px}.sx-bar i{display:block;height:100%;background:#4ADE80}
+/* inicio: lo de antes, escondido salvo «Más opciones» (la barra de lectura y los errores se siguen viendo) */
+#p-tren.sx-oculto #saludo,#p-tren.sx-oculto #go,#p-tren.sx-oculto>.nota,#p-tren.sx-oculto .card-t,#p-tren.sx-oculto .pdf>.big,#p-tren.sx-oculto .pdf>b,
+#p-tren.sx-oculto .pdf>span,#p-tren.sx-oculto .pdf-btns,#p-tren.sx-oculto .man-o,#p-tren.sx-oculto .man-go,#p-tren.sx-oculto .man-sub,#p-tren.sx-oculto #pdf-estado{display:none!important}
+#p-tren.sx-oculto .card{background:none;border:0;padding:0;box-shadow:none;margin:0}
+#p-tren.sx-oculto .pdf{border:0;padding:0;background:none;min-height:0}
+/* mapa */
+#p-mapa.sx-oculto #plano-info,#p-mapa.sx-oculto #est-mapa,#p-mapa.sx-oculto #sum,#p-mapa.sx-oculto #clipbar,#p-mapa.sx-oculto #legend{display:none!important}
+.sx-coche{display:flex;align-items:center;justify-content:space-between;background:#132236;border-radius:18px;padding:8px;margin-bottom:10px;border:2px solid #2a4466;position:sticky;top:0;z-index:7}
+.sx-coche button{width:58px;height:58px;border-radius:14px;background:#1E293B;border:0;color:#fff;font-size:28px;font-weight:900;cursor:pointer}
+.sx-coche .c{text-align:center;font-size:26px;font-weight:900}.sx-coche .c small{display:block;font-size:13px;color:#CBD5E1;font-weight:700}
+.sx-tog{display:flex;gap:8px;margin-bottom:10px}
+.sx-tog button{flex:1;border-radius:14px;padding:12px 4px;font:900 16px Inter,sans-serif;background:#1E293B;color:#CBD5E1;border:2px solid #334155;cursor:pointer}
+.sx-tog button.on{background:#F59E0B;color:#111;border-color:#F59E0B}
+.sx-mini{display:block;width:100%;margin-bottom:10px;border-radius:14px;padding:11px;font:900 15px Inter,sans-serif;background:none;color:#4ADE80;border:2px dashed #4ADE80;cursor:pointer}
+.sx-aviso{background:#1E3A8A;border-radius:14px;padding:10px 12px;font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sx-aviso button{margin-left:auto;background:#fff;color:#111;border:0;border-radius:9px;padding:6px 10px;font:900 13px Inter,sans-serif}
+#p-mapa .seat{height:54px;font-size:13px;border-radius:12px}
+#p-mapa .seat .ml{position:static;transform:none;display:block;margin:2px auto 0;width:max-content;max-width:96%;font-size:8.5px;overflow:hidden;text-overflow:ellipsis}
+#p-mapa .seat .sx-t{display:block;font-size:8.5px;font-weight:900;margin-top:2px}
+#p-mapa .seat.sx-ok{background:#14532D!important;color:#86EFAC;opacity:1}
+/* hoja del asiento */
+.sx-hoja{padding:6px 18px 22px;overflow-y:auto}
+.sx-as{font-size:30px;font-weight:900;margin:4px 0 10px}.sx-as small{font-size:16px;color:#CBD5E1;font-weight:700}
+.sx-menu{border-radius:18px;padding:16px;font-size:23px;font-weight:900;margin:8px 0;color:#fff}
+.sx-menu small{display:block;font-size:15px;font-weight:700;opacity:.95;margin-top:4px}
+.sx-alerta{background:#7f1d1d;border-radius:14px;padding:10px 12px;font-size:17px;font-weight:900;margin-bottom:8px}
+.sx-dos{display:flex;gap:10px;margin:10px 0}
+.sx-dos button{flex:1;border-radius:16px;padding:14px 6px;font:900 16px Inter,sans-serif;background:#1E293B;cursor:pointer}
+.sx-dos .si{border:2.5px solid #4ADE80;color:#86EFAC}.sx-dos .si.on{background:#14532D}
+.sx-dos .nn{border:2.5px solid #F87171;color:#FCA5A5}.sx-dos .nn.on{background:#7f1d1d;color:#fff}
+.sx-ok1{display:block;width:100%;background:#16A34A;border:0;border-radius:18px;padding:20px;color:#fff;font:900 24px Inter,sans-serif;cursor:pointer;margin-top:4px}
+.sx-ok1.des{background:#334155;font-size:18px}
+.sx-cerrar{display:block;width:100%;background:#1E293B;border:2px solid #334155;border-radius:16px;padding:14px;color:#E2E8F0;font:900 17px Inter,sans-serif;cursor:pointer;margin-top:8px}
+/* resumen */
+#p-resumen.sx-oculto>*:not(#sx-res){display:none!important}
+.sx-res{background:#132236;border-radius:18px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-size:19px;font-weight:900;border:2px solid #2a4466}
+.sx-res b{font-size:32px}.sx-res.v b{color:#4ADE80}.sx-res.r b{color:#FCA5A5}.sx-res.a b{color:#FCD34D}
+/* a mano: preguntas de una en una, en grande */
+.sx-setup .sh-body{font-size:15px}
+.sx-setup .chip{font-size:16px;padding:12px 14px;border-radius:14px}
+.sx-setup .card-t{font-size:15px;margin-top:12px}
+.sx-setup .m-ok,.sx-setup .m-sec{height:56px;font-size:18px;border-radius:16px}
+.sx-pasos{display:flex;gap:6px;margin:2px 0 10px}.sx-pasos i{flex:1;height:7px;border-radius:4px;background:#334155}.sx-pasos i.on{background:#F59E0B}
+.sx-q{font-size:23px;font-weight:900;margin-bottom:6px}
+.sx-pone{border-radius:18px;padding:12px 14px;margin-bottom:10px;color:#fff}
+.sx-pone .t{font-size:12px;font-weight:900;letter-spacing:.6px;opacity:.9}.sx-pone .m{font-size:21px;font-weight:900;margin-top:2px}
+.sx-pone .tr{display:flex;justify-content:space-between;align-items:center;margin-top:8px;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;font-size:16px;font-weight:900}
+.sx-pone .tr button{background:#fff;color:#111;border:0;border-radius:9px;padding:7px 10px;font:900 14px Inter,sans-serif}
+.sx-tabs{display:flex;gap:6px;margin-top:6px}.sx-tabs button{flex:1;border-radius:12px;padding:10px 4px;font:900 15px Inter,sans-serif;background:rgba(0,0,0,.25);color:#fff;border:2px solid transparent}
+.sx-tabs button.on{background:#fff;color:#111}
+.sx-toques{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.sx-toques span{background:#1E293B;border:2px solid #334155;border-radius:10px;padding:5px 8px;font-size:13px;font-weight:900}
+.sx-col2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 10px}
+.sx-col2 .h{font-size:15px;font-weight:900;margin-bottom:6px}
+.sx-col2 button{display:block;width:100%;border-radius:12px;padding:11px 4px;font:900 15px Inter,sans-serif;background:#1E293B;color:#fff;border:2px solid #334155;margin-bottom:7px;cursor:pointer}
+.sx-col2 button.s{background:#16A34A;border-color:#4ADE80}.sx-col2 button.b{background:#DC2626;border-color:#F87171}.sx-col2 button.x{opacity:.3}
+/* dos servicios */
+.sx-big2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sx-big2 button{border-radius:16px;padding:16px 8px;font:900 22px Inter,sans-serif;background:#1E293B;border:2px solid #334155;color:#fff;cursor:pointer}
+.sx-big2 button small{display:block;font-size:12px;font-weight:700;color:#CBD5E1;margin-top:3px}
+.sx-big2 button.on{background:#F59E0B;color:#111;border-color:#F59E0B}.sx-big2 button.on small{color:#111}
+.sx-svbox{border:2px solid #334155;border-radius:16px;padding:10px;margin-top:10px;background:#132236}
+.sx-svbox .t{font-size:12px;font-weight:900;color:#CBD5E1;letter-spacing:.5px;margin-bottom:6px}.sx-svbox .t small{font-weight:700;letter-spacing:0}
+.sx-lin{display:flex;align-items:flex-start;margin:14px 0 6px}
+.sx-lin span{display:flex;flex-direction:column;align-items:center;font-size:10px;font-weight:900;min-width:30px}
+.sx-lin span i{width:14px;height:14px;border-radius:50%;background:#0b1220;border:3px solid #94A3B8;margin-bottom:3px}
+.sx-lin span.cut i{width:20px;height:20px;margin-top:-3px;background:#F59E0B;border-color:#FCD34D}
+.sx-lin b{flex:1;height:7px;margin:4px -10px 0;border-radius:4px}
+.sx-ley{display:flex;gap:6px}.sx-ley div{flex:1;border-radius:12px;padding:8px;font-size:12.5px;font-weight:900;color:#fff}
+.sx-tabs button small{display:block;font-size:11px;font-weight:700;opacity:.85}
+.sx-letoca{border-radius:14px;padding:10px 12px;font-size:15px;font-weight:900;color:#fff;margin-top:6px}
+.sx-letoca .chips{margin-top:6px}.sx-letoca .chip{background:rgba(0,0,0,.25);border-color:transparent;color:#fff;font-size:13px;padding:7px 10px}
+.sx-letoca .chip.sel{background:#fff;color:#111}
+.sx-aviso2{background:#7c2d12;border:2px solid #F59E0B;border-radius:16px;padding:12px;font-size:15px;font-weight:700;line-height:1.45;margin-bottom:12px}
+.sx-mini2{display:flex;gap:6px;margin-top:10px}.sx-mini2 div{flex:1;border-radius:12px;padding:8px;font-size:12px;font-weight:900;color:#fff;text-align:center}.sx-mini2 b{display:block;font-size:22px}
+#p-mapa .seat .tr{font-size:8px}
+/* fila de coches como antes, un poco más grande; y comprobar quién sube */
+#p-mapa #coches{position:sticky;top:0;z-index:6;background:var(--bg);padding-bottom:6px}
+#p-mapa #coches .coche{min-width:58px;padding:7px 4px}
+#p-mapa #coches .coche .n{font-size:20px}#p-mapa #coches .coche .k{font-size:12px;font-weight:900;color:#FCD34D}
+.sx-clip{display:block;width:100%;text-align:left;border-radius:16px;padding:12px 14px;margin:8px 0 10px;font:900 17px Inter,sans-serif;background:#1E293B;color:#E2E8F0;border:2.5px solid #334155;cursor:pointer}
+.sx-clip b{color:#94A3B8}.sx-clip small{display:block;font-size:12.5px;font-weight:700;color:#CBD5E1;margin-top:3px}
+.sx-clip.on{background:#14532D;border-color:#4ADE80}.sx-clip.on b{color:#86EFAC}
+.sx-lleg{padding:12px 14px;font-size:17px;margin:4px 0 10px}.sx-lleg span{font-size:24px}
+/* ficha: el servicio de antes, abajo y plegado */
+.sx-antes{margin-top:12px;border:2px dashed #475569;border-radius:16px;padding:0 10px;opacity:.85}
+.sx-antes summary{list-style:none;cursor:pointer;padding:12px 2px;font-size:15px;font-weight:900;color:#CBD5E1}
+.sx-antes summary::-webkit-details-marker{display:none}
+.sx-antes summary::before{content:'▸ ';color:#94A3B8}.sx-antes[open] summary::before{content:'▾ '}
+.sx-antes summary small{display:block;font-size:12.5px;font-weight:700;color:#94A3B8;margin-top:2px}
+.sx-antes[open]{padding-bottom:10px}
+.sx-mover{display:block;width:100%;margin-top:8px;background:#1E293B;border:2.5px solid #60A5FA;color:#BFDBFE;border-radius:16px;padding:13px;font:900 17px Inter,sans-serif;cursor:pointer}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -2500,6 +2602,372 @@ function recibirDatos(d, marcas){
 }
 
 pintarTipos();
+/* ═══ Diseño sencillo ═══
+   Capa por encima del módulo. Cambia cómo se VE
+   (letra y botones grandes, pocas cosas por pantalla); los datos y lo que hace
+   cada botón son los del módulo de siempre. «Más opciones» enseña lo de antes. */
+var SX={mas:false, falta:true, resMas:false, full:null, paso:1};
+function sxEl(id, antesDe, html){ var e=document.getElementById(id); if(!e){ e=document.createElement('div'); e.id=id; antesDe.parentNode.insertBefore(e, antesDe); } if(html!=null) e.innerHTML=html; return e; }
+function sxNombre(){ var t=(document.getElementById('saludo')||{}).textContent||''; var m=t.match(/Hola,\s*([^👋!¿]+)/); if(m) return m[1].trim();
+  try{ return (parent.localStorage.getItem('svSoloNombre')||'').split(' ')[0]; }catch(e){ return ''; } }
+function sxTotales(){ var t=LISTA.length, s=0, no=0; LISTA.forEach(function(r){ if(servidos[r.sid]) s++; else if(subio[r.sid]==='no') no++; }); return {t:t, s:s, no:no, falta:t-s-no}; }
+function sxParadas(){ return Object.keys(ORDEN).sort(function(a,b){ return ORDEN[a]-ORDEN[b]; }); }
+function sxParadaIdx(){ try{ var d=JSON.parse(localStorage.getItem(CLAVE+'_parada')||'null'); if(d&&d.c===CARGADO_EN) return d.i||0; }catch(e){} return 0; }
+
+/* ── Inicio ── */
+function sxInicio(){
+  var pt=document.getElementById('p-tren'); if(!pt) return;
+  pt.classList.toggle('sx-oculto', !SX.mas);
+  var br=document.getElementById('bar'); if(br&&cargado) br.style.display='none'; // la barra de lectura, solo mientras se lee
+  var h, nom=sxNombre();
+  if(!cargado){
+    h='<h1 class="sx-h1">Hola'+(nom?', '+limpio(nom):'')+' 👋</h1><div class="sx-sub">¿Qué servicio llevas hoy?</div>'+
+      '<label class="sx-gbtn sx-or" onclick="precalentarOCR()"><span>📄</span><div>Subir el MOL<small>PDF, foto o captura</small></div>'+
+        '<input type="file" accept="application/pdf,.pdf,image/*" style="display:none" onchange="if(this.files[0]) leerArchivo(this.files[0]); this.value=\'\'"></label>'+
+      '<button class="sx-gbtn sx-gr" onclick="abrirManual()"><span>✍️</span><div>Hacerlo a mano<small>Sin MOL</small></div></button>'+
+      '<div class="err" id="sx-err"></div>';
+  } else {
+    var T=sxTotales(), P=sxParadas(), i=Math.min(sxParadaIdx(), Math.max(P.length-1,0)), sig=P[i+1];
+    var pc=T.t?Math.round(T.s/T.t*100):0, num=valor('i-num');
+    h='<div class="sx-tren"><div class="n">'+limpio(tipo)+' '+limpio(num||'')+'</div><div class="r">'+limpio(valor('i-ruta'))+'</div>'+
+      '<div class="big">'+T.s+' <small>de '+T.t+' servidos</small></div><div class="sx-bar"><i style="width:'+pc+'%"></i></div>'+
+      (T.no?'<div class="r" style="margin-top:8px">🚫 '+T.no+' no subieron</div>':'')+
+      (MANUAL&&MANUAL.svs.length>1?'<div class="sx-mini2">'+MANUAL.svs.map(function(k){ var l=LISTA.filter(function(r){ return r.k===k&&subio[r.sid]!=='no'; }), sv=l.filter(function(r){ return servidos[r.sid]; }).length;
+        return '<div style="background:'+COMIDAS[k].c+'">'+limpio(COMIDAS[k].n)+'<b>'+sv+'/'+l.length+'</b></div>'; }).join('')+'</div>':'')+'</div>'+
+      '<button class="sx-gbtn sx-or" onclick="abrirMapa()"><span>💺</span><div>Ver los asientos</div></button>'+
+      (sig?'<button class="sx-gbtn sx-az" onclick="sxLlegamos()"><span>🚉</span><div>Llegamos a '+limpio(estCorto(sig))+'<small>Toca al llegar a la parada</small></div></button>':
+           (P.length?'<div class="sx-sub" style="text-align:center">🏁 Final del recorrido</div>':''));
+  }
+  h+='<button class="sx-mas" onclick="SX.mas=!SX.mas;sxInicio()">'+(SX.mas?'▲ Menos opciones':'⚙️ Más opciones')+'</button>';
+  sxEl('sx-inicio', pt.firstElementChild, h);
+}
+function sxLlegamos(){
+  var P=sxParadas(), i=sxParadaIdx()+1; if(i>=P.length) return;
+  try{ localStorage.setItem(CLAVE+'_parada', JSON.stringify({c:CARGADO_EN, i:i})); }catch(e){}
+  estFiltro={modo:'sube', est:P[i]}; SX.falta=false; abrirMapa();
+  toast('🚉 '+estCorto(P[i])+': ahora ves quién sube aquí');
+}
+
+/* ── Mapa ── */
+function sxCoche(d){ var l=COCHES, i=l.indexOf(coche); if(i<0) i=0; i=(i+d+l.length)%l.length; coche=l[i]; pintarMapa(); }
+function sxSeatsPost(){
+  var w=document.getElementById('wagon'); if(!w) return;
+  var editando=MANUAL&&MANUAL.editando;
+  w.querySelectorAll('.seat').forEach(function(b){
+    var m=(b.getAttribute('onclick')||'').match(/'([^']+)'/); if(!m) return;
+    var sv=(ASIENTOS[m[1]]||[]).filter(pasaEst), viv=sv.filter(function(r){ return subio[r.sid]!=='no'; }), pend=viv.filter(function(r){ return !servidos[r.sid]; });
+    if(sv.length&&!editando){
+      if(!viv.length) b.insertAdjacentHTML('beforeend','<span class="sx-t">NO SUBIÓ</span>');
+      else if(!pend.length){ b.classList.add('sx-ok'); b.insertAdjacentHTML('beforeend','<span class="sx-t">✓ HECHO</span>'); }
+      else if(pend.some(function(r){ return subio[r.sid]==='si'; })) b.insertAdjacentHTML('beforeend','<span class="sx-t">🧍 SUBIÓ</span>');
+    }
+    if(SX.falta&&!editando&&!pend.length) b.classList.add('dim');
+  });
+}
+function sxMapa(){
+  var pm=document.getElementById('p-mapa'), co=document.getElementById('coches'); if(!pm||!co) return;
+  pm.classList.toggle('sx-oculto', !SX.mas);
+  var enC=LISTA.filter(function(r){ return r.coche===coche; }), falta=enC.filter(function(r){ return !servidos[r.sid]&&subio[r.sid]!=='no'; }).length;
+  var editando=MANUAL&&MANUAL.editando;
+  var P=sxParadas(), sig=P[Math.min(sxParadaIdx(), Math.max(P.length-1,0))+1];
+  var h=(editando?'':
+      '<button class="sx-clip'+(modoClip?' on':'')+'" onclick="modoClip=!modoClip;pintarMapa()">🧍 Comprobar quién sube: <b>'+(modoClip?'SÍ':'NO')+'</b>'+
+        '<small>'+(modoClip?'Toca un asiento: 1 vez ✓ subió · 2 veces 🚫 no subió · 3 veces sin comprobar':'Actívalo cuando te dicten los asientos: marcas de un toque')+'</small></button>'+
+      '<div class="sx-tog"><button class="'+(SX.falta?'on':'')+'" onclick="SX.falta=true;pintarMapa()">Lo que falta</button><button class="'+(!SX.falta?'on':'')+'" onclick="SX.falta=false;pintarMapa()">Todos</button></div>')+
+    sxMapaDos()+(estFiltro.est?'<div class="sx-aviso">🚉 Solo los que '+(estFiltro.modo==='sube'?'suben':'bajan')+' en <b>'+limpio(estCorto(estFiltro.est))+'</b> <button onclick="setEst(estFiltro.modo,null)">Ver todos</button></div>':'')+
+    (!editando&&sig?'<button class="sx-gbtn sx-az sx-lleg" onclick="sxLlegamos()"><span>🚉</span><div>Llegamos a '+limpio(estCorto(sig))+'<small>Toca al llegar a la parada</small></div></button>':'');
+  sxEl('sx-mapa', co.nextElementSibling, h);
+  var mb=document.getElementById('sx-mapa-mas'); if(!mb){ mb=document.createElement('button'); mb.id='sx-mapa-mas'; mb.className='sx-mas'; pm.appendChild(mb); }
+  mb.textContent=SX.mas?'▲ Menos opciones':'⚙️ Más opciones (filtros, embarque, plano…)'; mb.onclick=function(){ SX.mas=!SX.mas; pintarMapa(); };
+  sxSeatsPost(); sxSeatsDos();
+}
+
+/* ── Ficha del asiento ── */
+var _fichaOrig=ficha;
+ficha=function(key){
+  if(SX.full===key) return _fichaOrig(key);
+  fichaAbierta=key; hoja='sx-ficha';
+  var p=key.split('-'), c=+p[0], sv=ASIENTOS[key]||[];
+  var h='<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as">Asiento '+p[1]+' <small>· coche '+cocheVer(c)+'</small></div>';
+  if(!sv.length) h+='<div class="sx-sub">Este asiento no tiene servicio.</div><button class="sx-gbtn sx-gr" onclick="abrirExtra(\''+key+'\')"><span>➕</span><div>Añadir pasajero</div></button>';
+  function bloque(r){
+    var m=COMIDAS[r.k], me=menuElegido(r), su=subio[r.sid], hecho=!!servidos[r.sid];
+    var men=me&&!me.esp?me.t:(/SIN ELEC|SIN POSIB/i.test(sinAcento(r.menu||''))?'SIN ELECCIÓN':capital(r.menu||''));
+    return '<div class="sx-menu" style="background:'+m.c+'">'+m.e+' '+nombreTipo(r)+(men?' · '+limpio(men):'')+'<small>De '+limpio(estCorto(r.origen))+' a '+limpio(estCorto(r.destino))+(r.nombre?' · '+limpio(r.nombre):'')+'</small></div>'+
+      (r.especial?'<div class="sx-alerta">⚠️ '+limpio(String(r.especial).toUpperCase())+'</div>':'')+
+      '<div class="sx-dos"><button class="si'+(su==='si'?' on':'')+'" onclick="setSube('+r.sid+',\'si\');refrescar()">🧍 Ha subido'+(su==='si'?' ✓':'')+'</button>'+
+      '<button class="nn'+(su==='no'?' on':'')+'" onclick="setSube('+r.sid+',\'no\');refrescar()">🚫 No ha subido'+(su==='no'?' ✓':'')+'</button></div>'+
+      (su==='no'?'':'<button class="sx-ok1'+(hecho?' des':'')+'" onclick="toggleServido('+r.sid+');refrescar()">'+(hecho?'↩︎ Quitar «servido»':'✓ SERVIDO')+'</button>')+
+      '<button class="sx-mover" onclick="empezarMover('+r.sid+')">↔ Cambiar de asiento</button>';
+  }
+  // Primero el servicio que se está dando ahora; lo demás (p. ej. el aperitivo que ya bajó en Zaragoza), abajo y plegado.
+  var ahora=sxAhora(sv), antes=sv.filter(function(r){ return ahora.indexOf(r)<0; });
+  ahora.forEach(function(r){ h+=bloque(r); });
+  antes.forEach(function(r){
+    var m=COMIDAS[r.k], fin=ahora.length&&ORDEN[r.destino]<=ORDEN[ahora[0].origen], est=subio[r.sid]==='no'?'🚫 no subió':servidos[r.sid]?'✓ servido':'sin servir';
+    h+='<details class="sx-antes"'+(SX.antesAb===key?' open':'')+' ontoggle="SX.antesAb=this.open?\''+key+'\':null"><summary>'+(fin?'Servicio anterior':ahora.length&&ORDEN[r.origen]>=ORDEN[ahora[0].destino]?'Siguiente servicio':'Otro servicio')+' · '+m.e+' '+limpio(nombreTipo(r))+' · '+est+
+      '<small>'+limpio(estCorto(r.origen))+' → '+limpio(estCorto(r.destino))+' · toca para verlo</small></summary>'+bloque(r)+'</details>';
+  });
+  h+='<button class="sx-mas" onclick="SX.full=\''+key+'\';ficha(\''+key+'\')">✏️ Más opciones (menú, dieta, nombre…)</button>'+
+     '<button class="sx-cerrar" onclick="cerrar()">Cerrar</button></div>';
+  sxPon(h,'ficha-'+key);
+  document.getElementById('ov-asiento').classList.add('on');
+};
+var _cerrarOrig=cerrar; cerrar=function(){ SX.full=null; document.getElementById('sh-asiento').classList.remove('sx-setup'); document.getElementById('sh-asiento').dataset.sx=''; _cerrarOrig(); };
+
+// Qué filas del asiento son «de ahora»: las del servicio que se ve en el mapa; si no hay,
+// las que aún no han bajado en la parada actual.
+function sxAhora(sv){
+  if(sv.length<2) return sv.slice();
+  var l=filtro?sv.filter(function(r){ return r.k===filtro; }):[];
+  if(!l.length&&cargado){ var P=sxParadas(), i=sxParadaIdx(), e=P[Math.min(i,P.length-1)];
+    if(i>0&&e) l=sv.filter(function(r){ return !(ORDEN[r.destino]<=ORDEN[e]); }); }
+  return l.length?l:sv.slice();
+}
+
+/* ── Resumen ── */
+var _resOrig=pintarResumen;
+pintarResumen=function(){
+  _resOrig();
+  var pr=document.getElementById('p-resumen'), T=sxTotales();
+  pr.classList.toggle('sx-oculto', !SX.resMas);
+  sxEl('sx-res', pr.firstElementChild, '<h1 class="sx-h1">'+limpio(tipo)+' '+limpio(valor('i-num')||'')+'</h1><div class="sx-sub">'+limpio(valor('i-ruta'))+'</div>'+
+    '<div class="sx-res v">✓ Servidos <b>'+T.s+'</b></div><div class="sx-res a">⏳ Faltan <b>'+T.falta+'</b></div><div class="sx-res r">🚫 No subieron <b>'+T.no+'</b></div>'+
+    '<button class="sx-mas" onclick="SX.resMas=!SX.resMas;pintarResumen()">'+(SX.resMas?'▲ Menos detalles':'📋 Ver más detalles')+'</button>');
+};
+
+/* ── Servicio a mano: preguntas de una en una ── */
+var _setupOrig=pintarSetup, _abrirManOrig=abrirManual;
+abrirManual=async function(){ SX.paso=1; await _abrirManOrig(); };
+pintarSetup=function(){
+  var sh=document.getElementById('sh-asiento'), b0=sh.querySelector('.sh-body'), y=(b0&&sh.dataset.hoja==='manual'&&SX.pasoVisto===SX.paso)?b0.scrollTop:0;
+  _setupOrig();
+  var body=sh.querySelector('.sh-body'); if(!body) return;
+  sh.classList.add('sx-setup');
+  var bloques=[], cur=null;
+  Array.prototype.slice.call(body.children).forEach(function(n){ if(n.classList.contains('card-t')&&/Sale de|cuántos/i.test(n.textContent)){ cur=[]; bloques.push(cur); } if(!cur){ cur=[]; bloques.push(cur); } cur.push(n); });
+  // bloques: 0 = tren · 1 = recorrido · 2 = servicios. Se pregunta primero el recorrido.
+  var paso=SX.paso, ver=[1,0,2][paso-1];
+  bloques.forEach(function(b,i){ b.forEach(function(n){ n.style.display=(i===ver||n.id==='m-err')?'':'none'; }); });
+  var tit=['¿De dónde a dónde?','¿Qué tren es?','¿Qué servicios hay?'][paso-1];
+  body.insertAdjacentHTML('afterbegin','<div class="sx-pasos">'+[1,2,3].map(function(i){ return '<i class="'+(i<=paso?'on':'')+'"></i>'; }).join('')+'</div><div class="sx-q">'+tit+'</div>');
+  if(paso===2) sxPasoTren(body, bloques[0]);
+  if(paso===3) sxPasoServicios(body, bloques[2]);
+  var pie=sh.querySelector('.mfoot');
+  if(pie) pie.innerHTML='<button class="m-sec" onclick="'+(paso>1?'SX.paso--;pintarSetup()':'cerrar()')+'">'+(paso>1?'‹ Atrás':'Cancelar')+'</button>'+
+    (paso<3?'<button class="m-ok" onclick="sxSiguiente()">Siguiente ›</button>':'<button class="m-ok" onclick="empezarManual()">✓ Empezar</button>');
+  SX.pasoVisto=paso; if(y) body.scrollTop=y; // al tocar un botón, la hoja se queda donde estaba
+};
+function sxSiguiente(){
+  var err=document.getElementById('m-err'), n=document.getElementById('m-num'); if(n) SETUP.num=(n.value||'').replace(/\D/g,'').slice(0,5);
+  if(SX.paso===1&&(!SETUP.a||!SETUP.b||SETUP.a===SETUP.b)){ if(err) err.textContent='Elige de dónde sale y a dónde llega.'; return; }
+  if(err) err.textContent='';
+  SX.paso++; pintarSetup(); var b=document.querySelector('#sh-asiento .sh-body'); if(b) b.scrollTop=0;
+}
+
+/* ── Qué trenes hacen cada ruta (se irán añadiendo más) ── */
+var SX_RUTAS=[{est:['Barcelona-Sants',M_ATO], series:['S-103','S-100']}];
+function sxSugeridas(){ var R=rutaSetup(); for(var i=0;i<SX_RUTAS.length;i++){ var x=SX_RUTAS[i]; if(x.est.every(function(e){ return R.indexOf(e)>-1; })) return x.series; } return null; }
+function sxSerie(s){ tipo='AVE'; serie=s; SX.otroTren=false; pintarSetup(); }
+function sxPasoTren(body, bl){
+  var sug=sxSugeridas(); if(!sug||SX.otroTren){ if(sug) bl[0].insertAdjacentHTML('beforebegin','<button class="sx-mas" style="margin:0 0 6px;text-align:left" onclick="SX.otroTren=false;pintarSetup()">‹ Volver a los trenes de esta ruta</button>'); return; }
+  if(sug.indexOf(serie)<0){ tipo='AVE'; serie=sug[0]; }
+  for(var i=0;i<4;i++) if(bl[i]) bl[i].style.display='none'; // tipo y serie: solo si es «otro tren»
+  var R=rutaSetup();
+  bl[0].insertAdjacentHTML('beforebegin','<div class="sx-sub" style="margin-bottom:8px">'+limpio(estCorto(R[0]))+' → '+limpio(estCorto(R[R.length-1]))+' · lo normal en esta ruta:</div>'+
+    '<div class="sx-big2">'+sug.map(function(s){ return '<button class="'+(s===serie?'on':'')+'" onclick="sxSerie(\''+s+'\')">'+s+'<small>'+limpio(MODELO[s.replace(/\D/g,'').slice(0,3)]||'')+'</small></button>'; }).join('')+'</div>'+
+    '<button class="sx-mas" onclick="SX.otroTren=true;pintarSetup()">Otro tren ›</button>');
+}
+
+/* ── Dos servicios (también dos iguales: 1.º y 2.º desayuno) y dónde cambia ── */
+var SX_BASE={}; SV_MAN.forEach(function(k){ SX_BASE[k]={n:COMIDAS[k].n, c:COMIDAS[k].c};
+  COMIDAS[k+'2']={n:'2.º '+COMIDAS[k].n, e:COMIDAS[k].e, c:'#9333EA'}; MENUS_MAN[k+'2']=MENUS_MAN[k]; });
+var SX_C1='#0284C7', SX_C2='#9333EA';
+function sxBase(k){ return String(k||'').replace(/2$/,''); }
+function sxNombresSv(){
+  SV_MAN.forEach(function(k){ COMIDAS[k].n=SX_BASE[k].n; COMIDAS[k].c=SX_BASE[k].c; });
+  if(MANUAL&&MANUAL.svs.length>1&&MANUAL.svs[1]===MANUAL.svs[0]+'2'){ COMIDAS[MANUAL.svs[0]].n='1.º '+SX_BASE[MANUAL.svs[0]].n; COMIDAS[MANUAL.svs[0]].c=SX_C1; }
+}
+function sxCorteDef(R){ var mid=R.slice(1,-1); return mid.indexOf('Zaragoza-Delicias')>-1?'Zaragoza-Delicias':''; }
+function sxPasoServicios(body, bl){
+  var S=SETUP, R=rutaSetup(), mid=R.slice(1,-1);
+  S.s2=sxBase(S.s2);
+  if(S.corte===undefined) S.corte=sxCorteDef(R);
+  if(S.corte&&mid.indexOf(S.corte)<0) S.corte='';
+  bl.forEach(function(n){ if(n.id!=='m-err') n.style.display='none'; });
+  function chips(k){ return '<div class="chips">'+SV_MAN.map(function(x){ return '<button class="chip'+(S[k]===x?' sel':'')+'" onclick="setupSet(\''+k+'\',\''+x+'\')">'+COMIDAS[x].e+' '+SX_BASE[x].n+'</button>'; }).join('')+'</div>'; }
+  var dos=S.n===2, ci=dos&&S.corte?R.indexOf(S.corte):-1;
+  var n1=(dos&&S.s1===S.s2?'1.º ':'')+SX_BASE[S.s1].n, n2=dos?(S.s1===S.s2?'2.º ':'')+SX_BASE[S.s2].n:'';
+  var h='<div class="chips"><button class="chip'+(!dos?' sel':'')+'" onclick="setupSet(\'n\',1)">1 servicio</button><button class="chip'+(dos?' sel':'')+'" onclick="setupSet(\'n\',2)">2 servicios</button></div>'+
+    '<div class="sx-svbox" style="border-color:'+SX_C1+'"><div class="t">'+(dos?'1.º SERVICIO':'SERVICIO')+'</div>'+chips('s1')+'</div>'+
+    (dos?'<div class="sx-svbox" style="border-color:'+SX_C2+'"><div class="t">2.º SERVICIO <small>(puede ser el mismo)</small></div>'+chips('s2')+'</div>'+
+      '<div class="sx-q" style="font-size:17px;margin-top:14px">🔀 ¿En qué parada cambia de servicio?</div><div class="chips">'+
+      mid.map(function(e){ return '<button class="chip'+(S.corte===e?' sel':'')+'" onclick="setupSet(\'corte\',rutaSetup()['+R.indexOf(e)+'])">'+limpio(estCorto(e))+'</button>'; }).join('')+
+      '<button class="chip'+(!S.corte?' sel':'')+'" onclick="setupSet(\'corte\',\'\')">No cambia · los dos todo el viaje</button></div>':'');
+  if(dos&&ci>0){
+    h+='<div class="sx-lin">'+R.map(function(e,i){ return (i?'<b style="background:'+(i<=ci?SX_C1:SX_C2)+'"></b>':'')+'<span class="'+(i===ci?'cut':'')+'"><i></i>'+sigla(e)+'</span>'; }).join('')+'</div>'+
+      '<div class="sx-ley"><div style="background:'+SX_C1+'">'+COMIDAS[S.s1].e+' '+limpio(n1)+'<br>'+sigla(R[0])+' → '+sigla(R[ci])+'</div><div style="background:'+SX_C2+'">'+COMIDAS[S.s2].e+' '+limpio(n2)+'<br>'+sigla(R[ci])+' → '+sigla(R[R.length-1])+'</div></div>';
+  }
+  bl[0].insertAdjacentHTML('beforebegin','<div id="sx-svs">'+h+'</div>');
+}
+var _empOrig=empezarManual;
+empezarManual=function(){
+  var S=SETUP, s2=S.s2, antes=CARGADO_EN;
+  if(S.n===2&&S.s1===S.s2) S.s2=S.s1+'2'; // dos iguales: el 2.º lleva su propia clave
+  _empOrig(); S.s2=s2;
+  if(CARGADO_EN===antes||!MANUAL) return;
+  var R=MANUAL.ruta, ci=S.n===2&&S.corte?R.indexOf(S.corte):-1;
+  if(ci>0&&ci<R.length-1){ MANUAL.corte=ci; MANUAL.tramo[MANUAL.svs[0]]=[0,ci]; MANUAL.tramo[MANUAL.svs[1]]=[ci,R.length-1]; }
+  if(S.num){ var m=memRutas(); if(m[S.num]){ m[S.num].corte=S.corte||''; m[S.num].s2=s2; try{ localStorage.setItem('svManualRutas', JSON.stringify(m)); }catch(e){} } }
+  sxNombresSv(); filtro=MANUAL.svs[0]; guardar(); pintarMapa();
+};
+var _setupNumOrig=setupNum;
+setupNum=function(v){ _setupNumOrig(v); var m=memRutas()[SETUP.num]; if(m&&'corte' in m){ SETUP.corte=m.corte; pintarSetup(); } };
+function sxRango(k){ var R=MANUAL.ruta, i=MANUAL.svs.indexOf(k), c=MANUAL.corte; if(!c||i<0) return [0,R.length-1]; return i===0?[0,c]:[c,R.length-1]; }
+function sxN(k){ return MANUAL&&MANUAL.svs.length>1?(MANUAL.svs.indexOf(k)===0?'1.º':'2.º'):''; }
+
+/* ── Poniendo asientos a mano: tarjeta grande ── */
+var _manOrig=pintarManual;
+pintarManual=function(){
+  _manOrig();
+  var el=document.getElementById('manual-bar'); if(!el||!MANUAL||!MANUAL.editando) return;
+  var k=MANUAL.svs[MANUAL.act], t=MANUAL.tramo[k], R=MANUAL.ruta, ops=MENUS_MAN[k];
+  el.innerHTML='<div class="sx-pone" style="background:'+COMIDAS[k].c+'"><div class="t">ESTÁS PONIENDO</div>'+
+    (MANUAL.svs.length>1?'<div class="sx-tabs">'+MANUAL.svs.map(function(x,i){ return '<button class="'+(i===MANUAL.act?'on':'')+'" onclick="actManual('+i+')">'+COMIDAS[x].e+' '+COMIDAS[x].n+(MANUAL.corte?'<small>'+sigla(R[sxRango(x)[0]])+' → '+sigla(R[sxRango(x)[1]])+'</small>':'')+'</button>'; }).join('')+'</div>':
+      '<div class="m">'+COMIDAS[k].e+' '+COMIDAS[k].n+'</div>')+
+    '<div class="tr">'+limpio(estCorto(R[t[0]]))+' → '+limpio(estCorto(R[t[1]]))+' <button onclick="sxTramo()">Cambiar</button></div></div>'+
+    '<div class="sx-toques">'+ops.map(function(m,i){ return '<span>'+(i?(i+1)+':':'1 toque:')+' '+m+'</span>'; }).join('')+'<span>'+(ops.length+1)+': quitar</span></div>'+
+    '<button class="sx-gbtn sx-gr" style="padding:12px 16px;font-size:17px" onclick="terminarManual()"><span style="font-size:22px">✓</span><div>Listo, a servir</div></button>';
+};
+function sxTramo(){
+  var k=MANUAL.svs[MANUAL.act], t=MANUAL.tramo[k], R=MANUAL.ruta;
+  SX.tr=[t[0],t[1]]; hoja='sx-tramo'; fichaAbierta=null; sxPintaTramo();
+  document.getElementById('ov-asiento').classList.add('on');
+}
+function sxPon(h, cual){ var el=document.getElementById('sh-asiento'), b=el.querySelector('.sx-hoja'), y=(b&&el.dataset.sx===cual)?b.scrollTop:0;
+  el.innerHTML=h; el.dataset.sx=cual; el.dataset.hoja=''; var b2=el.querySelector('.sx-hoja'); if(b2&&y) b2.scrollTop=y; }
+function sxPintaTramo(){
+  var R=MANUAL.ruta, a=SX.tr[0], b=SX.tr[1], k=MANUAL.svs[MANUAL.act], rg=sxRango(k), lo=rg[0], hi=rg[1], i, su='', ba='';
+  for(i=lo;i<hi;i++) su+='<button class="'+(i===a?'s':'')+'" onclick="SX.tr[0]='+i+';if(SX.tr[1]<='+i+')SX.tr[1]='+(i+1)+';sxPintaTramo()">'+limpio(estCorto(R[i]))+'</button>';
+  for(i=lo+1;i<=hi;i++) ba+='<button class="'+(i===b?'b':'')+(i<=a?' x':'')+'"'+(i<=a?' disabled':' onclick="SX.tr[1]='+i+';sxPintaTramo()"')+'>'+limpio(estCorto(R[i]))+'</button>';
+  var h='<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:24px">¿De dónde a dónde?</div><div class="sx-sub">Para los asientos que toques ahora'+
+    (MANUAL.corte?' · '+COMIDAS[k].e+' '+limpio(COMIDAS[k].n)+' va de '+limpio(estCorto(R[lo]))+' a '+limpio(estCorto(R[hi])):'')+'</div>'+
+    '<div class="sx-col2"><div><div class="h">🟢 Sube en</div>'+su+'</div><div><div class="h">🔴 Baja en</div>'+ba+'</div></div>'+
+    '<button class="sx-ok1" onclick="sxTramoOk()">✓ '+limpio(estCorto(R[a]))+' → '+limpio(estCorto(R[b]))+'</button><button class="sx-cerrar" onclick="cerrar()">Cancelar</button></div>';
+  sxPon(h,'tramo');
+}
+function sxTramoOk(){ var k=MANUAL.svs[MANUAL.act]; MANUAL.tramo[k]=[SX.tr[0],SX.tr[1]]; MANUAL.paso=0; guardar(); cerrar(); pintarMapa(); }
+
+/* ── Un viajero (mantener pulsado): eliges sube y baja y la app pone qué servicios le tocan ── */
+var _fichaManOrig=fichaManual;
+fichaManual=function(key, sid){
+  if(sid!=null||!MANUAL||!MANUAL.corte) return _fichaManOrig(key, sid);
+  var R=MANUAL.ruta, sv=(ASIENTOS[key]||[]).filter(function(r){ return r.manual&&MANUAL.svs.indexOf(r.k)>-1; }), menus={}, esp='';
+  var o=sv.length?Math.min.apply(null, sv.map(function(r){ return R.indexOf(r.origen); })):0, d=sv.length?Math.max.apply(null, sv.map(function(r){ return R.indexOf(r.destino); })):R.length-1;
+  sv.forEach(function(r){ menus[r.k]=r.menu; if(r.especial) esp=r.especial; });
+  SX.pj={key:key, o:Math.max(o,0), d:d<0?R.length-1:d, menus:menus, esp:esp};
+  hoja='sx-pasajero'; fichaAbierta=null; sxPintaPasajero();
+  document.getElementById('ov-asiento').classList.add('on');
+};
+function sxLeToca(){ var P=SX.pj; return MANUAL.svs.map(function(k){ var rg=sxRango(k), a=Math.max(P.o,rg[0]), b=Math.min(P.d,rg[1]); return a<b?{k:k, o:a, d:b}:null; }).filter(Boolean); }
+function sxPintaPasajero(){
+  var P=SX.pj, R=MANUAL.ruta, p=partesKey(P.key), i, su='', ba='';
+  for(i=0;i<R.length-1;i++) su+='<button class="'+(i===P.o?'s':'')+'" onclick="SX.pj.o='+i+';if(SX.pj.d<='+i+')SX.pj.d='+(R.length-1)+';sxPintaPasajero()">'+limpio(estCorto(R[i]))+'</button>';
+  for(i=1;i<R.length;i++) ba+='<button class="'+(i===P.d?'b':'')+(i<=P.o?' x':'')+'"'+(i<=P.o?' disabled':' onclick="SX.pj.d='+i+';sxPintaPasajero()"')+'>'+limpio(estCorto(R[i]))+'</button>';
+  var toca=sxLeToca();
+  var h='<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:24px">Asiento '+p.a+' <small>· coche '+cocheVer(p.c)+'</small></div><div class="sx-sub">¿De dónde a dónde va?</div>'+
+    '<div class="sx-col2"><div><div class="h">🟢 Sube en</div>'+su+'</div><div><div class="h">🔴 Baja en</div>'+ba+'</div></div>'+
+    '<div class="sx-q" style="font-size:17px">Le toca:</div>'+
+    toca.map(function(t){ var ops=MENUS_MAN[t.k], m=P.menus[t.k]||ops[0];
+      return '<div class="sx-letoca" style="background:'+COMIDAS[t.k].c+'">'+COMIDAS[t.k].e+' '+limpio(COMIDAS[t.k].n)+' · '+limpio(estCorto(R[t.o]))+' → '+limpio(estCorto(R[t.d]))+
+        '<div class="chips">'+ops.map(function(x,j){ return '<button class="chip'+(x===m?' sel':'')+'" onclick="SX.pj.menus[\''+t.k+'\']=MENUS_MAN[\''+t.k+'\']['+j+'];sxPintaPasajero()">'+x+'</button>'; }).join('')+'</div></div>'; }).join('')+
+    '<div class="card-t" style="margin-top:10px">⚠️ Dieta</div><div class="chips">'+['Sin gluten','Sin lactosa','Vegetariano','Vegano'].map(function(v){ return '<button class="chip'+(P.esp===v?' sel':'')+'" onclick="SX.pj.esp=SX.pj.esp===\''+v+'\'?\'\':\''+v+'\';sxPintaPasajero()">'+v+'</button>'; }).join('')+'</div>'+
+    '<button class="sx-ok1" onclick="sxGuardaPasajero()">✓ Guardar '+p.a+'</button>'+
+    '<button class="sx-mas" onclick="_fichaManOrig(\''+P.key+'\')">✏️ Más opciones (nombre, nota, otro pasajero…)</button>'+
+    ((ASIENTOS[P.key]||[]).length?'<button class="sx-cerrar" style="color:#FCA5A5" onclick="sxQuitaPasajero()">🗑 Quitar este asiento</button>':'')+
+    '<button class="sx-cerrar" onclick="cerrar()">Cancelar</button></div>';
+  sxPon(h,'pj-'+P.key);
+}
+function sxGuardaPasajero(){
+  var P=SX.pj, R=MANUAL.ruta, p=partesKey(P.key), toca=sxLeToca(), sv=(ASIENTOS[P.key]||[]).filter(function(r){ return r.manual; });
+  MANUAL.svs.forEach(function(k){
+    var r=sv.filter(function(x){ return x.k===k; })[0], t=toca.filter(function(x){ return x.k===k; })[0];
+    if(t){ var m=P.menus[k]||MENUS_MAN[k][0];
+      if(!r){ r=filaManual(p.c,p.f,p.l,k,R[t.o],R[t.d],m); LISTA.push(r); }
+      r.origen=R[t.o]; r.destino=R[t.d]; r.menu=m; r.especial=limpio(P.esp); }
+    else if(r) quitarDeLista(r.sid);
+  });
+  reindexar(); guardar(); estadoManual(); cerrar(); pintarMapa();
+}
+function sxQuitaPasajero(){ (ASIENTOS[SX.pj.key]||[]).slice().forEach(function(r){ if(r.manual) quitarDeLista(r.sid); }); reindexar(); guardar(); estadoManual(); cerrar(); pintarMapa(); }
+
+/* ── Sirviendo con dos servicios: primero el 1.º; al llegar a la parada del cambio, el 2.º ── */
+function sxDosSv(){ return MANUAL&&MANUAL.svs.length>1&&MANUAL.corte; }
+function sxSvAhora(){ var P=sxParadas(), e=P[Math.min(sxParadaIdx(),P.length-1)], ri=MANUAL.ruta.indexOf(e); return MANUAL.svs[ri>=MANUAL.corte?1:0]; }
+var _termOrig=terminarManual;
+terminarManual=function(){ _termOrig(); if(sxDosSv()){ filtro=sxSvAhora(); pintarMapa(); } };
+function sxFaltan(k){ return LISTA.filter(function(r){ return r.k===k&&!servidos[r.sid]&&subio[r.sid]!=='no'; }); }
+var _llegOrig=sxLlegamos;
+sxLlegamos=function(){
+  var P=sxParadas(), i=sxParadaIdx()+1;
+  if(!sxDosSv()||i>=P.length||MANUAL.ruta.indexOf(P[i])!==MANUAL.corte) return _llegOrig();
+  try{ localStorage.setItem(CLAVE+'_parada', JSON.stringify({c:CARGADO_EN, i:i})); }catch(e){}
+  var k1=MANUAL.svs[0], k2=MANUAL.svs[1], f=sxFaltan(k1), sube=LISTA.filter(function(r){ return r.k===k2&&r.origen===P[i]; }).length;
+  hoja='sx-cambio'; fichaAbierta=null;
+  sxPon('<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:24px">🚉 Llegamos a '+limpio(estCorto(P[i]))+'</div>'+
+    '<div class="sx-aviso2">Termina el <b>'+limpio(COMIDAS[k1].n)+'</b>.'+(f.length?' Quedan <b>'+f.length+' sin servir</b>: '+f.slice(0,6).map(function(r){ return r.coche+'-'+pad(r.fila)+r.letra; }).join(', ')+(f.length>6?'…':'')+'.':' ¡Todo servido! 👏')+
+      '<br>Empieza el <b>'+limpio(COMIDAS[k2].n)+'</b>'+(sube?': suben '+sube+' viajeros.':'.')+'</div>'+
+    '<button class="sx-gbtn" style="background:'+SX_C2+';color:#fff" onclick="sxVerSv(\''+k2+'\')"><span>'+COMIDAS[k2].e+'</span><div>Empezar '+limpio(COMIDAS[k2].n)+'<small>El mapa enseña lo del 2.º</small></div></button>'+
+    (f.length?'<button class="sx-cerrar" onclick="sxVerSv(\''+k1+'\')">↩️ Antes, ver los '+f.length+' que faltan del 1.º</button>':'')+'</div>','cambio');
+  document.getElementById('ov-asiento').classList.add('on');
+};
+function sxVerSv(k){ SX.falta=true; estFiltro={modo:'sube', est:null}; cerrar(); abrirMapa(); filtro=k; pintarMapa(); }
+// «Ver los asientos»: con dos servicios, el mapa abre en el que toca según la parada.
+var _abrirMapaOrig=abrirMapa;
+abrirMapa=function(){ _abrirMapaOrig(); if(sxDosSv()&&!MANUAL.editando){ filtro=sxSvAhora(); pintarMapa(); } };
+function sxMapaDos(){
+  if(!sxDosSv()||MANUAL.editando) return '';
+  return '<div class="sx-tog">'+MANUAL.svs.map(function(k,i){ var on=filtro===k;
+    return '<button class="'+(on?'on':'')+'" style="'+(on?'background:'+COMIDAS[k].c+';border-color:'+COMIDAS[k].c+';color:#fff':'')+'" onclick="filtro=\''+k+'\';pintarMapa()">'+COMIDAS[k].e+' '+limpio(COMIDAS[k].n)+'<small style="display:block;font-size:11px">'+sxFaltan(k).length+' por servir</small></button>'; }).join('')+'</div>';
+}
+function sxSeatsDos(){
+  if(!MANUAL||MANUAL.svs.length<2) return;
+  var w=document.getElementById('wagon'); if(!w) return;
+  w.querySelectorAll('.seat').forEach(function(b){
+    var m=(b.getAttribute('onclick')||'').match(/'([^']+)'/); if(!m) return;
+    var ks={}; (ASIENTOS[m[1]]||[]).forEach(function(r){ var i=MANUAL.svs.indexOf(r.k); if(i>-1) ks[i]=r; });
+    var tr=b.querySelector('.tr');
+    if(ks[0]&&ks[1]){
+      if(!/\b(dim|done|nosube|sx-ok)\b/.test(b.className)) b.style.background='linear-gradient(90deg,'+COMIDAS[MANUAL.svs[0]].c+' 50%,'+COMIDAS[MANUAL.svs[1]].c+' 50%)';
+      if(tr) tr.textContent='1.º + 2.º';
+    } else if(tr&&(ks[0]||ks[1])){ var r=ks[0]||ks[1]; tr.textContent=sxN(r.k)+' '+sigla(r.origen)+'›'+sigla(r.destino); }
+  });
+}
+
+/* ── Comprobar quién sube: un toque por asiento, sin abrir nada ── */
+var _tocarOrig=tocarAsiento;
+tocarAsiento=function(key){
+  if(!modoClip||MOVIENDO!==null||(MANUAL&&MANUAL.editando)) return _tocarOrig(key);
+  var todas=(ASIENTOS[key]||[]).filter(pasaEst), sv=filtro?todas.filter(function(r){ return r.k===filtro; }):todas;
+  if(!sv.length) sv=todas;
+  if(sv.length!==1) return _tocarOrig(key);
+  var r=sv[0], grupo=[r];
+  // la misma persona en el otro servicio (sigue en el mismo asiento justo donde cambia)
+  todas.forEach(function(x){ if(x!==r&&x.manual&&(x.origen===r.destino||x.destino===r.origen)) grupo.push(x); });
+  var s0=subio[r.sid], v=!s0?'si':s0==='si'?'no':null;
+  grupo.forEach(function(x){ if(v){ subio[x.sid]=v; if(v==='no') delete servidos[x.sid]; } else delete subio[x.sid]; anotar(x.sid); });
+  toast('Asiento '+key.split('-')[1]+': '+(v==='si'?'🧍 subió':v==='no'?'🚫 no subió':'❔ sin comprobar'));
+  guardar(); pintarMapa();
+};
+
+/* ── Enganches ── */
+var _pintarMapaOrig=pintarMapa;
+pintarMapa=function(){ _pintarMapaOrig(); sxMapa(); };
+var _goPOrig=goP;
+goP=function(p){ _goPOrig(p); if(p==='tren') sxInicio(); };
+var _montarOrig=montar; montar=function(l){ sxNombresSv(); _montarOrig(l); sxInicio(); };
+setTimeout(function(){ sxInicio(); if(document.getElementById('p-mapa').classList.contains('on')) pintarMapa(); }, 60);
+
 restaurar();
 /* «Desliza hacia abajo para actualizar», también dentro de Servicios: el gesto lo pinta y lo
    hace la app (parent.__ptr); aquí solo se comprueba que se puede (arriba del todo, sin ventanas abiertas). */
