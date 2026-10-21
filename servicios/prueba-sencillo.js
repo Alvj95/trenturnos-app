@@ -93,7 +93,8 @@ ficha=function(key){
       (r.especial?'<div class="sx-alerta">⚠️ '+limpio(String(r.especial).toUpperCase())+'</div>':'')+
       '<div class="sx-dos"><button class="si'+(su==='si'?' on':'')+'" onclick="setSube('+r.sid+',\'si\');refrescar()">🧍 Ha subido'+(su==='si'?' ✓':'')+'</button>'+
       '<button class="nn'+(su==='no'?' on':'')+'" onclick="setSube('+r.sid+',\'no\');refrescar()">🚫 No ha subido'+(su==='no'?' ✓':'')+'</button></div>'+
-      (su==='no'?'':'<button class="sx-ok1'+(hecho?' des':'')+'" onclick="toggleServido('+r.sid+');refrescar()">'+(hecho?'↩︎ Quitar «servido»':'✓ SERVIDO')+'</button>');
+      (su==='no'?'':'<button class="sx-ok1'+(hecho?' des':'')+'" onclick="toggleServido('+r.sid+');refrescar()">'+(hecho?'↩︎ Quitar «servido»':'✓ SERVIDO')+'</button>')+
+      '<button class="sx-mover" onclick="empezarMover('+r.sid+')">↔ Cambiar de asiento</button>';
   }
   // Primero el servicio que se está dando ahora; lo demás (p. ej. el aperitivo que ya bajó en Zaragoza), abajo y plegado.
   var ahora=sxAhora(sv), antes=sv.filter(function(r){ return ahora.indexOf(r)<0; });
@@ -103,7 +104,7 @@ ficha=function(key){
     h+='<details class="sx-antes"'+(SX.antesAb===key?' open':'')+' ontoggle="SX.antesAb=this.open?\''+key+'\':null"><summary>'+(fin?'Servicio anterior':ahora.length&&ORDEN[r.origen]>=ORDEN[ahora[0].destino]?'Siguiente servicio':'Otro servicio')+' · '+m.e+' '+limpio(nombreTipo(r))+' · '+est+
       '<small>'+limpio(estCorto(r.origen))+' → '+limpio(estCorto(r.destino))+' · toca para verlo</small></summary>'+bloque(r)+'</details>';
   });
-  h+='<button class="sx-mas" onclick="SX.full=\''+key+'\';ficha(\''+key+'\')">✏️ Más opciones (cambiar de asiento, menú…)</button>'+
+  h+='<button class="sx-mas" onclick="SX.full=\''+key+'\';ficha(\''+key+'\')">✏️ Más opciones (menú, dieta, nombre…)</button>'+
      '<button class="sx-cerrar" onclick="cerrar()">Cerrar</button></div>';
   sxPon(h,'ficha-'+key);
   document.getElementById('ov-asiento').classList.add('on');
