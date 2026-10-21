@@ -469,6 +469,38 @@ button{font-family:inherit}
 .sx-antes summary small{display:block;font-size:12.5px;font-weight:700;color:#94A3B8;margin-top:2px}
 .sx-antes[open]{padding-bottom:10px}
 .sx-mover{display:block;width:100%;margin-top:8px;background:#1E293B;border:2.5px solid #60A5FA;color:#BFDBFE;border-radius:16px;padding:13px;font:900 17px Inter,sans-serif;cursor:pointer}
+/* ═══ Secuencia operativa ═══ */
+.sq-hbtn{position:relative;background:#4C1D95!important;border:2px solid #A78BFA!important}
+.sq-hbtn i{position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);font:900 7.5px Inter,sans-serif;font-style:normal;color:#C4B5FD;letter-spacing:.3px;white-space:nowrap;pointer-events:none}
+#tema-btn{display:none!important} /* el estilo de temporada está en «Más opciones» */
+.sq-mo{background:#7C3AED;color:#fff}
+.sq-tren{background:#132236;border:2px solid #2a4466;border-radius:16px;padding:12px;margin-bottom:10px}
+.sq-tren .n{font-size:23px;font-weight:900}.sq-tren .n small{font-size:13px;color:#CBD5E1}.sq-tren .r{font-size:14px;color:#CBD5E1;margin-top:2px}
+.sq-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.sq-chips span{background:#1E293B;border-radius:9px;padding:5px 8px;font-size:12.5px;font-weight:800}
+.sq-chips .no{opacity:.45;text-decoration:line-through}
+.sq-tabs button{font-size:14px!important;padding:10px 2px!important}
+.sq-ahora{background:#7c2d12;border:2px solid #F59E0B;border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:15px;font-weight:800;line-height:1.45}.sq-ahora span{font-weight:600;font-size:13.5px}
+.sq-op{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1.5px solid #334155;border-radius:11px;padding:7px 10px;margin-top:5px;font-size:13px;background:#132236}
+.sq-op .tx{color:#CBD5E1;font-weight:700}.sq-op span:last-child{font-size:10.5px;color:#94A3B8;font-weight:800;white-space:nowrap}
+.sq-op.r b{font-size:14px;color:#fff}
+.sq-mas{font-size:12.5px;color:#94A3B8;line-height:1.5;margin-top:10px}
+.sq-res{border-radius:16px;padding:14px;margin-top:10px;font-size:21px;font-weight:900;line-height:1.3;color:#fff}.sq-res small{display:block;font-size:13px;font-weight:700;margin-top:4px;opacity:.95}
+.sq-it{border-radius:13px;padding:9px 12px;margin-top:6px;color:#fff;font-size:15px;line-height:1.35}.sq-it b{font-weight:900}.sq-it small{display:block;font-size:12px;font-weight:700;opacity:.95;margin-top:2px}
+.sq-pir{display:grid;gap:2px;font-size:10px;font-weight:900;text-align:center}
+.sq-pir div{padding:6px 1px;border-radius:5px;color:#fff}.sq-pir .hh{color:#CBD5E1;font-size:9px}.sq-pir .rr{text-align:left;font-size:11px}
+.sq-ley{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.sq-ley span{border-radius:8px;padding:5px 8px;font-size:11.5px;font-weight:900;color:#fff}
+.sq-tl{position:relative;padding-left:20px}.sq-tl::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:3px;background:#334155;border-radius:2px}
+.sq-fase{font-size:11px;font-weight:900;letter-spacing:.6px;color:#7DD3FC;margin:12px 0 4px -20px}
+.sq-st{position:relative;margin-bottom:12px}.sq-st::before{content:'';position:absolute;left:-18px;top:5px;width:11px;height:11px;border-radius:50%;background:#0b1220;border:3px solid #64748B}
+.sq-st.pas{opacity:.5}.sq-st.pas::before{background:#16A34A;border-color:#4ADE80}
+.sq-st.yo::before{background:#F59E0B;border-color:#FCD34D;box-shadow:0 0 0 4px rgba(245,158,11,.3)}
+.sq-st .n{font-size:16px;font-weight:900}.sq-st .n i{font-style:normal;color:#FCD34D;margin-right:7px}.sq-st.yo .n{color:#FCD34D}
+.sq-num{margin:4px 0 12px}.sq-ok{background:#14532D;border:2px solid #4ADE80;border-radius:14px;padding:12px;margin-top:8px;font-size:14.5px;line-height:1.45}.sq-ok span{font-size:12.5px;color:#BBF7D0}
+.sq-ficha{background:#132236;border:2px dashed #7C3AED;border-radius:14px;padding:8px 10px;margin:-2px 0 8px}.sq-ficha .t{font-size:12.5px;font-weight:900;color:#C4B5FD}
+.sq-mo{border:2px solid #C4B5FD!important}
+.sq-trenb{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#132236;border:2px solid #2a4466;border-radius:16px;padding:12px;margin-bottom:8px;color:#F8FAFC;font:inherit;cursor:pointer}
+.sq-trenb b{font-size:20px}.sq-trenb small{display:block;font-size:13px;color:#CBD5E1;font-weight:700;margin:2px 0 4px}.sq-trenb i{margin-left:auto;font-style:normal;font-size:22px;color:#94A3B8}
+.sq-tag{display:inline-block;border-radius:7px;padding:2px 7px;font-size:11px;font-weight:900;margin-right:4px;color:#fff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -2968,6 +3000,316 @@ var _goPOrig=goP;
 goP=function(p){ _goPOrig(p); if(p==='tren') sxInicio(); };
 var _montarOrig=montar; montar=function(l){ sxNombresSv(); _montarOrig(l); sxInicio(); };
 setTimeout(function(){ sxInicio(); if(document.getElementById('p-mapa').classList.contains('on')) pintarMapa(); }, 60);
+
+/* ═══ Secuencia operativa ═══
+   Las fichas de secuencia de cada tren van guardadas aquí, por número de tren.
+   Con el nº de tren (del MOL o puesto a mano) la app sabe sus paradas, qué le toca
+   a cada pasajero según dónde sube y baja (la pirámide), y qué hay que hacer en
+   cada parada. */
+var SECUENCIAS={
+ '3933':{
+  tren:'3933', tipo:'AVE', serie:'S-102', ruta:'Granada → Barcelona Sants', dur:'6 h 59', dias:'Todos los días (LMXJVSD)', rev:'Rev. 20 · 14/09/26',
+  lleva:[['☕','Cafetería',1],['🛒','Bar móvil',1],['🙋','At. cliente',1],['🧒','Menores',1],['🍽️','A la plaza',1],['📺','Audio/vídeo',0],['📰','Prensa',0]],
+  megafonia:'🔊 Castellano · catalán · inglés', trip:'👤 1 TA (tú) · ☕ 1 TCF (cafetería)',
+  paradas:[['Granada','7:55'],['Antequera-Santa Ana','8:41'],['Córdoba-Julio Anguita','9:24'],['Ciudad Real','10:29'],['Zaragoza-Delicias','12:49'],['Lleida-Pirineus','13:38'],['Camp de Tarragona','14:12'],['Barcelona-Sants','14:54']],
+  // Pirámide: fila = parada donde sube; columnas = paradas donde baja (de la siguiente al final).
+  pir:[['C','D','D','D','D','D','D'],['C','D','D','D','D','D'],['C','D','D','D','D'],['AP','AP','AP','AP'],['AP','AP','AP'],['C','AP'],['C']],
+  // Bloques de la secuencia. est = parada (índice) de la que se sale; null = antes de salir. r = restauración: D desayuno · AP aperitivo · C cortesía · BD copa · L licores
+  bloques:[
+   {h:'6:55', t:'Toma de servicio', fase:'FASE I · PREPARACIÓN DEL SERVICIO', est:null, ops:[
+    ['Toma de servicio en centro operativo','TA·TCF','OP/10'],['Toma de servicio en tren (7:10)','TA·TCF','OP/20'],['Revisión soportes publicitarios','TA·TCF','OP/60'],
+    ['Supervisión de las dotaciones','TA·TCF','OP/30'],['Supervisión de la funcionalidad','TA·TCF','OP/40'],['Presentación al supervisor/OCE','TA·TCF','OP/50'],
+    ['Reposición consumibles WC','TA','OP/270'],['Preparación servicio de restauración','TA','OP/170'],['Preparación servicio de bar móvil','TA·TCF','OP/70']]},
+   {h:'7:25', t:'Acogida de viajeros', fase:'FASE II · INICIO DEL SERVICIO', est:null, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Inicio servicio de cafetería','TCF','OP/91'],['1.ª emisión mensaje equipajes (castellano e inglés)','TA','OP/181'],['2.ª emisión mensaje equipajes (castellano e inglés)','TA','OP/181']]},
+   {h:'7:55', t:'Salida de Granada', fase:'FASE III · EL TRAYECTO', est:0, ops:[
+    ['Mensaje de bienvenida (castellano e inglés)','TA','OP/110'],['Emisión mensaje PlayRenfe (castellano e inglés)*','TA','OP/181'],['Emisión mensaje equipajes (castellano e inglés)','TA','OP/181'],
+    ['Supervisión equipajes / pase de atención','TA','OP/100'],['Conectar canal Renfe','TA','OP/140'],['Desconectar canal Renfe','TA','OP/360'],['Preparación servicio de restauración','TA','OP/170'],
+    ['Servicio restauración de cortesía (pax destino Antequera)','TA','OP/155','C'],['Entrega de carta menú','TA','OP/200'],['Entrega/recogida de toallita caliente','TA','OP/210'],
+    ['Servicio de restauración desayuno (a todos)','TA','OP/220','D'],['Mensaje estación intermedia (castellano e inglés)','TA','OP/180']]},
+   {h:'8:41', t:'Antequera AV', est:1, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Supervisión equipajes / pase de atención','TA','OP/100'],['Servicio restauración de cortesía (pax destino Córdoba)','TA','OP/155','C'],
+    ['Recogida prestación','TA','OP/240'],['Servicio copa de bienvenida/despedida (pax destino Córdoba)','TA','OP/150','BD'],['Mensaje estación intermedia (castellano e inglés)','TA','OP/180']]},
+   {h:'9:24', t:'Córdoba', est:2, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Emisión mensaje equipajes (castellano e inglés)','TA','OP/181'],['Supervisión equipajes / pase de atención','TA','OP/100'],
+    ['Reposición consumibles WC','TA','OP/270'],['Servicio restauración de cortesía (pax Córdoba – Ciudad Real)','TA','OP/155','C'],['Entrega de carta menú','TA','OP/200'],
+    ['Entrega/recogida de toallita caliente','TA','OP/210'],['Servicio de restauración desayuno (pax Córdoba)','TA','OP/220','D'],['Recogida prestación','TA','OP/240'],
+    ['Servicio copa de bienvenida/despedida (pax Granada y Antequera – Ciudad Real)','TA','OP/150','BD'],['Mensaje estación intermedia (castellano e inglés)','TA','OP/180']]},
+   {h:'10:29', t:'Ciudad Real', est:3, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Supervisión equipajes / pase de atención','TA','OP/100'],['Pase de bar móvil','TA','OP/160'],['Recogida selectiva de residuos','TA','OP/250'],
+    ['Preparación servicio de restauración','TA','OP/170'],['Entrega de carta menú','TA','OP/200'],['Servicio de restauración aperitivo (pax subidos en Ciudad Real)','TA','OP/220','AP'],
+    ['Recogida prestación','TA','OP/240'],['Servicio de licores (pax subidos en Ciudad Real)','TA','OP/260','L'],['Servicio copa de bienvenida/despedida (pax destino Zaragoza)','TA','OP/150','BD'],
+    ['Pase de bar móvil','TA','OP/160'],['Recogida selectiva de residuos','TA','OP/250'],['Reposición consumibles WC','TA','OP/270'],['Mensaje estación intermedia (castellano e inglés)','TA','OP/180']]},
+   {h:'12:49', t:'Zaragoza Delicias', est:4, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Emisión mensaje equipajes (castellano e inglés)','TA','OP/181'],['Supervisión equipajes / pase de atención','TA','OP/100'],
+    ['Preparación servicio de restauración','TA','OP/170'],['Entrega de carta menú','TA','OP/200'],['Servicio de restauración aperitivo (pax subidos en Zaragoza)','TA','OP/220','AP'],
+    ['Servicio copa de bienvenida/despedida (pax destino Lleida)','TA','OP/150','BD'],['Recogida prestación','TA','OP/240'],['Servicio de licores (pax subidos en Zaragoza)','TA','OP/260','L'],
+    ['Reposición consumibles WC','TA','OP/270'],['Mensaje estación intermedia (castellano, catalán e inglés)','TA','OP/180']]},
+   {h:'13:38', t:'Lleida Pirineus', est:5, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Supervisión equipajes / pase de atención','TA','OP/100'],['Servicio restauración de cortesía (pax Lleida – Camp)','TA','OP/155','C'],
+    ['Entrega de carta menú','TA','OP/200'],['Servicio de restauración aperitivo (pax Lleida – Barcelona)','TA','OP/220','AP'],['Recogida prestación','TA','OP/240'],
+    ['Servicio de licores (pax Lleida – Barcelona)','TA','OP/260','L'],['Pase de bar móvil','TA','OP/160'],['Servicio copa de bienvenida/despedida (pax destino Camp y Lleida)','TA','OP/150','BD'],
+    ['Recogida selectiva de residuos','TA','OP/250'],['Mensaje estación intermedia (castellano, catalán e inglés)','TA','OP/180']]},
+   {h:'14:12', t:'Camp de Tarragona', est:6, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Supervisión equipajes / pase de atención','TA','OP/100'],['Servicio restauración de cortesía (pax Camp – Barcelona)','TA','OP/155','C'],
+    ['Desmontaje y recogida bar móvil','TA','OP/290'],['Cierre documentación con supervisor/OCE','TA','OP/300'],['Cierre documentación servicio','TA','OP/221'],['Mensaje de despedida (castellano, catalán e inglés)','TA','OP/310']]},
+   {h:'14:54', t:'Llegada a Barcelona Sants', fase:'FASE IV · FINALIZACIÓN DEL SERVICIO', est:7, ops:[
+    ['Cierre servicio de cafetería','TCF','OP/330'],['Despedida de viajeros','TA','OP/320'],['Recogida de dotaciones a bordo / revisión final del tren','TA·TCF','OP/340'],['Deje de servicio en centro operativo','TA·TCF','OP/350']]}
+  ],
+  notas:['Una posible demora en el estacionamiento previsto del tren en el andén podría retrasar el inicio del servicio a bordo.','*Mensaje PlayRenfe se emitirá tras confirmación del SSB/OC del correcto funcionamiento del sistema.']
+ }
+};
+var SQ_TIPO={D:{n:'Desayuno',e:'🥐',c:'#EA580C',k:'des'}, AP:{n:'Aperitivo',e:'🥨',c:'#2563EB',k:'ape'}, C:{n:'Cortesía',e:'🍪',c:'#475569',k:'cor'}, BD:{n:'Copa de bienvenida/despedida',e:'🥂',c:'#7C3AED'}, L:{n:'Licores',e:'🥃',c:'#0F766E'}, BM:{n:'Bar móvil',e:'🛒',c:'#0D9488'}};
+var SQ={tab:'ahora', todo:false, s:0, b:null};
+if(!MENUS_MAN.cor) MENUS_MAN.cor=['Cortesía'];
+function sqDe(num){ num=String(num||'').replace(/\D/g,''); return SECUENCIAS[num]||null; }
+function sqActual(){ return cargado?sqDe(MANUAL&&MANUAL.seq||valor('i-num')):sqDe(sqSolo().tren); }
+// Secuencia abierta desde el inicio, sin MOL: qué tren y en qué parada vamos (se guarda en el móvil).
+function sqSolo(){ try{ return JSON.parse(localStorage.getItem(CLAVE+'_sq')||'{}')||{}; }catch(e){ return {}; } }
+function sqSoloPon(o){ try{ localStorage.setItem(CLAVE+'_sq', JSON.stringify(o)); }catch(e){} }
+function sqIdx(Q, nombre){ var n=estacion(nombre).nombre; for(var i=0;i<Q.paradas.length;i++) if(estacion(Q.paradas[i][0]).nombre===n) return i; return -1; }
+function sqCorto(Q,i){ return estCorto(Q.paradas[i][0]); }
+function sqTipo(Q,s,b){ var f=Q.pir[s]; return f&&b>s?f[b-s-1]||null:null; }
+// Qué le toca a un pasajero que sube en s y baja en b, en el orden en que se hace.
+function sqLeToca(Q,s,b){
+  var T=sqTipo(Q,s,b); if(!T) return {T:null, items:[]};
+  var items=[], comida=null, copa=null;
+  Q.bloques.forEach(function(bl,bi){ if(bl.est===null||bl.est<s||bl.est>=b) return;
+    bl.ops.forEach(function(o,oi){
+      if(o[3]===T&&!comida) comida={r:T, bi:bi, oi:oi, bl:bl, txt:o[0]};
+      if(o[3]==='BD'&&T!=='C') copa={r:'BD', bi:bi, oi:oi, bl:bl, txt:o[0]};
+    }); });
+  if(comida){ items.push(comida);
+    if(T==='AP') comida.bl.ops.forEach(function(o,oi){ if(o[3]==='L') items.push({r:'L', bi:comida.bi, oi:oi, bl:comida.bl, txt:o[0]}); }); }
+  if(copa) items.push(copa);
+  items.sort(function(x,y){ return x.bi-y.bi||x.oi-y.oi; });
+  return {T:T, items:items};
+}
+function sqCuando(it){ return it.bl.est===0?'al salir de '+it.bl.t.replace('Salida de ','')+' ('+it.bl.h+')':'después de '+it.bl.t+' ('+it.bl.h+')'; }
+function sqListaHTML(Q,s,b,compacto){
+  var L=sqLeToca(Q,s,b); if(!L.T) return '';
+  return L.items.map(function(it,i){ var t=SQ_TIPO[it.r];
+    return '<div class="sq-it" style="background:'+t.c+'"><b>'+(L.items.length>1?(i+1)+'.º ':'')+t.e+' '+t.n+'</b><small>'+(compacto?'':limpio(it.txt)+' · ')+limpio(sqCuando(it))+'</small></div>'; }).join('');
+}
+
+/* ── La hoja «Secuencia» ── */
+function abrirSecuencia(tab){ var Q=sqActual(); if(!Q) return; if(tab) SQ.tab=tab; hoja='sq'; fichaAbierta=null; pintarSecuencia(); document.getElementById('ov-asiento').classList.add('on'); }
+function sqBloqueAhora(Q){
+  if(!cargado) return Math.min(sqSolo().k||0, Q.bloques.length-1); var P=sxParadas(), e=P[Math.min(sxParadaIdx(),P.length-1)], i=e?sqIdx(Q,e):-1;
+  if(i<0) return 0; for(var k=0;k<Q.bloques.length;k++) if(Q.bloques[k].est===i) return k; return 0;
+}
+function sqOps(bl){ return bl.ops.filter(function(o){ return SQ.todo||/TA/.test(o[1]); }); }
+function sqDestaca(o){ return o[3]||/bar m[oó]vil/i.test(o[0]); }
+function sqOpHTML(o){ var t=o[3]?SQ_TIPO[o[3]]:/bar m[oó]vil/i.test(o[0])?SQ_TIPO.BM:null;
+  return t?'<div class="sq-op r" style="border-color:'+t.c+';background:'+t.c+'33"><b>'+t.e+' '+limpio(o[0])+'</b><span>'+o[1]+' · '+o[2]+'</span></div>'
+          :'<div class="sq-op"><span class="tx">'+limpio(o[0])+'</span><span>'+o[1]+' · '+o[2]+'</span></div>'; }
+function pintarSecuencia(){
+  var Q=sqActual(); if(!Q) return cerrar();
+  var h='<div class="sh-handle"></div><div class="sx-hoja sq">'+
+    '<div class="sq-tren"><div class="n">'+Q.tipo+' '+Q.tren+' <small>· '+Q.serie+' · '+Q.dur+'</small></div><div class="r">'+limpio(Q.ruta)+' · '+Q.paradas[0][1]+' → '+Q.paradas[Q.paradas.length-1][1]+'</div>'+
+    '<div class="sq-chips">'+Q.lleva.map(function(x){ return '<span class="'+(x[2]?'':'no')+'">'+x[0]+' '+x[1]+'</span>'; }).join('')+'</div>'+
+    '<div class="sq-chips"><span>'+Q.trip+'</span><span>'+Q.megafonia+'</span></div><div class="r" style="font-size:11.5px;margin-top:4px">'+Q.dias+' · '+Q.rev+'</div></div>'+
+    '<div class="sx-tog sq-tabs">'+[['ahora','Ahora'],['toca','¿Qué le toca?'],['paradas','Paradas']].filter(function(t){ return t[0]!=='toca'||Q.pir; }).map(function(t){ return '<button class="'+(SQ.tab===t[0]?'on':'')+'" onclick="SQ.tab=\''+t[0]+'\';pintarSecuencia()">'+t[1]+'</button>'; }).join('')+'</div>';
+  if(SQ.tab==='toca'&&!Q.pir) SQ.tab='ahora';
+  if(SQ.tab==='ahora'){
+    var k=sqBloqueAhora(Q), bl=Q.bloques[k], sig=Q.bloques[k+1];
+    h+='<div class="sq-ahora">🚉 '+(bl.est===null?'Antes de salir':bl.est===0?'Saliendo de <b>'+limpio(sqCorto(Q,0))+' · '+bl.h+'</b>':'Después de <b>'+limpio(bl.t)+' · '+bl.h+'</b>')+(sig?'<br><span>Próxima: '+limpio(sig.t)+' · '+sig.h+'</span>':'')+'</div>'+
+      '<div class="sx-q" style="font-size:17px">Qué toca hacer ahora:</div>'+(sqOps(bl).some(sqDestaca)?sqOps(bl).filter(sqDestaca).map(sqOpHTML).join('')+
+      '<div class="sq-mas">También: '+sqOps(bl).filter(function(o){ return !sqDestaca(o); }).map(function(o){ return limpio(o[0].replace(/\s*\(.*\)/,'')).toLowerCase(); }).join(' · ')+'</div>':sqOps(bl).map(sqOpHTML).join(''))+
+      (cargado?'':(sig?'<button class="sx-gbtn sx-az sx-lleg" onclick="sqSiguiente(1)"><span>🚉</span><div>'+limpio(sqPaso(sig))+'<small>Toca al llegar · pasa a lo siguiente</small></div></button>':'<div class="sq-ahora" style="background:#14532D;border-color:#4ADE80">🏁 Final del recorrido</div>')+
+        (k>0?'<button class="sx-mas" onclick="sqSiguiente(-1)">‹ Volver a lo anterior</button>':'')+'<button class="sx-mas" onclick="sqElegir()">🔁 Cambiar de tren</button>');
+  } else if(SQ.tab==='toca'){
+    var n=Q.paradas.length, s=SQ.s, b=SQ.b==null||SQ.b<=s?n-1:SQ.b, su='', ba='', i;
+    for(i=0;i<n-1;i++) su+='<button class="'+(i===s?'s':'')+'" onclick="SQ.s='+i+';if(SQ.b!=null&&SQ.b<='+i+')SQ.b=null;pintarSecuencia()">'+limpio(sqCorto(Q,i))+'</button>';
+    for(i=1;i<n;i++) ba+='<button class="'+(i===b?'b':'')+(i<=s?' x':'')+'"'+(i<=s?' disabled':' onclick="SQ.b='+i+';pintarSecuencia()"')+'>'+limpio(sqCorto(Q,i))+'</button>';
+    var T=sqTipo(Q,s,b), tt=SQ_TIPO[T];
+    h+='<div class="sx-col2"><div><div class="h">🟢 Sube en</div>'+su+'</div><div><div class="h">🔴 Baja en</div>'+ba+'</div></div>'+
+      '<div class="sq-res" style="background:'+tt.c+'">'+tt.e+' '+tt.n+(T!=='C'?' + 🥂 bebida':'')+'<small>'+limpio(sqCorto(Q,s))+' → '+limpio(sqCorto(Q,b))+' · en este orden:</small></div>'+sqListaHTML(Q,s,b)+
+      '<div class="sx-q" style="font-size:16px;margin-top:14px">La hoja entera</div>'+sqPiramide(Q)+
+      '<div class="sq-ley"><span style="background:#EA580C">D = Desayuno + bebida</span><span style="background:#2563EB">AP = Aperitivo + bebida</span><span style="background:#475569">C = Cortesía</span></div>';
+  } else {
+    var ya=cargado?sqBloqueAhora(Q):-1;
+    h+='<div class="sx-tog"><button class="'+(!SQ.todo?'on':'')+'" onclick="SQ.todo=false;pintarSecuencia()">Lo mío (TA)</button><button class="'+(SQ.todo?'on':'')+'" onclick="SQ.todo=true;pintarSecuencia()">Todo (TA + TCF)</button></div><div class="sq-tl">'+
+      Q.bloques.map(function(bl,k){ return (bl.fase?'<div class="sq-fase">'+bl.fase+'</div>':'')+'<div class="sq-st'+(k<ya?' pas':k===ya?' yo':'')+'"><div class="n"><i>'+bl.h+'</i>'+limpio(bl.t)+(k===ya?' · AHORA':'')+'</div>'+sqOps(bl).map(sqOpHTML).join('')+'</div>'; }).join('')+
+      '</div>'+Q.notas.map(function(x){ return '<div class="sq-mas">'+limpio(x)+'</div>'; }).join('');
+  }
+  h+='<button class="sx-cerrar" onclick="cerrar()">Cerrar</button></div>';
+  sxPon(h,'sq-'+SQ.tab);
+}
+function sqPiramide(Q){
+  var n=Q.paradas.length, h='<div class="sq-pir" style="grid-template-columns:64px repeat('+(n-1)+',1fr)"><div></div>';
+  for(var j=1;j<n;j++) h+='<div class="hh">'+limpio(sigla(Q.paradas[j][0]))+'</div>';
+  for(var i=0;i<n-1;i++){ h+='<div class="rr">'+limpio(sqCorto(Q,i))+'</div>';
+    for(j=1;j<n;j++){ var T=j>i?sqTipo(Q,i,j):null; h+=T?'<div style="background:'+SQ_TIPO[T].c+'">'+T+'</div>':'<div></div>'; } }
+  return h+'</div>';
+}
+
+function sqVamos(bl){ return bl.est===null?bl.t.toLowerCase():bl.t.replace('Salida de ','').replace('Llegada a ',''); }
+function sqPaso(bl){ return bl.est===null?'Siguiente: '+bl.t:bl.est===0?'Salimos de '+bl.t.replace('Salida de ',''):'Llegamos a '+bl.t.replace('Llegada a ',''); }
+function sqSiguiente(d){ var o=sqSolo(), Q=sqDe(o.tren); if(!Q) return; o.k=Math.max(0,Math.min(Q.bloques.length-1,(o.k||0)+d)); sqSoloPon(o); pintarSecuencia(); }
+// Elegir el tren (desde el inicio, sin MOL)
+function sqElegir(){ hoja='sq-elegir'; fichaAbierta=null; SQ.num=''; sqPintaElegir(); document.getElementById('ov-asiento').classList.add('on'); }
+function sqPintaElegir(){
+  var trenes=Object.keys(SECUENCIAS).map(function(n){ var Q=SECUENCIAS[n], t={};
+    Q.bloques.forEach(function(b){ b.ops.forEach(function(o){ if(o[3]&&o[3]!=='BD'&&o[3]!=='L') t[o[3]]=1; }); });
+    var et=Object.keys(t).length?['D','AP'].filter(function(x){ return t[x]; }).map(function(x){ return '<span class="sq-tag" style="background:'+SQ_TIPO[x].c+'">'+SQ_TIPO[x].e+' '+SQ_TIPO[x].n+'</span>'; }).join(''):'<span class="sq-tag" style="background:#334155">🛒 Sin restauración</span>';
+    return '<button class="sq-trenb" onclick="sqAbrirTren(\''+n+'\')"><div><b>'+n+'</b> · '+Q.serie+'<small>'+limpio(estCorto(Q.paradas[0][0]))+' '+Q.paradas[0][1]+' → '+limpio(estCorto(Q.paradas[Q.paradas.length-1][0]))+' '+Q.paradas[Q.paradas.length-1][1]+'</small>'+et+'</div><i>›</i></button>'; }).join('');
+  sxPon('<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:25px">¿Qué tren llevas?</div>'+
+    '<div class="f-lbl">🔢 Nº de tren</div><input class="inp" id="sq-num2" inputmode="numeric" placeholder="p. ej. 3933" oninput="sqNum2(this.value)" style="font-size:22px;font-weight:900;letter-spacing:2px"><div id="sq-card2"></div>'+
+    '<div class="sx-q" style="font-size:16px;margin-top:16px">🚆 Trenes guardados</div>'+trenes+
+    '<div class="sq-mas">Cuando me pases más fichas de secuencia, aparecerán aquí.</div><button class="sx-cerrar" onclick="cerrar()">Cerrar</button></div>','sq-elegir');
+}
+function sqNum2(v){ v=String(v||'').replace(/\D/g,'').slice(0,5); var Q=sqDe(v), c=document.getElementById('sq-card2'); if(!c) return;
+  c.innerHTML=Q?'<div class="sq-ok">✅ <b>Tengo la secuencia del '+Q.tren+'</b><br>'+limpio(Q.ruta)+' · '+Q.serie+'<button class="sx-gbtn sq-mo" style="margin:10px 0 0;padding:12px 14px;font-size:17px" onclick="sqAbrirTren(\''+Q.tren+'\')"><span>📋</span><div>Ver la secuencia</div></button></div>'
+    :(v.length>=4?'<div class="sq-mas">Todavía no tengo la secuencia de este tren. Pásame la ficha y la añado.</div>':''); }
+function sqAbrirTren(n){ var o=sqSolo(); if(o.tren!==n) o={tren:n, k:0}; sqSoloPon(o); SQ.tab='ahora'; hoja='sq'; pintarSecuencia(); }
+
+/* ── Botón arriba y en el inicio ── */
+// En Solo Servicios no hay botón arriba: la secuencia se abre desde el inicio.
+var SV_SOLO=false; try{ SV_SOLO=parent!==window&&typeof parent.SERVICIOS_HTML==='undefined'; }catch(e){}
+function sqBoton(){
+  var Q=SV_SOLO?null:sqActual(), pb=document.getElementById('perfil-btn'); if(!pb) return;
+  var b=document.getElementById('sq-btn');
+  if(!Q){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('button'); b.id='sq-btn'; b.className='hbtn sq-hbtn'; b.title='Secuencia operativa'; b.onclick=function(){ abrirSecuencia('ahora'); }; pb.parentNode.insertBefore(b, pb.parentNode.firstChild); }
+  b.innerHTML='📋<i>SECUENCIA</i>';
+}
+var _sqInicio=sxInicio;
+// El estilo de temporada (antes, el botón 🎃 de arriba) va en «Más opciones».
+function sqEstilo(el){
+  var tb=document.getElementById('tema-btn'), vie=document.getElementById('sq-estilo'); if(vie) vie.remove();
+  if(!SX.mas||!tb||!tb.classList.contains('on')) return;
+  var cur=document.querySelector('#tema-panel .cur b'), mas=el.querySelector('.sx-mas');
+  if(mas) mas.insertAdjacentHTML('afterend','<button id="sq-estilo" class="sq-trenb" onclick="temaPanel()"><span style="font-size:26px">🎨</span><div><b style="font-size:17px">Estilo de temporada</b><small>Ahora: '+limpio(tb.textContent)+' '+limpio(cur?cur.textContent:'')+' · toca para cambiarlo</small></div><i>›</i></button>');
+}
+sxInicio=function(){ _sqInicio(); sqBoton(); var Q=sqActual(), el=document.getElementById('sx-inicio'); if(el) sqEstilo(el);
+  if(el&&!cargado){ var gr=el.querySelector('.sx-gr'), o=sqSolo(), Qs=sqDe(o.tren);
+    var vie=document.getElementById('sq-home'); if(vie) vie.remove();
+    if(gr) gr.insertAdjacentHTML('afterend','<button id="sq-home" class="sx-gbtn sq-mo" onclick="'+(Qs?'sqAbrirTren(\''+Qs.tren+'\');document.getElementById(\'ov-asiento\').classList.add(\'on\')':'sqElegir()')+'"><span>📋</span><div>Secuencia operativa<small>'+(Qs?'Tren '+Qs.tren+' · vamos por: '+limpio(sqVamos(Qs.bloques[Math.min(o.k||0,Qs.bloques.length-1)])):'Qué hay que hacer en cada parada')+'</small></div></button>'); return; }
+  if(!Q||!el||!cargado) return;
+  var k=sqBloqueAhora(Q), bl=Q.bloques[k];
+  var bt=el.querySelector('.sx-or'); if(bt&&!document.getElementById('sq-ini')) bt.insertAdjacentHTML('beforebegin','<button id="sq-ini" class="sx-gbtn sq-mo" onclick="abrirSecuencia(\'ahora\')"><span>📋</span><div>Ver la secuencia<small>Qué toca en cada parada · ahora: '+limpio(bl.est===null?'antes de salir':bl.t)+'</small></div></button>'); };
+var _sqMapa=sxMapa; sxMapa=function(){ _sqMapa(); sqBoton(); };
+
+/* ── A mano: primero el nº de tren; si tiene secuencia, lo demás sale solo ── */
+var _sqSetup=pintarSetup;
+pintarSetup=function(){
+  if(SX.paso===1&&SETUP.seqOk) return sqResumenSetup();
+  var sh=document.getElementById('sh-asiento'), b0=sh.querySelector('.sh-body'), y=(b0&&sh.dataset.hoja==='manual'&&SX.pasoVisto===SX.paso)?b0.scrollTop:0;
+  _sqSetup();
+  if(SX.paso!==1) return;
+  var body=document.querySelector('#sh-asiento .sh-body'), q=body&&body.querySelector('.sx-q'); if(!q) return;
+  setTimeout(function(){ if(y) body.scrollTop=y; }); // el recuadro del nº de tren va arriba: la hoja no se mueve al tocar
+  q.insertAdjacentHTML('afterend','<div class="sq-num"><div class="f-lbl">🔢 Nº de tren (si lo sabes)</div><input class="inp" id="sq-num" inputmode="numeric" placeholder="p. ej. 3933" value="'+limpio(SETUP.num||'')+'" oninput="sqNum(this.value)"><div id="sq-card"></div></div>');
+  sqNum(SETUP.num||'', true);
+};
+function sqNum(v, sinFoco){ v=String(v||'').replace(/\D/g,'').slice(0,5); SETUP.num=v; var m=document.getElementById('m-num'); if(m) m.value=v;
+  var Q=sqDe(v), c=document.getElementById('sq-card'); if(!c) return;
+  c.innerHTML=Q?'<div class="sq-ok">✅ <b>Tengo la secuencia del '+Q.tren+'</b><br>'+limpio(Q.ruta)+' · '+Q.tipo+' '+Q.serie+'<br><span>Paradas, servicios y qué le toca a cada uno, ya puestos.</span>'+
+      '<button class="sx-gbtn sx-gr" style="margin:10px 0 0;padding:12px 14px;font-size:17px" onclick="sqUsar(\''+Q.tren+'\')"><span>✓</span><div>Usar la secuencia</div></button></div>'
+    :(v.length>=4?'<div class="sq-mas">No tengo la secuencia de este tren: sigue con las preguntas de abajo.</div>':''); }
+function sqUsar(num){ var Q=sqDe(num); if(!Q) return;
+  SETUP.seq=num; SETUP.seqOk=true; SETUP.num=num; SETUP.a=Q.paradas[0][0]; SETUP.b=Q.paradas[Q.paradas.length-1][0]; SETUP.quitadas={}; SETUP.extras=[];
+  SETUP.n=2; SETUP.s1='des'; SETUP.s2='ape'; SETUP.corte=''; tipo=Q.tipo; serie=Q.serie; pintarSetup(); }
+function sqResumenSetup(){
+  var Q=sqDe(SETUP.seq), sh=document.getElementById('sh-asiento');
+  var con=function(T){ var l=[]; Q.pir.forEach(function(f,s){ if(f.indexOf(T)>-1) l.push(sqCorto(Q,s)); }); return l.join(', '); };
+  sh.classList.add('sx-setup');
+  ponerHoja(cabHoja('✍️','Servicio a mano','Con la secuencia del '+Q.tren)+'<div class="sh-body" style="overflow-y:auto">'+
+    '<div class="sx-q">Todo listo</div><div class="sq-tren"><div class="n">'+Q.tipo+' '+Q.tren+' <small>· '+Q.serie+'</small></div><div class="r">'+limpio(Q.ruta)+'</div></div>'+
+    '<div class="card-t">🚉 Paradas</div><div class="sq-chips">'+Q.paradas.map(function(p){ return '<span>'+limpio(estCorto(p[0]))+' '+p[1]+'</span>'; }).join('')+'</div>'+
+    '<div class="card-t" style="margin-top:12px">🍽️ Qué le toca a cada uno (lo pone la app sola)</div>'+
+    '<div class="sq-it" style="background:#EA580C"><b>🥐 Desayuno + 🥂 bebida</b><small>Suben en '+limpio(con('D'))+'</small></div>'+
+    '<div class="sq-it" style="background:#2563EB"><b>🥨 Aperitivo + 🥂 bebida</b><small>Suben en '+limpio(con('AP'))+'</small></div>'+
+    '<div class="sq-it" style="background:#475569"><b>🍪 Cortesía</b><small>Tramos de una sola parada (ver la pirámide)</small></div>'+
+    '<div class="err" id="m-err"></div><input type="hidden" id="m-num" value="'+limpio(Q.tren)+'"></div>'+
+    '<div class="mfoot"><button class="m-sec" onclick="SETUP.seqOk=false;SETUP.seq=null;pintarSetup()">‹ Atrás</button><button class="m-ok" onclick="empezarManual()">✓ Empezar</button></div>','manual');
+}
+var _sqRuta=rutaSetup;
+rutaSetup=function(){ var Q=SETUP&&SETUP.seqOk&&sqDe(SETUP.seq); return Q?Q.paradas.map(function(p){ return p[0]; }):_sqRuta(); };
+var _sqAbrirMan=abrirManual;
+abrirManual=async function(){ await _sqAbrirMan(); if(SETUP){ SETUP.seq=null; SETUP.seqOk=false; } };
+var _sqEmp=empezarManual;
+empezarManual=function(){
+  var Q=SETUP&&SETUP.seqOk&&sqDe(SETUP.seq), antes=CARGADO_EN;
+  _sqEmp(); if(!Q||CARGADO_EN===antes||!MANUAL) return;
+  var n=Q.paradas.length;
+  MANUAL.seq=Q.tren; delete MANUAL.corte;
+  MANUAL.svs=['des','ape','cor']; MANUAL.tramo={des:[0,n-1], ape:[3,n-1], cor:[0,1]}; MANUAL.act=0;
+  sxNombresSv(); filtro='des'; guardar(); pintarMapa();
+};
+
+/* ── «Cambiar» (de dónde a dónde): con secuencia, la app elige el servicio sola ── */
+var _sqPintaTramo=sxPintaTramo;
+sxPintaTramo=function(){
+  var Q=MANUAL&&MANUAL.seq&&sqDe(MANUAL.seq); if(!Q) return _sqPintaTramo();
+  var R=MANUAL.ruta, a=SX.tr[0], b=SX.tr[1], i, su='', ba='';
+  for(i=0;i<R.length-1;i++) su+='<button class="'+(i===a?'s':'')+'" onclick="SX.tr[0]='+i+';if(SX.tr[1]<='+i+')SX.tr[1]='+(R.length-1)+';sxPintaTramo()">'+limpio(estCorto(R[i]))+'</button>';
+  for(i=1;i<R.length;i++) ba+='<button class="'+(i===b?'b':'')+(i<=a?' x':'')+'"'+(i<=a?' disabled':' onclick="SX.tr[1]='+i+';sxPintaTramo()"')+'>'+limpio(estCorto(R[i]))+'</button>';
+  var T=sqTipo(Q,a,b), tt=SQ_TIPO[T];
+  sxPon('<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:24px">¿De dónde a dónde?</div><div class="sx-sub">Para los asientos que toques ahora</div>'+
+    '<div class="sx-col2"><div><div class="h">🟢 Sube en</div>'+su+'</div><div><div class="h">🔴 Baja en</div>'+ba+'</div></div>'+
+    '<div class="sx-q" style="font-size:16px">Le toca (secuencia del '+Q.tren+'):</div>'+sqListaHTML(Q,a,b)+
+    '<button class="sx-ok1" style="background:'+tt.c+'" onclick="sxTramoOk()">✓ '+tt.e+' '+tt.n+' · '+limpio(estCorto(R[a]))+' → '+limpio(estCorto(R[b]))+'</button><button class="sx-cerrar" onclick="cerrar()">Cancelar</button></div>','tramo');
+};
+var _sqTramoOk=sxTramoOk;
+sxTramoOk=function(){
+  var Q=MANUAL&&MANUAL.seq&&sqDe(MANUAL.seq); if(!Q) return _sqTramoOk();
+  var k=SQ_TIPO[sqTipo(Q,SX.tr[0],SX.tr[1])].k; MANUAL.act=MANUAL.svs.indexOf(k); MANUAL.tramo[k]=[SX.tr[0],SX.tr[1]]; MANUAL.paso=0; filtro=k;
+  guardar(); cerrar(); pintarMapa();
+};
+
+/* ── Mantener pulsado un asiento: sube, baja y la app dice qué le toca y en qué orden ── */
+var _sqFichaMan=fichaManual;
+fichaManual=function(key, sid){
+  var Q=MANUAL&&MANUAL.seq&&sqDe(MANUAL.seq); if(sid!=null||!Q) return _sqFichaMan(key, sid);
+  var R=MANUAL.ruta, sv=(ASIENTOS[key]||[]).filter(function(r){ return r.manual; }), r=sv[0];
+  SX.pj={key:key, o:r?Math.max(0,R.indexOf(r.origen)):0, d:r?R.indexOf(r.destino):R.length-1, menu:r?r.menu:null, esp:r&&r.especial||''};
+  if(SX.pj.d<=SX.pj.o) SX.pj.d=R.length-1;
+  hoja='sx-pasajero'; fichaAbierta=null; sqPintaPasajero(); document.getElementById('ov-asiento').classList.add('on');
+};
+function sqPintaPasajero(){
+  var Q=sqDe(MANUAL.seq), P=SX.pj, R=MANUAL.ruta, p=partesKey(P.key), i, su='', ba='';
+  for(i=0;i<R.length-1;i++) su+='<button class="'+(i===P.o?'s':'')+'" onclick="SX.pj.o='+i+';if(SX.pj.d<='+i+')SX.pj.d='+(R.length-1)+';sqPintaPasajero()">'+limpio(estCorto(R[i]))+'</button>';
+  for(i=1;i<R.length;i++) ba+='<button class="'+(i===P.d?'b':'')+(i<=P.o?' x':'')+'"'+(i<=P.o?' disabled':' onclick="SX.pj.d='+i+';sqPintaPasajero()"')+'>'+limpio(estCorto(R[i]))+'</button>';
+  var T=sqTipo(Q,P.o,P.d), k=SQ_TIPO[T].k, ops=MENUS_MAN[k], m=ops.indexOf(P.menu)>-1?P.menu:ops[0];
+  sxPon('<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:24px">Asiento '+p.a+' <small>· coche '+cocheVer(p.c)+'</small></div><div class="sx-sub">¿De dónde a dónde va?</div>'+
+    '<div class="sx-col2"><div><div class="h">🟢 Sube en</div>'+su+'</div><div><div class="h">🔴 Baja en</div>'+ba+'</div></div>'+
+    '<div class="sx-q" style="font-size:17px">Le toca (secuencia del '+Q.tren+'):</div>'+sqListaHTML(Q,P.o,P.d)+
+    (ops.length>1?'<div class="card-t" style="margin-top:10px">🍴 Menú</div><div class="chips">'+ops.map(function(x,j){ return '<button class="chip'+(x===m?' sel':'')+'" onclick="SX.pj.menu=MENUS_MAN[\''+k+'\']['+j+'];sqPintaPasajero()">'+x+'</button>'; }).join('')+'</div>':'')+
+    '<div class="card-t" style="margin-top:10px">⚠️ Dieta</div><div class="chips">'+['Sin gluten','Sin lactosa','Vegetariano','Vegano'].map(function(v){ return '<button class="chip'+(P.esp===v?' sel':'')+'" onclick="SX.pj.esp=SX.pj.esp===\''+v+'\'?\'\':\''+v+'\';sqPintaPasajero()">'+v+'</button>'; }).join('')+'</div>'+
+    '<button class="sx-ok1" onclick="sqGuardaPasajero()">✓ Guardar '+p.a+'</button>'+
+    '<button class="sx-mas" onclick="_sqFichaMan(\''+P.key+'\')">✏️ Más opciones (nombre, nota, otro pasajero…)</button>'+
+    ((ASIENTOS[P.key]||[]).length?'<button class="sx-cerrar" style="color:#FCA5A5" onclick="sxQuitaPasajero()">🗑 Quitar este asiento</button>':'')+
+    '<button class="sx-cerrar" onclick="cerrar()">Cancelar</button></div>','pj-'+P.key);
+}
+function sqGuardaPasajero(){
+  var Q=sqDe(MANUAL.seq), P=SX.pj, R=MANUAL.ruta, p=partesKey(P.key), T=sqTipo(Q,P.o,P.d), k=SQ_TIPO[T].k, ops=MENUS_MAN[k], m=ops.indexOf(P.menu)>-1?P.menu:ops[0];
+  var sv=(ASIENTOS[P.key]||[]).filter(function(r){ return r.manual; }), r=sv.filter(function(x){ return x.k===k; })[0]||sv[0];
+  sv.forEach(function(x){ if(x!==r) quitarDeLista(x.sid); });
+  if(!r){ r=filaManual(p.c,p.f,p.l,k,R[P.o],R[P.d],m); LISTA.push(r); }
+  r.k=k; r.tipoTxt=COMIDAS[k].n; r.origen=R[P.o]; r.destino=R[P.d]; r.menu=m; r.especial=limpio(P.esp);
+  reindexar(); guardar(); estadoManual(); cerrar(); pintarMapa();
+}
+// Con secuencia no hay «1.º / 2.º»: cada uno lleva lo suyo.
+var _sqSeatsDos=sxSeatsDos; sxSeatsDos=function(){ if(MANUAL&&MANUAL.seq) return; _sqSeatsDos(); };
+
+/* ── Ficha del asiento (con MOL o a mano): «Según la secuencia», en orden ── */
+var _sqFicha=ficha;
+ficha=function(key){
+  _sqFicha(key); var Q=sqActual(); if(!Q||SX.full===key) return;
+  var sv=ASIENTOS[key]||[], ahora=sxAhora(sv), cajas=document.querySelectorAll('#sh-asiento .sx-hoja > .sx-menu');
+  ahora.forEach(function(r,i){ var c=cajas[i]; if(!c) return; var s=sqIdx(Q,r.origen), b=sqIdx(Q,r.destino); if(s<0||b<=s) return;
+    var T=sqTipo(Q,s,b), base=String(r.k).replace(/2$/,''), dif=T&&SQ_TIPO[T].k!==base&&base!=='box';
+    c.insertAdjacentHTML('afterend','<div class="sq-ficha"><div class="t">📋 Según la secuencia del '+Q.tren+':</div>'+(dif?'<div class="sx-alerta" style="margin:4px 0">⚠️ Le toca '+SQ_TIPO[T].n.toLowerCase()+', no '+limpio(COMIDAS[r.k].n.toLowerCase())+'</div>':'')+sqListaHTML(Q,s,b,true)+'</div>'); });
+};
+// MOL de un tren con secuencia guardada: el tipo y la serie salen de la secuencia (p. ej. 3933 → AVE S-102).
+var _sqComp=mostrarComprobacion;
+mostrarComprobacion=function(){ _sqComp.apply(this, arguments); var Q=sqDe(valor('i-num')); if(Q&&(tipo!==Q.tipo||serie!==Q.serie)){ tipo=Q.tipo; serie=Q.serie; try{ pintarTipos(); }catch(e){} } };
+setTimeout(sqBoton, 120);
+
+// Al cerrar la secuencia, el inicio se pone al día (tren y parada).
+var _sqCerrar=cerrar; cerrar=function(){ var era=hoja; _sqCerrar(); if(!cargado&&/^sq/.test(era||'')) sxInicio(); };
 
 restaurar();
 /* «Desliza hacia abajo para actualizar», también dentro de Servicios: el gesto lo pinta y lo
