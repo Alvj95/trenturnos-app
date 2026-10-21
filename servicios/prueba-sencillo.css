@@ -92,3 +92,10 @@
 .sx-clip b{color:#94A3B8}.sx-clip small{display:block;font-size:12.5px;font-weight:700;color:#CBD5E1;margin-top:3px}
 .sx-clip.on{background:#14532D;border-color:#4ADE80}.sx-clip.on b{color:#86EFAC}
 .sx-lleg{padding:12px 14px;font-size:17px;margin:4px 0 10px}.sx-lleg span{font-size:24px}
+/* ficha: el servicio de antes, abajo y plegado */
+.sx-antes{margin-top:12px;border:2px dashed #475569;border-radius:16px;padding:0 10px;opacity:.85}
+.sx-antes summary{list-style:none;cursor:pointer;padding:12px 2px;font-size:15px;font-weight:900;color:#CBD5E1}
+.sx-antes summary::-webkit-details-marker{display:none}
+.sx-antes summary::before{content:'▸ ';color:#94A3B8}.sx-antes[open] summary::before{content:'▾ '}
+.sx-antes summary small{display:block;font-size:12.5px;font-weight:700;color:#94A3B8;margin-top:2px}
+.sx-antes[open]{padding-bottom:10px}
