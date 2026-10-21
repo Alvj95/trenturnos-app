@@ -1690,6 +1690,12 @@ function ordenarEstaciones(){
   var sm=sentidoMarcha();
   if(sm&&orden.length&&orden.every(function(e){ return posCorredor(e)>-1; }))
     orden.sort(function(a,b){ return sm==='ida'?posCorredor(a)-posCorredor(b):posCorredor(b)-posCorredor(a); });
+  // Si el MOL no deja claro el orden (p. ej. nadie viaja entre Córdoba y Ciudad Real), manda el recorrido real:
+  // las paradas de la secuencia del tren, si está guardada; si no, las de la línea, si están todas en ella.
+  var Q=typeof sqDe==='function'&&sqDe((LISTA[0]&&LISTA[0].tren)||valor('i-num'));
+  if(Q&&orden.length&&orden.every(function(e){ return sqIdx(Q,e)>-1; })) orden.sort(function(a,b){ return sqIdx(Q,a)-sqIdx(Q,b); });
+  else if(orden.length>2&&typeof rutaBase==='function'){ var ruta=rutaBase(orden[0], orden[orden.length-1]);
+    if(orden.every(function(e){ return ruta.indexOf(e)>-1; })) orden.sort(function(a,b){ return ruta.indexOf(a)-ruta.indexOf(b); }); }
   ORDEN={}; orden.forEach(function(s,i){ ORDEN[s]=i; });
 }
 function rangoEst(s){ return s in ORDEN?ORDEN[s]:99; }
