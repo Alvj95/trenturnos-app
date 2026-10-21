@@ -64,3 +64,23 @@
 .sx-col2 .h{font-size:15px;font-weight:900;margin-bottom:6px}
 .sx-col2 button{display:block;width:100%;border-radius:12px;padding:11px 4px;font:900 15px Inter,sans-serif;background:#1E293B;color:#fff;border:2px solid #334155;margin-bottom:7px;cursor:pointer}
 .sx-col2 button.s{background:#16A34A;border-color:#4ADE80}.sx-col2 button.b{background:#DC2626;border-color:#F87171}.sx-col2 button.x{opacity:.3}
+/* dos servicios */
+.sx-big2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sx-big2 button{border-radius:16px;padding:16px 8px;font:900 22px Inter,sans-serif;background:#1E293B;border:2px solid #334155;color:#fff;cursor:pointer}
+.sx-big2 button small{display:block;font-size:12px;font-weight:700;color:#CBD5E1;margin-top:3px}
+.sx-big2 button.on{background:#F59E0B;color:#111;border-color:#F59E0B}.sx-big2 button.on small{color:#111}
+.sx-svbox{border:2px solid #334155;border-radius:16px;padding:10px;margin-top:10px;background:#132236}
+.sx-svbox .t{font-size:12px;font-weight:900;color:#CBD5E1;letter-spacing:.5px;margin-bottom:6px}.sx-svbox .t small{font-weight:700;letter-spacing:0}
+.sx-lin{display:flex;align-items:flex-start;margin:14px 0 6px}
+.sx-lin span{display:flex;flex-direction:column;align-items:center;font-size:10px;font-weight:900;min-width:30px}
+.sx-lin span i{width:14px;height:14px;border-radius:50%;background:#0b1220;border:3px solid #94A3B8;margin-bottom:3px}
+.sx-lin span.cut i{width:20px;height:20px;margin-top:-3px;background:#F59E0B;border-color:#FCD34D}
+.sx-lin b{flex:1;height:7px;margin:4px -10px 0;border-radius:4px}
+.sx-ley{display:flex;gap:6px}.sx-ley div{flex:1;border-radius:12px;padding:8px;font-size:12.5px;font-weight:900;color:#fff}
+.sx-tabs button small{display:block;font-size:11px;font-weight:700;opacity:.85}
+.sx-letoca{border-radius:14px;padding:10px 12px;font-size:15px;font-weight:900;color:#fff;margin-top:6px}
+.sx-letoca .chips{margin-top:6px}.sx-letoca .chip{background:rgba(0,0,0,.25);border-color:transparent;color:#fff;font-size:13px;padding:7px 10px}
+.sx-letoca .chip.sel{background:#fff;color:#111}
+.sx-aviso2{background:#7c2d12;border:2px solid #F59E0B;border-radius:16px;padding:12px;font-size:15px;font-weight:700;line-height:1.45;margin-bottom:12px}
+.sx-mini2{display:flex;gap:6px;margin-top:10px}.sx-mini2 div{flex:1;border-radius:12px;padding:8px;font-size:12px;font-weight:900;color:#fff;text-align:center}.sx-mini2 b{display:block;font-size:22px}
+#p-mapa .seat .tr{font-size:8px}
