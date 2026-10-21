@@ -55,6 +55,7 @@ function sxSeatsPost(){
     if(sv.length&&!editando){
       if(!viv.length) b.insertAdjacentHTML('beforeend','<span class="sx-t">NO SUBIÓ</span>');
       else if(!pend.length){ b.classList.add('sx-ok'); b.insertAdjacentHTML('beforeend','<span class="sx-t">✓ HECHO</span>'); }
+      else if(pend.some(function(r){ return subio[r.sid]==='si'; })) b.insertAdjacentHTML('beforeend','<span class="sx-t">🧍 SUBIÓ</span>');
     }
     if(SX.falta&&!editando&&!pend.length) b.classList.add('dim');
   });
@@ -64,12 +65,14 @@ function sxMapa(){
   pm.classList.toggle('sx-oculto', !SX.mas);
   var enC=LISTA.filter(function(r){ return r.coche===coche; }), falta=enC.filter(function(r){ return !servidos[r.sid]&&subio[r.sid]!=='no'; }).length;
   var editando=MANUAL&&MANUAL.editando;
-  var h='<div class="sx-coche"><button onclick="sxCoche(-1)">◀</button><div class="c">Coche '+cocheVer(coche)+(esAcop(coche)?' <small style="display:inline;color:#7DD3FC">🔗</small>':'')+
-    '<small>'+(editando?enC.length+' puestos':falta?'faltan '+falta+' por servir':'✓ todo servido')+'</small></div><button onclick="sxCoche(1)">▶</button></div>'+
-    (editando?'<button class="sx-mini" onclick="abrirAnadirCoche()">＋ Añadir otro coche</button>':
+  var P=sxParadas(), sig=P[Math.min(sxParadaIdx(), Math.max(P.length-1,0))+1];
+  var h=(editando?'':
+      '<button class="sx-clip'+(modoClip?' on':'')+'" onclick="modoClip=!modoClip;pintarMapa()">🧍 Comprobar quién sube: <b>'+(modoClip?'SÍ':'NO')+'</b>'+
+        '<small>'+(modoClip?'Toca un asiento: 1 vez ✓ subió · 2 veces 🚫 no subió · 3 veces sin comprobar':'Actívalo cuando te dicten los asientos: marcas de un toque')+'</small></button>'+
       '<div class="sx-tog"><button class="'+(SX.falta?'on':'')+'" onclick="SX.falta=true;pintarMapa()">Lo que falta</button><button class="'+(!SX.falta?'on':'')+'" onclick="SX.falta=false;pintarMapa()">Todos</button></div>')+
-    sxMapaDos()+(estFiltro.est?'<div class="sx-aviso">🚉 Solo los que '+(estFiltro.modo==='sube'?'suben':'bajan')+' en <b>'+limpio(estCorto(estFiltro.est))+'</b> <button onclick="setEst(estFiltro.modo,null)">Ver todos</button></div>':'');
-  sxEl('sx-mapa', co, h);
+    sxMapaDos()+(estFiltro.est?'<div class="sx-aviso">🚉 Solo los que '+(estFiltro.modo==='sube'?'suben':'bajan')+' en <b>'+limpio(estCorto(estFiltro.est))+'</b> <button onclick="setEst(estFiltro.modo,null)">Ver todos</button></div>':'')+
+    (!editando&&sig?'<button class="sx-gbtn sx-az sx-lleg" onclick="sxLlegamos()"><span>🚉</span><div>Llegamos a '+limpio(estCorto(sig))+'<small>Toca al llegar a la parada</small></div></button>':'');
+  sxEl('sx-mapa', co.nextElementSibling, h);
   var mb=document.getElementById('sx-mapa-mas'); if(!mb){ mb=document.createElement('button'); mb.id='sx-mapa-mas'; mb.className='sx-mas'; pm.appendChild(mb); }
   mb.textContent=SX.mas?'▲ Menos opciones':'⚙️ Más opciones (filtros, embarque, plano…)'; mb.onclick=function(){ SX.mas=!SX.mas; pintarMapa(); };
   sxSeatsPost(); sxSeatsDos();
@@ -317,6 +320,22 @@ function sxSeatsDos(){
     } else if(tr&&(ks[0]||ks[1])){ var r=ks[0]||ks[1]; tr.textContent=sxN(r.k)+' '+sigla(r.origen)+'›'+sigla(r.destino); }
   });
 }
+
+/* ── Comprobar quién sube: un toque por asiento, sin abrir nada ── */
+var _tocarOrig=tocarAsiento;
+tocarAsiento=function(key){
+  if(!modoClip||MOVIENDO!==null||(MANUAL&&MANUAL.editando)) return _tocarOrig(key);
+  var todas=(ASIENTOS[key]||[]).filter(pasaEst), sv=filtro?todas.filter(function(r){ return r.k===filtro; }):todas;
+  if(!sv.length) sv=todas;
+  if(sv.length!==1) return _tocarOrig(key);
+  var r=sv[0], grupo=[r];
+  // la misma persona en el otro servicio (sigue en el mismo asiento justo donde cambia)
+  todas.forEach(function(x){ if(x!==r&&x.manual&&(x.origen===r.destino||x.destino===r.origen)) grupo.push(x); });
+  var s0=subio[r.sid], v=!s0?'si':s0==='si'?'no':null;
+  grupo.forEach(function(x){ if(v){ subio[x.sid]=v; if(v==='no') delete servidos[x.sid]; } else delete subio[x.sid]; anotar(x.sid); });
+  toast('Asiento '+key.split('-')[1]+': '+(v==='si'?'🧍 subió':v==='no'?'🚫 no subió':'❔ sin comprobar'));
+  guardar(); pintarMapa();
+};
 
 /* ── Enganches ── */
 var _pintarMapaOrig=pintarMapa;
