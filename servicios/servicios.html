@@ -504,6 +504,7 @@ button{font-family:inherit}
 .bm2 .n{font-size:15px;font-weight:900;color:#fff;min-width:34px;text-align:center}.bm2 .n i{font-style:normal;font-size:11px;color:#94A3B8}
 .bm2 .d{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}.bm2 .d i{width:7px;height:7px;border-radius:50%;border:1.5px solid #5EEAD4}.bm2 .d i.h{background:#5EEAD4}
 .sq-op.ok{opacity:.55}.sq-op.ok .tx{text-decoration:line-through;color:#94A3B8}.sq-op .chk{font-size:11px;color:#5EEAD4;font-weight:900}
+.sq-tren{position:relative}.sq-tren:has(.sq-camb) .n{padding-right:104px}.sq-camb{position:absolute;top:10px;right:10px;background:#1E293B;border:2px solid #A78BFA;color:#E9D5FF;border-radius:11px;padding:7px 10px;font:900 13px Inter,sans-serif;cursor:pointer}
 .sq-ficha{background:#132236;border:2px dashed #7C3AED;border-radius:14px;padding:8px 10px;margin:-2px 0 8px}.sq-ficha .t{font-size:12.5px;font-weight:900;color:#C4B5FD}
 .sq-mo{border:2px solid #C4B5FD!important}
 .sq-trenb{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#132236;border:2px solid #2a4466;border-radius:16px;padding:12px;margin-bottom:8px;color:#F8FAFC;font:inherit;cursor:pointer}
@@ -3197,7 +3198,7 @@ function sqOpHTML(o){ var t=o[3]?SQ_TIPO[o[3]]:/bar m[oó]vil/i.test(o[0])?SQ_TI
 function pintarSecuencia(){
   var Q=sqActual(); if(!Q) return cerrar();
   var h='<div class="sh-handle"></div><div class="sx-hoja sq">'+
-    '<div class="sq-tren"><div class="n">'+Q.tipo+' '+Q.tren+' <small>· '+Q.serie+' · '+Q.dur+'</small></div><div class="r">'+limpio(Q.ruta)+' · '+Q.paradas[0][1]+' → '+Q.paradas[Q.paradas.length-1][1]+'</div>'+
+    '<div class="sq-tren">'+(cargado?'':'<button class="sq-camb" onclick="sqElegir()">🔁 Cambiar</button>')+'<div class="n">'+Q.tipo+' '+Q.tren+' <small>· '+Q.serie+' · '+Q.dur+'</small></div><div class="r">'+limpio(Q.ruta)+' · '+Q.paradas[0][1]+' → '+Q.paradas[Q.paradas.length-1][1]+'</div>'+
     '<div class="sq-chips">'+Q.lleva.map(function(x){ return '<span class="'+(x[2]?'':'no')+'">'+x[0]+' '+x[1]+'</span>'; }).join('')+'</div>'+
     '<div class="sq-chips"><span>'+Q.trip+'</span><span>'+Q.megafonia+'</span></div><div class="r" style="font-size:11.5px;margin-top:4px">'+Q.dias+' · '+Q.rev+'</div></div>'+sqBMhtml(Q)+
     '<div class="sx-tog sq-tabs">'+[['ahora','Ahora'],['toca','¿Qué le toca?'],['paradas','Paradas']].filter(function(t){ return t[0]!=='toca'||Q.pir; }).map(function(t){ return '<button class="'+(SQ.tab===t[0]?'on':'')+'" onclick="SQ.tab=\''+t[0]+'\';pintarSecuencia()">'+t[1]+'</button>'; }).join('')+'</div>';
@@ -3208,7 +3209,7 @@ function pintarSecuencia(){
       '<div class="sx-q" style="font-size:17px">Qué toca hacer ahora:</div>'+(sqOps(bl).some(sqDestaca)?sqOps(bl).filter(sqDestaca).map(sqOpHTML).join('')+
       '<div class="sq-mas">También: '+sqOps(bl).filter(function(o){ return !sqDestaca(o); }).map(function(o){ return limpio(o[0].replace(/\s*\(.*\)/,'')).toLowerCase(); }).join(' · ')+'</div>':sqOps(bl).map(sqOpHTML).join(''))+
       (cargado?'':(sig?'<button class="sx-gbtn sx-az sx-lleg" onclick="sqSiguiente(1)"><span>🚉</span><div>'+limpio(sqPaso(sig))+'<small>Toca al llegar · pasa a lo siguiente</small></div></button>':'<div class="sq-ahora" style="background:#14532D;border-color:#4ADE80">🏁 Final del recorrido</div>')+
-        (k>0?'<button class="sx-mas" onclick="sqSiguiente(-1)">‹ Volver a lo anterior</button>':'')+'<button class="sx-mas" onclick="sqElegir()">🔁 Cambiar de tren</button>');
+        (k>0?'<button class="sx-mas" onclick="sqSiguiente(-1)">‹ Volver a lo anterior</button>':'')+'');
   } else if(SQ.tab==='toca'){
     var n=Q.paradas.length, s=SQ.s, b=SQ.b==null||SQ.b<=s?n-1:SQ.b, su='', ba='', i;
     for(i=0;i<n-1;i++) su+='<button class="'+(i===s?'s':'')+'" onclick="SQ.s='+i+';if(SQ.b!=null&&SQ.b<='+i+')SQ.b=null;pintarSecuencia()">'+limpio(sqCorto(Q,i))+'</button>';
@@ -3248,8 +3249,10 @@ function sqPintaElegir(){
     Q.bloques.forEach(function(b){ b.ops.forEach(function(o){ if(o[3]&&o[3]!=='BD'&&o[3]!=='L') t[o[3]]=1; }); });
     var et=Object.keys(t).length?['D','AP','M','CE'].filter(function(x){ return t[x]; }).map(function(x){ return '<span class="sq-tag" style="background:'+SQ_TIPO[x].c+'">'+SQ_TIPO[x].e+' '+SQ_TIPO[x].n+'</span>'; }).join(''):'<span class="sq-tag" style="background:#334155">🛒 Sin restauración</span>';
     return '<button class="sq-trenb" onclick="sqAbrirTren(\''+n+'\',1)"><div><b>'+n+'</b> · '+Q.serie+'<small>'+limpio(estCorto(Q.paradas[0][0]))+' '+Q.paradas[0][1]+' → '+limpio(estCorto(Q.paradas[Q.paradas.length-1][0]))+' '+Q.paradas[Q.paradas.length-1][1]+'</small>'+et+'</div><i>›</i></button>'; }).join('');
+  var o=sqSolo(), Qs=sqDe(o.tren);
   sxPon('<div class="sh-handle"></div><div class="sx-hoja"><div class="sx-as" style="font-size:25px">¿Qué tren llevas?</div>'+
-    '<div class="f-lbl">🔢 Nº de tren</div><input class="inp" id="sq-num2" inputmode="numeric" placeholder="p. ej. 3933" oninput="sqNum2(this.value)" style="font-size:22px;font-weight:900;letter-spacing:2px"><div id="sq-card2"></div>'+
+    (Qs?'<button class="sx-gbtn sq-mo" style="padding:12px 14px;font-size:18px" onclick="sqAbrirTren(\''+Qs.tren+'\')"><span>▶</span><div>Seguir con el '+Qs.tren+'<small>Vamos por: '+limpio(sqVamos(Qs.bloques[Math.min(o.k||0,Qs.bloques.length-1)]))+'</small></div></button>':'')+
+    '<div class="f-lbl">🔢 '+(Qs?'O escribe el nº de tren':'Nº de tren')+'</div><input class="inp" id="sq-num2" inputmode="numeric" placeholder="p. ej. 3933" oninput="sqNum2(this.value)" style="font-size:22px;font-weight:900;letter-spacing:2px"><div id="sq-card2"></div>'+
     '<div class="sx-q" style="font-size:16px;margin-top:16px">🚆 Trenes guardados</div>'+trenes+
     '<div class="sq-mas">Cuando me pases más fichas de secuencia, aparecerán aquí.</div><button class="sx-cerrar" onclick="cerrar()">Cerrar</button></div>','sq-elegir');
 }
@@ -3281,7 +3284,7 @@ function sqEstilo(el){
 sxInicio=function(){ _sqInicio(); sqBoton(); var Q=sqActual(), el=document.getElementById('sx-inicio'); if(el) sqEstilo(el);
   if(el&&!cargado){ var gr=el.querySelector('.sx-gr'), o=sqSolo(), Qs=sqDe(o.tren);
     var vie=document.getElementById('sq-home'); if(vie) vie.remove();
-    if(gr) gr.insertAdjacentHTML('afterend','<button id="sq-home" class="sx-gbtn sq-mo" onclick="'+(Qs?'sqAbrirTren(\''+Qs.tren+'\');document.getElementById(\'ov-asiento\').classList.add(\'on\')':'sqElegir()')+'"><span>📋</span><div>Secuencia operativa<small>'+(Qs?'Tren '+Qs.tren+' · vamos por: '+limpio(sqVamos(Qs.bloques[Math.min(o.k||0,Qs.bloques.length-1)])):'Qué hay que hacer en cada parada')+'</small></div></button>'); return; }
+    if(gr) gr.insertAdjacentHTML('afterend','<button id="sq-home" class="sx-gbtn sq-mo" onclick="sqElegir()"><span>📋</span><div>Secuencia operativa<small>'+(Qs?'Tren '+Qs.tren+' · vamos por: '+limpio(sqVamos(Qs.bloques[Math.min(o.k||0,Qs.bloques.length-1)])):'Qué hay que hacer en cada parada')+'</small></div></button>'); return; }
   if(!Q||!el||!cargado) return;
   var k=sqBloqueAhora(Q), bl=Q.bloques[k];
   var bt=el.querySelector('.sx-or'); if(bt&&!document.getElementById('sq-ini')) bt.insertAdjacentHTML('beforebegin','<button id="sq-ini" class="sx-gbtn sq-mo" onclick="abrirSecuencia(\'ahora\')"><span>📋</span><div>Ver la secuencia<small>Qué toca en cada parada · ahora: '+limpio(bl.est===null?'antes de salir':bl.t)+'</small></div></button>'); };
