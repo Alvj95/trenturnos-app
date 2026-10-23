@@ -16,9 +16,10 @@ import com.getcapacitor.BridgeActivity;
  *
  * Desde Android 15 las apps se dibujan por detrás de esas barras y la app tenía
  * que dejar el hueco ella sola; dentro del WebView (Servicios va en un marco)
- * ese hueco a veces salía 0 y la barra tapaba el menú de abajo y los botones. Aquí la app se coloca SIEMPRE dentro de las barras
- * (y encima del teclado cuando está abierto), con el fondo oscuro de la app
- * detrás de ellas y los iconos de las barras en claro.
+ * ese hueco a veces salía 0 y la barra tapaba el menú de abajo y los botones.
+ * Aquí la app se coloca SIEMPRE dentro de las barras (y encima del teclado
+ * cuando está abierto), con el fondo oscuro de la app detrás de ellas y los
+ * iconos de las barras en claro.
  * Capacitor no gestiona las barras (capacitor.config.json: SystemBars.insetsHandling = "disable").
  */
 public class MainActivity extends BridgeActivity {
