@@ -1,0 +1,12 @@
+{
+  "appId": "com.trenturnos.servicios",
+  "appName": "TrenTurnos V5 Servicios",
+  "webDir": "www",
+  "backgroundColor": "#07111F",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable",
+      "style": "DARK"
+    }
+  }
+}
