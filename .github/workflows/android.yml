@@ -11,6 +11,8 @@ on:
       - 'version-url/**'
       - '**.md'
       - 'privacidad.html'
+      - 'app-servicios/**'
+      - '.github/workflows/android-servicios.yml'
   workflow_dispatch:
 
 permissions:

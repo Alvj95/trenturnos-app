@@ -1,0 +1,84 @@
+name: Build TrenTurnos V5 Servicios
+
+# App aparte de Google Play con solo Servicios a bordo (com.trenturnos.servicios).
+# Usa el mismo módulo servicios/servicios.html que TrenTurnos y la misma clave de subida.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app-servicios/**'
+      - 'servicios/servicios.html'
+      - '.github/workflows/android-servicios.yml'
+  # En una PR solo comprueba que compila (sin publicar).
+  pull_request:
+    paths:
+      - 'app-servicios/**'
+      - '.github/workflows/android-servicios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write # publicar el .aab como Release
+
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    env:
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+    defaults:
+      run:
+        working-directory: app-servicios
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: npm install --no-audit --no-fund
+      # El módulo de Servicios es el de TrenTurnos: se copia aquí en cada compilación.
+      - run: cp ../servicios/servicios.html www/servicios.html
+      - run: npx cap sync android
+
+      - name: Assemble release APK
+        working-directory: app-servicios/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Build Google Play bundle (AAB)
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        working-directory: app-servicios/android
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          UPLOAD_KEYSTORE_PATH="$RUNNER_TEMP/upload.keystore" ./gradlew bundleRelease --no-daemon
+          cp app/build/outputs/bundle/release/app-release.aab ../TrenTurnos-Servicios.aab
+
+      - name: Package APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk TrenTurnos-Servicios.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trenturnos-servicios
+          path: |
+            app-servicios/TrenTurnos-Servicios.apk
+            app-servicios/TrenTurnos-Servicios.aab
+          if-no-files-found: warn
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: servicios-v1.0.${{ github.run_number }}
+          name: TrenTurnos V5 Servicios 1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: false
+          files: |
+            app-servicios/TrenTurnos-Servicios.apk
+            app-servicios/TrenTurnos-Servicios.aab
+          body: |
+            App aparte **TrenTurnos V5 Servicios** (solo Servicios a bordo, `com.trenturnos.servicios`).
+
+            `TrenTurnos-Servicios.aab` es para Google Play Console. `TrenTurnos-Servicios.apk` se puede instalar directamente para probar.

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<!-- App Android (Capacitor): compartir, descargas, botón atrás. -->
+<script src="native-bridge.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111F">
+<title>TrenTurnos V5 Servicios</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!--
+  Servicios a bordo — versión independiente (solo Servicios), con su propia URL.
+  Esta página es el «anfitrión»: el módulo de Servicios (servicios.html, el MISMO
+  archivo que usa TrenTurnos) va dentro de un marco y le pide a esta página lo
+  que en TrenTurnos le da la app: la matrícula, la conexión a Supabase (para
+  compartir el MOL con un compañero) y el gesto de deslizar para actualizar.
+  Para actualizar el módulo basta con sustituir servicios.html.
+-->
+<style>
+:root{
+  --bg:#07111F;--s1:#0D1B2E;--s2:#132236;--div:#1E3350;
+  --tx:#F8FAFC;--tx2:#94A3B8;--tx3:#64748B;--red2:#FCA5A5;--green2:#4ADE80;
+  --acc:#D97706;--acc2:#F59E0B;--acc3:#FCD34D;
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--tx);font-family:Inter,system-ui,sans-serif}
+#modulo{position:fixed;inset:0;border:0;width:100%;height:100%;display:none;background:var(--bg)}
+/* Entrada */
+#entrada{position:fixed;inset:0;z-index:40;display:none;overflow-y:auto;justify-content:center;
+  background:linear-gradient(-45deg,#1A1A2E,#16213E,#0F3460,#16213E,#1A1A2E)}
+.en-caja{width:100%;max-width:440px;padding:48px 18px 30px}
+.en-logo{font-size:52px;text-align:center}
+.en-t1{text-align:center;font-size:24px;font-weight:900;margin-top:6px}
+.en-t2{text-align:center;color:var(--tx2);font-size:13px;line-height:1.5;margin:6px 14px 20px}
+.card{background:rgba(13,27,46,.92);border:1px solid var(--div);border-radius:18px;padding:16px}
+.lbl{display:block;font-size:10.5px;font-weight:800;letter-spacing:.8px;color:var(--tx2);margin-bottom:6px}
+.inp{width:100%;background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:13px;font:inherit;font-size:15px;color:var(--tx);margin-bottom:12px;outline:none}
+.inp:focus{border-color:var(--acc2)}
+.nota{font-size:11.5px;line-height:1.5;color:var(--tx2)}
+.btn{display:block;width:100%;border:0;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#111;font:inherit;font-weight:800;font-size:15.5px;border-radius:14px;padding:14px;cursor:pointer;margin-top:14px}
+.btn:disabled{opacity:.45}
+.btn2{display:block;width:100%;background:var(--s2);border:1px solid var(--div);color:var(--tx);font:inherit;font-weight:700;font-size:13.5px;border-radius:12px;padding:12px;cursor:pointer;margin-top:8px}
+.err{color:var(--red2);font-size:12px;margin-top:8px;min-height:1em}
+.url{font-size:11px;color:var(--tx3);text-align:center;margin-top:16px}
+/* Ajustes */
+#aj{position:fixed;inset:0;display:none;z-index:50;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center}
+#aj.on{display:flex}
+.sh{width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:var(--s1);border-radius:22px 22px 0 0;border-top:1px solid var(--div);padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
+.sh-t{display:flex;align-items:center;font-weight:900;font-size:18px;margin-bottom:12px}
+.sh-t span{flex:1}
+.x{background:none;border:0;color:var(--tx2);font-size:20px;cursor:pointer}
+.it{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:12px;border:1px solid var(--div);border-radius:13px;margin-bottom:8px;background:var(--s2);color:var(--tx);font:inherit;cursor:pointer}
+.it .ic{font-size:21px}.it .tx{flex:1}.it b{font-size:13.5px}.it small{display:block;color:var(--tx2);font-size:11.5px;margin-top:2px;line-height:1.4}
+.det{display:none;padding:2px 4px 12px;font-size:12px;line-height:1.55;color:var(--tx2)}
+.det.on{display:block}
+.ver{font-size:11px;color:var(--tx3);text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="entrada">
+  <div class="en-caja">
+    <div class="en-logo">🍽️</div>
+    <div class="en-t1">Servicios a bordo</div>
+    <div class="en-t2">Lee el MOL, coloca a cada pasajero en su asiento y comparte el servicio con tu compañero.</div>
+    <div class="card">
+      <label class="lbl" for="en-nombre">TU NOMBRE</label>
+      <input class="inp" id="en-nombre" autocomplete="given-name" maxlength="40" placeholder="Tu nombre…">
+      <label class="lbl" for="en-mat">TU MATRÍCULA</label>
+      <input class="inp" id="en-mat" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Tu número de matrícula…">
+      <div class="nota">La matrícula solo sirve para <b>compartir el MOL</b> con un compañero y recibir los que te compartan. Todo lo demás se queda en este móvil.</div>
+      <button class="btn" id="en-btn" onclick="entrar()">Entrar</button>
+      <button class="btn2" id="en-cancelar" style="display:none" onclick="cerrarEntrada()">Cancelar</button>
+      <div class="err" id="en-err"></div>
+    </div>
+    <div class="url" id="en-url"></div>
+  </div>
+</div>
+
+<iframe id="modulo" title="Servicios a bordo"></iframe>
+
+<div id="aj" onclick="if(event.target===this)cerrarAjustes()">
+  <div class="sh">
+    <div class="sh-t"><span>⚙️ Ajustes</span><button class="x" onclick="cerrarAjustes()">✕</button></div>
+    <button class="it" onclick="cambiarDatos()"><span class="ic">👤</span><span class="tx"><b id="aj-yo">—</b><small>Cambiar nombre o matrícula</small></span>›</button>
+    <button class="it" onclick="instalar()"><span class="ic">📲</span><span class="tx"><b>Instalar en el móvil</b><small>Añade un icono en la pantalla de inicio, como una app</small></span>›</button>
+    <div class="det" id="det-instalar"></div>
+    <button class="it" onclick="borrarServicios()"><span class="ic">🗑️</span><span class="tx"><b>Borrar los servicios de este móvil</b><small>Pasajeros y MOL guardados</small></span>›</button>
+    <button class="it" onclick="verDet('det-priv')"><span class="ic">🔒</span><span class="tx"><b>Privacidad</b><small>Los MOL compartidos se borran solos a las 24 h</small></span>›</button>
+    <div class="det" id="det-priv">Los pasajeros y servicios que cargas se guardan <b>solo en este móvil</b>. Cuando compartes un MOL con un compañero, se envía a su matrícula y <b>se borra solo a las 24 horas</b> (o antes, si lo retiras). Nadie más puede verlo. La matrícula se usa únicamente para eso.</div>
+    <div class="ver">Servicios a bordo · v1.0</div>
+  </div>
+</div>
+
+<script>
+var K_NOMBRE = 'svSoloNombre', K_MAT = 'svSoloMatricula', K_MAT_MOD = 'trenturnosServiciosMatricula';
+function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){} return null; }
+function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+// ── Lo que el módulo le pide a la página (en TrenTurnos se lo da la app) ──
+var AJ = { nombre: ls(K_NOMBRE) || '', nombrePila: ls(K_NOMBRE) || '', matricula: ls(K_MAT) || '' };
+var sbAdmin = null;
+try{ sbAdmin = supabase.createClient('https://xoftsdupynwhzxsiusox.supabase.co', 'sb_publishable_jpuwxGvqz80zsRn2N_-qww_xqS1InnE'); }
+catch(e){ console.error('No se pudo conectar con Supabase:', e); }
+window.__svDesdeCal = false;
+window.__svPendienteAbrir = null;
+window.__svOcultar = function(){};
+window.__svCambiarPerfil = function(){ abrirAjustes(); };
+window.__svSyncTema = function(){};
+window.elegirEstetica = function(){};
+window.nvElegir = function(){};
+window._crearEventoPush = async function(mat, titulo, cuerpo){
+  if(!sbAdmin || !mat) return;
+  try{ await sbAdmin.from('eventos_push').insert({ matricula_destino: mat, titulo: titulo, cuerpo: cuerpo }); }catch(e){}
+};
+function mod(){ var f = document.getElementById('modulo'); try{ return f.contentWindow; }catch(e){ return null; } }
+function modDoc(){ var w = mod(); try{ return w && w.document; }catch(e){ return null; } }
+
+// ── Entrada ──
+function mostrarEntrada(editar){
+  document.getElementById('en-nombre').value = AJ.nombre || '';
+  document.getElementById('en-mat').value = AJ.matricula || '';
+  document.getElementById('en-err').textContent = '';
+  document.getElementById('en-cancelar').style.display = editar ? 'block' : 'none';
+  document.getElementById('en-btn').textContent = editar ? 'Guardar' : 'Entrar';
+  document.getElementById('en-url').textContent = location.host + location.pathname.replace(/index\.html$/, '');
+  document.getElementById('entrada').style.display = 'flex';
+}
+function cerrarEntrada(){ document.getElementById('entrada').style.display = 'none'; }
+function entrar(){
+  var n = document.getElementById('en-nombre').value.trim().replace(/\s+/g, ' ');
+  var m = document.getElementById('en-mat').value.trim().toUpperCase().replace(/\s+/g, '');
+  var err = document.getElementById('en-err');
+  if(!n){ err.textContent = 'Escribe tu nombre.'; return; }
+  if(!/^[0-9A-Z]{3,12}$/.test(m)){ err.textContent = 'Escribe tu matrícula (solo números o letras).'; return; }
+  ls(K_NOMBRE, n); ls(K_MAT, m); ls(K_MAT_MOD, m);
+  AJ.nombre = AJ.nombrePila = n; AJ.matricula = m;
+  cerrarEntrada();
+  arrancarModulo();
+  pintarSaludo();
+  comprobarCompartidos();
+}
+
+// ── Módulo ──
+var arrancado = false;
+function arrancarModulo(){
+  var f = document.getElementById('modulo');
+  f.style.display = 'block';
+  if(arrancado) return;
+  arrancado = true;
+  f.addEventListener('load', function(){ prepararModulo(); comprobarCompartidos(); });
+  f.src = 'servicios.html?v=19';
+}
+// Ajustes de la versión independiente dentro del módulo, sin tocar su código:
+// 🔁 (cambiar de perfil) pasa a ser ⚙️, saludo con el nombre y sitio para el aviso de MOL compartido.
+function prepararModulo(){
+  var d = modDoc(); if(!d) return;
+  var b = d.getElementById('perfil-btn');
+  if(b){ b.textContent = '⚙️'; b.title = 'Ajustes'; }
+  if(!d.getElementById('solo-css')){
+    var st = d.createElement('style'); st.id = 'solo-css';
+    st.textContent = '.solo-av{display:none;padding:12px 14px 0}.solo-av.on{display:block}' +
+      '.solo-it{display:flex;align-items:center;gap:10px;border:1px solid rgba(74,222,128,.45);background:rgba(34,197,94,.1);border-radius:14px;padding:10px 12px;margin-bottom:8px}' +
+      '.solo-it .i{font-size:20px}.solo-it .t{flex:1;min-width:0}.solo-it b{display:block;font-size:13px}.solo-it small{display:block;color:var(--tx2);font-size:11.5px;margin-top:2px}' +
+      '.solo-ver{border:0;background:var(--green2);color:#063;font:inherit;font-weight:800;font-size:12.5px;border-radius:9px;padding:8px 13px;cursor:pointer}' +
+      '.solo-no{border:0;background:none;color:var(--tx2);font-size:16px;cursor:pointer;padding:4px}';
+    d.head.appendChild(st);
+  }
+  if(!d.getElementById('solo-av')){
+    // Arriba del todo, fuera de las pestañas: se ve estés en Tren, Asientos o Resumen.
+    var cuerpo = d.getElementById('body');
+    var av = d.createElement('div'); av.id = 'solo-av'; av.className = 'solo-av';
+    if(cuerpo) cuerpo.insertBefore(av, cuerpo.firstChild);
+  }
+  pintarSaludo();
+}
+function pintarSaludo(){
+  var d = modDoc(); if(!d) return;
+  var s = d.getElementById('saludo');
+  if(s && AJ.nombre) s.textContent = 'Hola, ' + AJ.nombre.split(' ')[0] + ' 👋 ¿qué servicio llevas hoy?';
+}
+
+// ── 📨 MOL compartido conmigo ──
+var avisos = [];
+window.__svComprobarCompartidos = comprobarCompartidos;
+async function comprobarCompartidos(){
+  var d = modDoc(), caja = d && d.getElementById('solo-av');
+  if(!caja || !sbAdmin || !AJ.matricula) return;
+  var lista = [];
+  try{ var r = await sbAdmin.rpc('sv_pendientes', { p_matricula: AJ.matricula }); if(r.error) return; lista = r.data || []; }catch(e){ return; }
+  avisos = lista;
+  caja.innerHTML = lista.map(function(a, i){
+    return '<div class="solo-it"><span class="i">📨</span><div class="t"><b>' + esc(a.de_matricula) + ' te comparte el MOL</b><small>Tren ' + (esc(a.tren) || '—') + (a.fecha ? ' · ' + esc(a.fecha) : '') + '</small></div>' +
+      '<button class="solo-ver" onclick="parent.abrirCompartido(' + i + ')">Ver</button><button class="solo-no" title="Rechazar" onclick="parent.rechazarCompartido(' + i + ')">✕</button></div>';
+  }).join('');
+  caja.classList.toggle('on', lista.length > 0);
+}
+window.abrirCompartido = function(i){
+  var a = avisos[i]; if(!a) return;
+  a.para = AJ.matricula;
+  var w = mod();
+  if(w && w.svAbrirCompartido) w.svAbrirCompartido(a);
+  else window.__svPendienteAbrir = a;
+};
+window.rechazarCompartido = async function(i){
+  var a = avisos[i]; if(!a || !confirm('¿Rechazar el MOL de ' + a.de_matricula + '?')) return;
+  try{ await sbAdmin.rpc('sv_rechazar', { p_id: a.id, p_matricula: AJ.matricula }); }catch(e){}
+  comprobarCompartidos();
+};
+setInterval(function(){ if(!document.hidden) comprobarCompartidos(); }, 60000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) comprobarCompartidos(); });
+
+// ── ⚙️ Ajustes ──
+function abrirAjustes(){
+  document.getElementById('aj-yo').textContent = (AJ.nombre || '—') + ' · ' + (AJ.matricula || '—');
+  document.querySelectorAll('#aj .det').forEach(function(x){ x.classList.remove('on'); });
+  document.getElementById('aj').classList.add('on');
+}
+function cerrarAjustes(){ document.getElementById('aj').classList.remove('on'); }
+function verDet(id){ document.getElementById(id).classList.toggle('on'); }
+function cambiarDatos(){ cerrarAjustes(); mostrarEntrada(true); }
+var avisoInstalar = null;
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); avisoInstalar = e; });
+function instalar(){
+  if(avisoInstalar){ avisoInstalar.prompt(); avisoInstalar = null; return; }
+  var el = document.getElementById('det-instalar');
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var yaInstalada = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  el.innerHTML = yaInstalada ? '✅ Ya la tienes instalada en este móvil.'
+    : ios ? 'En Safari, toca <b>Compartir</b> (el cuadrado con la flecha) y luego <b>«Añadir a pantalla de inicio»</b>.'
+    : 'En Chrome, toca el menú <b>⋮</b> (arriba a la derecha) y luego <b>«Añadir a pantalla de inicio»</b> o <b>«Instalar aplicación»</b>.';
+  el.classList.add('on');
+}
+function borrarServicios(){
+  if(!confirm('¿Borrar los pasajeros y MOL guardados en este móvil? Tu nombre y matrícula se mantienen.')) return;
+  ['trenturnosServiciosAbordo', 'trenturnosServiciosSerie', 'trenturnosServiciosEspejo'].forEach(function(k){ ls(k, null); });
+  location.reload();
+}
+
+// Botón «atrás» de Android: primero decide el módulo (cerrar ficha, volver al mapa…).
+history.pushState({ sv: 1 }, '');
+window.addEventListener('popstate', function(){
+  if(document.getElementById('aj').classList.contains('on')){ cerrarAjustes(); history.pushState({ sv: 1 }, ''); return; }
+  var w = mod(), hecho = false;
+  try{ hecho = !!(w && w.svAtras && w.svAtras()); }catch(e){}
+  if(hecho) history.pushState({ sv: 1 }, '');
+  else history.back();
+});
+
+// (En la app de Android no hace falta el service worker.)
+
+if(AJ.matricula && AJ.nombre){ arrancarModulo(); } else { mostrarEntrada(false); }
+</script>
+
+
+<!-- «Desliza hacia abajo para actualizar» (el mismo de TrenTurnos): estando arriba
+     del todo, arrastrar hacia abajo y soltar recarga. El módulo avisa de sus toques
+     con parent.__ptr. No actúa en Ajustes ni en la pantalla de entrada. -->
+<div id="ptrInd" aria-hidden="true" style="position:fixed;top:0;left:50%;z-index:10060;width:44px;height:44px;margin-left:-22px;border-radius:50%;background:var(--s1,#0F1A2B);border:1px solid var(--div,#223149);box-shadow:0 6px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:20px;transform:translateY(-60px);opacity:0;pointer-events:none;transition:opacity .15s">
+  <span id="ptrIco" style="display:inline-block">🔄</span>
+</div>
+<div id="ptrTxt" aria-hidden="true" style="position:fixed;top:0;left:50%;z-index:10060;white-space:nowrap;font:800 11.5px system-ui,sans-serif;color:var(--tx,#E8EDF5);background:var(--s1,#0F1A2B);border:1px solid var(--div,#223149);border-radius:999px;padding:5px 12px;box-shadow:0 4px 12px rgba(0,0,0,.4);opacity:0;pointer-events:none;transform:translate(-50%,-30px)"></div>
+<script>
+(function(){
+  var UMBRAL = 70, MAX = 110;
+  var ind = document.getElementById('ptrInd'), ico = document.getElementById('ptrIco'), txt = document.getElementById('ptrTxt');
+  var y0 = null, x0 = 0, tirando = false, dist = 0, recargando = false;
+  function scrollerDe(el){
+    while(el && el !== document.body){
+      var cs = getComputedStyle(el);
+      if(/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+  function permitido(t){
+    if(!t || !t.closest) return false;
+    if(t.closest('#aj, #entrada, input, textarea, select')) return false;
+    if(document.querySelector('#aj.on')) return false;
+    return true;
+  }
+  function pintar(d){
+    var v = Math.min(MAX, d);
+    ind.style.opacity = v > 8 ? '1' : '0';
+    ind.style.transform = 'translateY(' + (v - 50) + 'px)';
+    ico.style.transform = 'rotate(' + (v * 3) + 'deg)';
+    txt.style.opacity = v > 25 ? '1' : '0';
+    txt.style.transform = 'translate(-50%,' + (v + 2) + 'px)';
+    txt.textContent = v >= UMBRAL ? 'Suelta para actualizar' : 'Desliza para actualizar';
+  }
+  function reset(){
+    ind.style.transition = 'transform .2s ease, opacity .2s'; txt.style.transition = 'transform .2s ease, opacity .2s';
+    pintar(0);
+    setTimeout(function(){ ind.style.transition = 'opacity .15s'; txt.style.transition = ''; }, 220);
+  }
+  document.addEventListener('touchstart', function(e){
+    if(recargando || e.touches.length !== 1){ y0 = null; return; }
+    var t = e.target;
+    if(!permitido(t)){ y0 = null; return; }
+    var sc = scrollerDe(t);
+    if(sc && sc.scrollTop > 0){ y0 = null; return; }
+    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; tirando = false; dist = 0;
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e){ mover(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  function mover(x, y){
+    if(y0 === null || recargando) return;
+    var dy = y - y0, dx = Math.abs(x - x0);
+    if(!tirando){
+      if(dy > 10 && dy > dx * 1.5){ tirando = true; ind.style.transition = 'opacity .15s'; }
+      else if(dy < -5 || dx > 12){ y0 = null; return; }
+      else return;
+    }
+    dist = Math.max(0, dy * 0.55);
+    pintar(dist);
+  }
+  function fin(){
+    if(y0 === null) return;
+    y0 = null;
+    if(tirando && dist >= UMBRAL){
+      recargando = true;
+      txt.textContent = 'Actualizando...';
+      ind.style.transform = 'translateY(' + (UMBRAL - 50) + 'px)';
+      ico.style.transition = 'transform .8s linear';
+      ico.style.transform = 'rotate(720deg)';
+      setTimeout(function(){ location.reload(); }, 350);
+    } else if(tirando){
+      reset();
+    }
+    tirando = false; dist = 0;
+  }
+  document.addEventListener('touchend', fin, { passive: true });
+  document.addEventListener('touchcancel', function(){ if(!recargando){ y0 = null; tirando = false; reset(); } }, { passive: true });
+  // Servicios a bordo va en su propio marco: sus toques no llegan aquí, así que él mismo
+  // avisa (ya comprobado que está arriba del todo y sin ventanas abiertas).
+  window.__ptr = {
+    ini: function(x, y){ if(recargando || document.querySelector('#aj.on')){ y0 = null; return; } y0 = y; x0 = x; tirando = false; dist = 0; },
+    mov: mover, fin: fin,
+    cancelar: function(){ if(!recargando){ y0 = null; tirando = false; reset(); } }
+  };
+})();
+</script>
+
+</body>
+</html>

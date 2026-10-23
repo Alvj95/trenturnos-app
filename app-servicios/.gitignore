@@ -1,0 +1,5 @@
+node_modules/
+# Se copia de servicios/servicios.html en cada compilación
+www/servicios.html
+*.apk
+*.aab
