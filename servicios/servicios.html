@@ -3445,6 +3445,25 @@ setTimeout(sqBoton, 120);
 // Al cerrar la secuencia, el inicio se pone al día (tren y parada).
 var _sqCerrar=cerrar; cerrar=function(){ var era=hoja; _sqCerrar(); if(!cargado&&/^sq/.test(era||'')) sxInicio(); };
 
+/* ── «Más opciones» con servicio cargado: solo «Borrar y empezar otro» ──
+   Antes volvía a salir todo el inicio (subir MOL, a mano…) aunque ya hubiera un servicio.
+   Ahora solo queda el botón para borrar el servicio; al borrarlo, la pantalla vuelve a quedar en blanco. */
+var _moIni=sxInicio;
+sxInicio=function(){ _moIni();
+  var pt=document.getElementById('p-tren'), el=document.getElementById('sx-inicio'); if(!pt||!el) return;
+  var solo=cargado&&SX.mas&&!(MANUAL&&MANUAL.editando), b=document.getElementById('mo-borrar');
+  pt.classList.toggle('mo-solo', solo);
+  if(!solo){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('div'); b.id='mo-borrar'; }
+  b.innerHTML='<button onclick="borrarServicio()">🗑️ Borrar este servicio y empezar otro</button><div>Se borra lo marcado y la pantalla vuelve a quedar en blanco.</div>';
+  if(b.previousElementSibling!==el) el.parentNode.insertBefore(b, el.nextSibling);
+};
+(function(){ var st=document.createElement('style'); st.textContent=
+  '#p-tren.mo-solo>*:not(#sx-inicio):not(#mo-borrar){display:none!important}'+
+  '#mo-borrar{margin:4px 0 24px}#mo-borrar button{width:100%;background:#7F1D1D;border:2px solid #F87171;color:#fff;border-radius:16px;padding:16px;font:900 18px Inter,sans-serif;cursor:pointer}'+
+  '#mo-borrar div{text-align:center;font-size:12.5px;color:#94A3B8;margin-top:8px}';
+  document.head.appendChild(st); })();
+
 restaurar();
 /* «Desliza hacia abajo para actualizar», también dentro de Servicios: el gesto lo pinta y lo
    hace la app (parent.__ptr); aquí solo se comprueba que se puede (arriba del todo, sin ventanas abiertas). */
