@@ -3267,7 +3267,7 @@ function sqAbrirTren(n, nuevo){ var o=sqSolo(); if(o.tren!==n||nuevo){ o={tren:n
 // En Solo Servicios no hay botón arriba: la secuencia se abre desde el inicio.
 var SV_SOLO=false; try{ SV_SOLO=parent!==window&&typeof parent.SERVICIOS_HTML==='undefined'; }catch(e){}
 function sqBoton(){
-  var Q=SV_SOLO?null:sqActual(), pb=document.getElementById('perfil-btn'); if(!pb) return;
+  var Q=(SV_SOLO||!cargado)?null:sqActual(), pb=document.getElementById('perfil-btn'); if(!pb) return; // sin servicio, el acceso es el botón del inicio
   var b=document.getElementById('sq-btn');
   if(!Q){ if(b) b.remove(); return; }
   if(!b){ b=document.createElement('button'); b.id='sq-btn'; b.className='hbtn sq-hbtn'; b.title='Secuencia operativa'; b.onclick=function(){ abrirSecuencia('ahora'); }; pb.parentNode.insertBefore(b, pb.parentNode.firstChild); }
@@ -3284,7 +3284,7 @@ function sqEstilo(el){
 sxInicio=function(){ _sqInicio(); sqBoton(); var Q=sqActual(), el=document.getElementById('sx-inicio'); if(el) sqEstilo(el);
   if(el&&!cargado){ var gr=el.querySelector('.sx-gr'), o=sqSolo(), Qs=sqDe(o.tren);
     var vie=document.getElementById('sq-home'); if(vie) vie.remove();
-    if(gr) gr.insertAdjacentHTML('afterend','<button id="sq-home" class="sx-gbtn sq-mo" onclick="sqElegir()"><span>📋</span><div>Secuencia operativa<small>'+(Qs?'Tren '+Qs.tren+' · vamos por: '+limpio(sqVamos(Qs.bloques[Math.min(o.k||0,Qs.bloques.length-1)])):'Qué hay que hacer en cada parada')+'</small></div></button>'); return; }
+    if(gr) gr.insertAdjacentHTML('afterend','<button id="sq-home" class="sx-gbtn sq-mo" onclick="sqElegir()"><span>📋</span><div>Secuencia operativa<small>Qué hay que hacer en cada parada</small></div></button>'); return; }
   if(!Q||!el||!cargado) return;
   var k=sqBloqueAhora(Q), bl=Q.bloques[k];
   var bt=el.querySelector('.sx-or'); if(bt&&!document.getElementById('sq-ini')) bt.insertAdjacentHTML('beforebegin','<button id="sq-ini" class="sx-gbtn sq-mo" onclick="abrirSecuencia(\'ahora\')"><span>📋</span><div>Ver la secuencia<small>Qué toca en cada parada · ahora: '+limpio(bl.est===null?'antes de salir':bl.t)+'</small></div></button>'); };
@@ -3436,7 +3436,8 @@ sqOpHTML=function(o){ var Q=sqActual(), i=Q?sqBMpases(Q).indexOf(o):-1;
   return _bmOp(o); };
 var _bmIni=sxInicio;
 sxInicio=function(){ _bmIni(); var el=document.getElementById('sx-inicio'); if(!el) return;
-  var Q=sqActual(); if(!Q) return; var tras=cargado?el.querySelector('.sx-tren'):document.getElementById('sq-home');
+  // Sin servicio cargado no se enseña el bar móvil del último tren: está dentro de la secuencia.
+  if(!cargado) return; var Q=sqActual(); if(!Q) return; var tras=el.querySelector('.sx-tren');
   if(tras&&!el.querySelector('.bm2')) tras.insertAdjacentHTML('afterend', sqBMhtml(Q)); };
 var _bmMapa=sxMapa;
 sxMapa=function(){ _bmMapa(); var m=document.getElementById('sx-mapa'), Q=sqActual(); if(!m||!Q||(MANUAL&&MANUAL.editando)||m.querySelector('.bm2')) return; m.insertAdjacentHTML('afterbegin', sqBMhtml(Q)); };
