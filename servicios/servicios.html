@@ -3467,6 +3467,177 @@ sxInicio=function(){ _moIni();
   '#mo-borrar div{text-align:center;font-size:12.5px;color:#94A3B8;margin-top:8px}';
   document.head.appendChild(st); })();
 
+/* ── 🍴 Nueva oferta de menús de restauración (Ciclo otoño) · y la carta anterior ──
+   Del 28/10/2026 al 24/04/2027 hay carta nueva: 3 ciclos que cambian cada lunes, empezando por
+   el Ciclo 2 (miércoles 28/10). Fuera de esas fechas sigue la carta anterior (4 ciclos).
+   La carta y el ciclo salen solos por la fecha del viaje (si el MOL trae el ciclo, manda el MOL);
+   las dos se pueden cambiar a mano.
+   · Web (+24 h): el cliente elige su menú y sale en el asiento (Kosher, Halal… en rojo; ❄️ = plato
+     frío de rotación). Los menús con condiciones dicen para qué dieta son aptos.
+   · A bordo (sin elección, carta nueva): la ficha enseña las 3 opciones del ciclo y se apunta cuál eligió. */
+var OTONO={ini:new Date(2026,9,28), fin:new Date(2027,3,24,23,59)};
+function lunesDe(d){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }
+function fechaDeTexto(t){ var m=String(t||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if(!m) return null; var y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1]); }
+function cicloOtono(d){
+  if(!d||d<OTONO.ini||d>OTONO.fin) return 0;
+  var w=Math.round((lunesDe(d)-lunesDe(OTONO.ini))/(7*864e5)); return [2,3,1][((w%3)+3)%3];
+}
+function semanaTxt(d){ var a=lunesDe(d), b=new Date(a); b.setDate(b.getDate()+6); if(a<OTONO.ini) a=OTONO.ini;
+  function f(x){ return pad(x.getDate())+'/'+pad(x.getMonth()+1); } return f(a)+' al '+f(b); }
+var CARTA='ant', CICLO_AUTO=false, CICLO_FECHA=null;
+function esNueva(){ return CARTA==='oto'; }
+function nCiclos(){ return esNueva()?3:4; }
+
+// Carta anterior (4 ciclos) tal cual; carta nueva: lo que se ofrece a bordo en cada ciclo
+var CICLOS_ANT=CICLOS;
+var CICLOS_OTO={
+ 1:{des:{cal:'Tortilla de patatas'}, ape:{sal:'Empanada'}, alm:[['🐟','Barca','Merluza',0],['🍗','Granja','Pollo',1],['🥗','Plato único Barca','Poke de salmón',0]]},
+ 2:{des:{cal:'Tortilla con butifarra'}, ape:{sal:'Bagel'}, alm:[['🐟','Barca','Ventresca',1],['🍝','Molino','Canelones',0],['🥗','Plato único Granja','Pollo con arroz',0]]},
+ 3:{des:{cal:'Tortilla de champiñones'}, ape:{sal:'Ibérica'}, alm:[['🍗','Granja','Jarrete',0],['🍝','Molino','Pasta con pollo',1],['🥗','Plato único Molino','Ensalada de quinoa',0]]}};
+var PU={BARCA:'Poke de salmón',GRANJA:'Pollo con arroz',MOLINO:'Ensalada de quinoa'};
+
+DIETAS=/SIN GLUTEN|GLUTEN FREE|CELIAC[OA]|SIN LACTOSA|VEGETARIAN[OA]|VEGAN[OA]|HALAL|KOSHER|DIABETIC[OA]|BAJO EN SAL/;
+var APTO={
+  SG_VEG:'Apto para <b>sin gluten, sin lactosa, veganos y vegetarianos</b>.',
+  SAU_DES:'Apto para <b>sin lactosa, vegano y vegetariano</b> si <b>no toma el yogur</b>, y para <b>sin gluten</b> si <b>no toma la fruta deshidratada</b>.',
+  SAU_APE:'Apto para <b>sin lactosa, sin gluten, vegano y vegetariano</b>.'};
+
+// Menús de la carta nueva con el plato en el nombre: se reconocen con cualquier carta
+var MENU_PLATO=[
+  {re:/TORTILLA.*PATATA/,t:'TORTILLA',i:'🔥',k:'cal',p:'Caliente · Tortilla de patatas'},
+  {re:/TORTILLA.*BUTIFARRA/,t:'TORTILLA',i:'🔥',k:'cal',p:'Caliente · Tortilla con butifarra'},
+  {re:/TORTILLA.*CHAMPI/,t:'TORTILLA',i:'🔥',k:'cal',p:'Caliente · Tortilla de champiñones'},
+  {re:/GRANJA.*JARRETE/,t:'JARRETE',i:'🍗',k:'car',p:'Granja · Jarrete'},
+  {re:/GRANJA.*POLLO/,t:'POLLO ❄️',i:'🍗',k:'car',p:'Granja · Pollo',frio:1},
+  {re:/BARCA.*MERLUZA/,t:'MERLUZA',i:'🐟',k:'pes',p:'Barca · Merluza'},
+  {re:/BARCA.*VENTRESCA/,t:'VENTRESCA ❄️',i:'🐟',k:'pes',p:'Barca · Ventresca',frio:1},
+  {re:/MOLINO.*CANELON/,t:'CANELONES',i:'🍝',k:'pas',p:'Molino · Canelones'},
+  {re:/MOLINO.*PASTA/,t:'PASTA ❄️',i:'🍝',k:'pas',p:'Molino · Pasta con pollo',frio:1},
+  {re:/PLATO UNICO.*BARCA/,t:'P. ÚNICO',i:'🥗',k:'pu',p:'Plato único Barca · '+PU.BARCA},
+  {re:/PLATO UNICO.*GRANJA/,t:'P. ÚNICO',i:'🥗',k:'pu',p:'Plato único Granja · '+PU.GRANJA},
+  {re:/PLATO UNICO.*MOLINO/,t:'P. ÚNICO',i:'🥗',k:'pu',p:'Plato único Molino · '+PU.MOLINO},
+  {re:/EMPANADA/,t:'EMPANADA',i:'🥨',k:'sal',p:'Salado · Empanada'},
+  {re:/BAGEL/,t:'BAGEL',i:'🥨',k:'sal',p:'Salado · Bagel'},
+  {re:/IBERIC/,t:'IBÉRICA',i:'🥨',k:'sal',p:'Salado · Ibérica'}];
+// Menús genéricos de la carta nueva (con la anterior siguen los de antes: CALIENTE, MIXTO, FRUTA…)
+var MENU_OTO=[
+  {re:/SALUDABLE/,t:'SALUDABLE',i:'🥝',k:'sau'},{re:/DULCE/,t:'DULCE',i:'🍰',k:'dul'},
+  {re:/\bFRIO\b/,t:'FRÍO',i:'🧊',k:'fri'},{re:/CALIENTE/,t:'CALIENTE',i:'🔥',k:'cal'},{re:/\bSALADO\b/,t:'SALADO',i:'🥨',k:'sal'}];
+function sinEleccion(r){ var t=sinAcento(r.menu||''); return !r.especial&&!r.abordo&&(!t||/SIN PREFER|SIN POSIB|ULTIMO|SIN ELEC/.test(t))&&/^(des|ape|mer|alm|cen)$/.test(r.k); }
+var _menuElegidoAnt=menuElegido;
+menuElegido=function(r){
+  if(r.especial) return {t:sinAcento(r.especial).replace('BAJO EN SAL','BAJO SAL/AZ.').slice(0,14), esp:1};
+  if(r.abordo) return {t:r.abordo.t, i:r.abordo.i, p:r.abordo.p, abordo:1, frio:r.abordo.frio};
+  if(esNueva()&&sinEleccion(r)) return {t:'A BORDO', i:'🍴', sin:1};
+  var t=sinAcento(r.menu||''), i;
+  if(t&&!/SIN PREFER|SIN POSIB|ULTIMO|SIN ELEC|CORTES/.test(t)){
+    for(i=0;i<MENU_PLATO.length;i++) if(MENU_PLATO[i].re.test(t)) return MENU_PLATO[i];
+    if(esNueva()) for(i=0;i<MENU_OTO.length;i++) if(MENU_OTO[i].re.test(t)) return MENU_OTO[i];
+  }
+  return _menuElegidoAnt(r);
+};
+platoDe=function(r){
+  var m=menuElegido(r); if(!m||m.esp||m.sin) return null; if(m.p) return m.p; if(!CICLO) return null;
+  if(!esNueva()){ var g={des:'des',ape:'ape',mer:'ape',alm:'alm',cen:'alm'}[r.k], c=CICLOS_ANT[CICLO]&&CICLOS_ANT[CICLO][g]; return c&&c[m.k]||null; }
+  var o=CICLOS_OTO[CICLO]; if(!o) return null;
+  if(r.k==='des'&&m.k==='cal') return 'Caliente · '+o.des.cal;
+  if((r.k==='ape'||r.k==='mer')&&m.k==='sal') return 'Salado · '+o.ape.sal;
+  return null;
+};
+function opcionesABordo(r){
+  var c=esNueva()&&CICLOS_OTO[CICLO]; if(!c) return [];
+  if(r.k==='des') return [['🔥','Caliente',c.des.cal,0],['🧊','Frío','',0],['🥝','Saludable','',0]];
+  if(r.k==='ape'||r.k==='mer') return [['🥨','Salado',c.ape.sal,0],['🍰','Dulce','',0],['🥝','Saludable','',0]];
+  return c.alm;
+}
+function elegirABordo(sid, i){
+  var r=LISTA.filter(function(x){ return x.sid===sid; })[0]; if(!r) return;
+  var o=opcionesABordo(r)[i]; if(!o) return;
+  var alm=r.k==='alm'||r.k==='cen';
+  r.abordo={t:(alm?o[2]:o[1]).toUpperCase().slice(0,12)+(o[3]?' ❄️':''), i:o[0], p:o[1]+(o[2]?' · '+o[2]:''), frio:o[3]};
+  guardar(); refrescar(); if(fichaAbierta) ficha(fichaAbierta);
+}
+function quitarABordo(sid){ var r=LISTA.filter(function(x){ return x.sid===sid; })[0]; if(r){ delete r.abordo; guardar(); refrescar(); if(fichaAbierta) ficha(fichaAbierta); } }
+function aptoDe(r, me){
+  var t=sinAcento((r.menu||'')+' '+(r.especial||''));
+  if(/SIN GLUTEN.*VEGAN|VEGAN.*SIN GLUTEN/.test(t)) return APTO.SG_VEG;
+  if(me&&me.k==='sau') return r.k==='des'?APTO.SAU_DES:APTO.SAU_APE;
+  return '';
+}
+tarjetaMenu=function(r){
+  var me=menuElegido(r);
+  if(me&&me.sin){
+    var ops=opcionesABordo(r);
+    if(!ops.length) return '<div class="plato"><div class="ttl"><span class="lb">A BORDO</span>🍴<small>Sin ciclo</small></div><div class="pl">No eligió por la web. Elige el ciclo (en 🔁 Cambiar) para ver qué ofrecer.</div></div>';
+    return '<div class="plato"><div class="ttl"><span class="lb">A BORDO</span>🍴<small>Ciclo '+CICLO+'</small></div>'+
+      '<div class="pl">No eligió por la web. <b>Ofrecer</b> (toca lo que elija):</div>'+
+      '<div class="ofr">'+ops.map(function(o,i){ return '<button onclick="elegirABordo('+r.sid+','+i+')">'+o[0]+' <b>'+o[1]+'</b>'+(o[2]?' · '+o[2]:'')+(o[3]?' ❄️':'')+'</button>'; }).join('')+'</div></div>';
+  }
+  if(!me) return '';
+  var p=platoDe(r), ap=aptoDe(r, me);
+  return '<div class="plato"><div class="ttl"><span class="lb'+(me.esp?' esp':'')+'">'+me.t+'</span>'+(me.i||'⚠️')+
+      (me.abordo?'<small>Elegido a bordo</small>':CICLO&&!me.esp?'<small>Ciclo '+CICLO+'</small>':'')+'</div>'+
+    (me.esp?'<div class="pl">Dieta especial: avisar al preparar.'+(ap?'<br>'+ap:'')+'</div>':
+     p?'<div class="pl">'+p.split(' → ').map(function(x,i,a){ return (a.length>1?(i?'Segundo: ':'Primero: '):'')+'<b>'+x+'</b>'; }).join('<br>')+(me.frio?' · ❄️ plato frío de rotación':'')+'</div>':
+     '<div class="pl">'+(CICLO?(esNueva()?'':'La carta del ciclo '+CICLO+' no trae este plato.'):'Elige el ciclo (en 🔁 Cambiar) para ver el plato.')+'</div>')+
+    (ap&&!me.esp?'<div class="apto">ℹ️ '+ap+'</div>':'')+
+    (me.abordo?'<button class="ofr-x" onclick="quitarABordo('+r.sid+')">↩︎ Cambiar lo elegido</button>':'')+'</div>';
+};
+
+// Carta y ciclo: salen por la fecha del viaje; se pueden cambiar a mano
+function fechaViaje(){ var r=((typeof LEIDO!=='undefined'&&LEIDO&&LEIDO.filas)||LISTA||[]).filter(function(x){ return x.fecha; })[0]; return fechaDeTexto(r&&r.fecha); }
+function autoCarta(){
+  CICLO_FECHA=fechaViaje()||new Date();
+  var c=cicloOtono(CICLO_FECHA); CARTA=c?'oto':'ant';
+  if(!CICLO_MOL&&c){ CICLO=c; CICLO_AUTO=true; } else CICLO_AUTO=false;
+  if(CICLO>nCiclos()) CICLO=0;
+}
+function ponCarta(k){ CARTA=k; CICLO_AUTO=false; if(CICLO>nCiclos()) CICLO=0; pintarCiclo(); refrescarSiCargado(); }
+pintarCiclo=function(){
+  var cart='<div class="cartas"><button class="'+(esNueva()?'sel':'')+'" onclick="ponCarta(\'oto\')">Carta nueva<small>Otoño · 3 ciclos</small></button>'+
+    '<button class="'+(!esNueva()?'sel':'')+'" onclick="ponCarta(\'ant\')">Carta anterior<small>4 ciclos</small></button></div>';
+  var h=[1,2,3,4].slice(0,nCiclos()).map(function(n){ return '<button class="'+(CICLO===n?'sel':'')+'" onclick="CICLO='+n+';CICLO_AUTO=false;pintarCiclo();refrescarSiCargado()">'+n+'<small>Ciclo</small></button>'; }).join('')+
+    '<button class="'+(!CICLO?'sel':'')+'" onclick="CICLO=0;CICLO_AUTO=false;pintarCiclo();refrescarSiCargado()">?<small>No lo sé</small></button>';
+  var l=document.querySelectorAll('.x-ciclo'); for(var i=0;i<l.length;i++){ l[i].innerHTML=h; var pr=l[i].previousElementSibling; if(!pr||!pr.classList.contains('cartas')) l[i].insertAdjacentHTML('beforebegin',cart); else pr.outerHTML=cart; }
+  var c=esNueva()&&CICLOS_OTO[CICLO], d=CICLO_MOL?'<div class="sug on">✅ El MOL dice <b style="color:var(--tx)">&nbsp;CICLO '+CICLO_MOL+'</b>&nbsp;· ya está elegido</div>':
+    CICLO_AUTO&&CICLO_FECHA?'<div class="sug on">✅ <b style="color:var(--tx)">&nbsp;Ciclo '+CICLO+'</b>&nbsp;· automático por la fecha · semana del '+semanaTxt(CICLO_FECHA)+'</div>':
+    '<div class="nota" style="text-align:left;margin:0 0 8px">'+(CICLO?'Ciclo '+CICLO+' elegido a mano.':esNueva()?'Elige el ciclo si lo sabes.':'El MOL no dice el ciclo. Si lo sabes, elígelo y verás el plato en cada asiento.')+'</div>';
+  if(c) d+='<div class="abord"><div class="ab-t">A BORDO ESTA SEMANA · sin elección previa</div>'+
+    '<div><b>☕ Desayuno</b> Caliente: '+c.des.cal.toLowerCase()+' · Frío · Saludable</div>'+
+    '<div><b>🍽️ Almuerzo / cena</b> '+c.alm.map(function(o){ return o[1]+': '+o[2].toLowerCase()+(o[3]?' ❄️':''); }).join(' · ')+'</div>'+
+    '<div><b>🥨 Aperitivo / merienda</b> Salado: '+c.ape.sal.toLowerCase()+' · Dulce · Saludable</div></div>';
+  l=document.querySelectorAll('.x-ciclo-det'); for(i=0;i<l.length;i++) l[i].innerHTML=d;
+};
+var _mostrarComprobacionMenus=mostrarComprobacion;
+mostrarComprobacion=function(){ _mostrarComprobacionMenus.apply(this, arguments); autoCarta(); pintarCiclo(); };
+var _restaurarMenus=restaurar;
+restaurar=function(){ var r=_restaurarMenus.apply(this, arguments); var c=CICLO; autoCarta(); if(!CICLO_AUTO&&c) CICLO=c; if(CICLO>nCiclos()) CICLO=0; pintarCiclo(); return r; };
+
+// Ficha sencilla: debajo del menú, el plato, para qué dieta es apto o qué ofrecer a bordo
+var _fichaMenus=ficha;
+ficha=function(key){
+  _fichaMenus(key);
+  if(SX.full===key) return;
+  var sv=ASIENTOS[key]||[], ahora=sxAhora(sv), orden=ahora.concat(sv.filter(function(r){ return ahora.indexOf(r)<0; }));
+  var els=document.querySelectorAll('#sh-asiento .sx-menu');
+  for(var i=0;i<els.length;i++){ var r=orden[i]; if(!r) continue; var h=tarjetaMenu(r); if(!h) continue;
+    var tras=els[i].nextElementSibling&&els[i].nextElementSibling.classList.contains('sx-alerta')?els[i].nextElementSibling:els[i];
+    tras.insertAdjacentHTML('afterend', h); }
+};
+(function(){ var st=document.createElement('style'); st.textContent=
+  '.plato .ofr{display:flex;flex-direction:column;gap:6px;margin-top:8px}'+
+  '.plato .ofr button{text-align:left;background:var(--s1);border:1px solid var(--div);color:var(--tx);border-radius:10px;padding:9px 10px;font:600 13px Inter,sans-serif;cursor:pointer}'+
+  '.plato .ofr button b{color:var(--acc3)}'+
+  '.plato .apto{margin-top:8px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.45);color:#BAE6FD;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45}'+
+  '.plato .apto b{color:#fff}'+
+  '.plato .ofr-x{margin-top:8px;background:none;border:0;color:var(--tx2);font:600 12px Inter,sans-serif;cursor:pointer}'+
+  '.cartas{display:flex;gap:8px;margin:0 0 8px}.cartas button{flex:1;background:var(--s1);border:1px solid var(--div);color:var(--tx);border-radius:12px;padding:8px;font:800 13px Inter,sans-serif;cursor:pointer}'+
+  '.cartas button small{display:block;font-size:10.5px;color:var(--tx2);font-weight:600}.cartas button.sel{border:2px solid var(--acc2);color:var(--acc3)}'+
+  '.abord{background:var(--s2);border:1px solid var(--div);border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:12px;line-height:1.5;color:#CBD5E1}'+
+  '.abord .ab-t{font-size:10.5px;font-weight:800;letter-spacing:1px;color:var(--tx2);margin-bottom:4px}'+
+  '.abord b{color:var(--acc3);display:block;margin-top:4px}';
+  document.head.appendChild(st); })();
+
 restaurar();
 /* «Desliza hacia abajo para actualizar», también dentro de Servicios: el gesto lo pinta y lo
    hace la app (parent.__ptr); aquí solo se comprueba que se puede (arriba del todo, sin ventanas abiertas). */
