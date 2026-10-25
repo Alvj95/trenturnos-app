@@ -28,6 +28,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Aviso de versión nueva de Google Play (ver TTActualizarPlugin), igual que en TrenTurnos.
+        registerPlugin(TTActualizarPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();

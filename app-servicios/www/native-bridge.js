@@ -395,12 +395,12 @@
       if (document.getElementById('tt-act-fondo')) return;
       actEstilos();
       var f = document.createElement('div'); f.id = 'tt-act-fondo';
-      f.innerHTML = '<div id="tt-act-hoja" role="dialog" aria-label="Nueva versión de TrenTurnos">' +
-        '<div class="a-ico">🆕</div><div class="a-t1">Nueva versión de TrenTurnos</div>' +
+      f.innerHTML = '<div id="tt-act-hoja" role="dialog" aria-label="Nueva versión de TrenTurnos V5 Servicios">' +
+        '<div class="a-ico">🆕</div><div class="a-t1">Nueva versión de TrenTurnos V5 Servicios</div>' +
         '<div class="a-t2">' + (version ? 'v' + actEsc(version) + ' · ' : '') + 'disponible en Google Play</div>' +
         (lineas.length ? '<div class="a-nov"><b>NOVEDADES</b>' + lineas.map(function (l) { return '• ' + actEsc(l); }).join('<br>') + '</div>' : '') +
         '<button type="button" class="a-si">⬇️ Actualizar ahora</button><button type="button" class="a-no">Más tarde</button>' +
-        '<div class="a-pie">Tus turnos y ajustes no se tocan al actualizar</div></div>';
+        '<div class="a-pie">Tu MOL y tus ajustes no se tocan al actualizar</div></div>';
       document.body.appendChild(f);
       function cerrar() { f.remove(); }
       f.querySelector('.a-no').onclick = function () { try { localStorage.setItem(K_MAS_TARDE, actHoy()); } catch (e) {} cerrar(); };
