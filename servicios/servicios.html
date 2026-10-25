@@ -3801,8 +3801,12 @@ setTimeout(function(){ sqaTick(); sqaRenfe(); }, 1500);
    Con el móvil bloqueado no se pregunta a Renfe: usan el último retraso que hubiera. */
 var SQA_ID=870000, SQA_CANAL='secuencia';
 SQA.firma=''; SQA.avN=0; SQA.avT=0; SQA.avInexacta=false;
-function sqaLN(){ try{ var C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.LocalNotifications)) C=window.parent&&window.parent.Capacitor;
+// Siempre el Capacitor de la página principal, como el resto del módulo (parent.*): Servicios va en
+// un marco y Android solo contesta a la página principal (desde el marco las llamadas no acaban nunca).
+function sqaLN(){ try{ var C=null; try{ if(window.parent&&window.parent!==window) C=window.parent.Capacitor; }catch(e){} if(!(C&&C.Plugins&&C.Plugins.LocalNotifications)) C=window.Capacitor;
   var L=C&&C.Plugins&&C.Plugins.LocalNotifications; return L&&C.isNativePlatform&&C.isNativePlatform()?L:null; }catch(e){ return null; } }
+// Si el móvil no contesta en 8 s, se avisa en los ajustes en vez de quedarse esperando
+function sqaPlazo(pr){ return Promise.race([pr, new Promise(function(_,no){ setTimeout(function(){ no(new Error('sin respuesta')); },8000); })]); }
 // Hora local de hoy (con setHours, así vale también el día del cambio de hora)
 function sqaFecha(min){ var b=sqaAhora(), m=Math.round(min); b.setHours(0,0,0,0); b.setHours(Math.floor(m/60), m%60, 0, 0); return new Date(b.getTime()-(window.SQA_DESFASE||0)); }
 function sqaTocaLista(bl,soloTA){ return bl.ops.filter(function(o){ return (!soloTA||/TA/.test(o[1]))&&sqDestaca(o); }).map(function(o){ var t=o[3]?SQ_TIPO[o[3]]:SQ_TIPO.BM; return t.e+' '+o[0].replace(/^Servicio( de)? (restauración )?(de )?/i,'').replace(/^./,function(c){ return c.toUpperCase(); }); }); }
@@ -3834,17 +3838,18 @@ function sqaAvPreparar(L){ if(sqaAvListo) return sqaAvListo;
 function sqaAvProgramar(forzar){ var L=sqaLN(); if(!L) return; var Q=sqActual(), A=sqaG();
   var on=Q&&A.on&&A.avisos, lista=on?sqaAvLista(Q,A):[], firma=on?Q.tren+'|'+lista.map(function(n){ return n.id+'@'+Math.round(n.at/60000); }).join(','):'off';
   if(!forzar&&firma===SQA.firma&&Date.now()-SQA.avT<10*60000) return; SQA.firma=firma; SQA.avT=Date.now();
-  L.checkPermissions().then(function(p){
+  sqaPlazo(L.checkPermissions()).then(function(p){
     if(p.display!=='granted'){ SQA.avN=-1; return sqaAvBorrar(L); }
     return sqaAvPreparar(L).then(function(){ return sqaAvBorrar(L); }).then(function(){ if(!lista.length) return null;
       return L.schedule({notifications:lista.map(function(n){ var o={id:n.id, title:n.title, body:n.body, largeBody:n.body, channelId:SQA_CANAL, schedule:{at:n.at, allowWhileIdle:true}, extra:n.extra};
         if(n.actionTypeId) o.actionTypeId=n.actionTypeId; return o; })}); }).then(function(r){ SQA.avN=lista.length; SQA.avInexacta=!!(r&&r.warning); });
-  }).catch(function(){}).then(function(){ var el=document.getElementById('sqa-avest'); if(el) el.outerHTML=sqaAvEstado(); }); }
+  }).catch(function(){ SQA.avN=-2; SQA.firma=''; }).then(function(){ var el=document.getElementById('sqa-avest'); if(el) el.outerHTML=sqaAvEstado(); }); }
 // Pide permiso la primera vez que se abre la secuencia con los avisos puestos
 var _sqaAbrirSec=abrirSecuencia; abrirSecuencia=function(tab){ _sqaAbrirSec(tab); var L=sqaLN(), A=sqaG(); if(!L||!A.avisos||SQA.pedido) return; SQA.pedido=1;
   L.checkPermissions().then(function(p){ if(p.display==='granted') return; return L.requestPermissions(); }).then(function(){ sqaAvProgramar(true); }).catch(function(){}); };
 function sqaAvEstado(){ var L=sqaLN(), A=sqaG(); if(!A.avisos) return '<div id="sqa-avest"></div>';
   if(!L) return '<div id="sqa-avest" class="sqa-avest">ℹ️ Con el móvil bloqueado avisa en la app de Android (TrenTurnos o TrenTurnos V5 Servicios). En la web solo avisa con la app abierta.</div>';
+  if(SQA.avN===-2) return '<div id="sqa-avest" class="sqa-avest no">⚠️ No se pudieron programar los avisos en el móvil. Cierra la app del todo y ábrela otra vez.</div>';
   if(SQA.avN<0) return '<div id="sqa-avest" class="sqa-avest no">⚠️ Sin permiso de notificaciones: actívalas para esta app en los ajustes de Android.</div>';
   return '<div id="sqa-avest" class="sqa-avest">📱 <b>'+SQA.avN+' aviso'+(SQA.avN===1?'':'s')+' programado'+(SQA.avN===1?'':'s')+'</b> en el móvil: suenan aunque esté bloqueado.'+(SQA.avInexacta?'<br>⚠️ Android puede retrasarlos unos minutos. <a href="#" onclick="sqaExacta();return false">Permitir hora exacta</a>':'')+'</div>'; }
 window.sqaExacta=function(){ var L=sqaLN(); if(L&&L.changeExactNotificationSetting) L.changeExactNotificationSetting().then(function(){ sqaAvProgramar(true); }).catch(function(){}); };
@@ -3855,7 +3860,7 @@ function sqaAjAvisosHTML(A){ var sw=function(k,t,d){ return '<button class="sqa-
       '<button class="sqa-prueba" onclick="sqaAvPrueba()">🔔 Probar un aviso (llega en 10 s: bloquea el móvil)</button>':''); }
 window.sqaAntes=function(m){ var A=sqaG(); A.antes=m; sqaP(A); sqaAvProgramar(true); pintarSecuencia(); };
 window.sqaAvPrueba=function(){ var L=sqaLN(); if(!L){ toast('Los avisos con el móvil bloqueado van en la app de Android'); return; }
-  L.checkPermissions().then(function(p){ return p.display==='granted'?p:L.requestPermissions(); }).then(function(p){ if(!p||p.display!=='granted'){ toast('⚠️ Activa las notificaciones de esta app en Android'); return; }
+  sqaPlazo(L.checkPermissions()).then(function(p){ return p.display==='granted'?p:L.requestPermissions(); }).then(function(p){ if(!p||p.display!=='granted'){ toast('⚠️ Activa las notificaciones de esta app en Android'); return; }
     return sqaAvPreparar(L).then(function(){ return L.schedule({notifications:[{id:SQA_ID+999, title:'🚉 En 5 min llegáis a Córdoba (prueba)', body:'Así te llegarán los avisos de la secuencia', channelId:SQA_CANAL, schedule:{at:new Date(Date.now()+10000), allowWhileIdle:true}}]}); })
       .then(function(){ toast('🔔 En 10 s llega un aviso de prueba'); }); }).catch(function(){ toast('⚠️ No se pudo programar el aviso'); }); };
 // Al cambiar un ajuste de avisos, se reprograma
