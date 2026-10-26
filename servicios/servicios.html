@@ -3023,6 +3023,46 @@ setTimeout(function(){ sxInicio(); if(document.getElementById('p-mapa').classLis
    a cada pasajero según dónde sube y baja (la pirámide), y qué hay que hacer en
    cada parada. */
 var SECUENCIAS={
+ '1092':{
+  tren:'1092', tipo:'Alvia', serie:'S-130', ruta:'Alacant → Barcelona Sants', dur:'5 h 17', dias:'Todos los días (LMXJVSD)', rev:'Ficha de secuencia operativa',
+  lleva:[['☕','Cafetería',1],['🛒','Bar móvil',1],['🙋','At. cliente',1],['🧒','Menores',1],['🍽️','A la plaza',1],['📺','Audio/vídeo',0],['📰','Prensa',0]],
+  megafonia:'🔊 Castellano · valenciano · catalán · inglés', trip:'👤 1 TA (tú) · ☕ 1 TCF (cafetería)',
+  paradas:[['Alicante','6:55'],['Valencia Nord','8:56'],['Castelló','9:52'],['Camp de Tarragona','11:31'],['Barcelona-Sants','12:12']],
+  // D+BD: desayuno + bebida de despedida · BB+D: bebida de bienvenida + desayuno · Rest.C: restauración de cortesía
+  pir:[['D+BD','D+BD','D+BD','D+BD'],['Rest.C','BB+D','BB+D'],['D+BD','D+BD'],['Rest.C']],
+  // Cada servicio de restauración dice a quién va: s = parada donde sube, b = donde baja (índices de «paradas»; sin ellos, a todos).
+  bloques:[
+   {h:'5:55', t:'Toma de servicio', fase:'FASE I · PREPARACIÓN DEL SERVICIO', est:null, ops:[
+    ['Toma de servicio en centro operativo','TA·TCF','OP/10'],['Toma de servicio en tren (6:10)','TA·TCF','OP/20'],['Revisión soportes publicitarios','TA·TCF','OP/60'],
+    ['Supervisión de las dotaciones','TA·TCF','OP/30'],['Supervisión de la funcionalidad','TA·TCF','OP/40'],['Presentación al supervisor/OCE','TA','OP/50'],
+    ['Reposición consumibles WC','TA','OP/270'],['Preparación servicio de restauración','TA·TCF','OP/170'],['Preparación servicio de bar móvil','TA·TCF','OP/70']]},
+   {h:'6:25', t:'Acogida de viajeros', fase:'FASE II · INICIO DEL SERVICIO', est:null, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Inicio servicio de cafetería','TCF','OP/91'],['1.ª emisión mensaje equipajes (castellano, valenciano e inglés)','TA','OP/181'],['2.ª emisión mensaje equipajes (castellano, valenciano e inglés)','TA','OP/181']]},
+   {h:'6:55', t:'Salida de Alacant', fase:'FASE III · EL TRAYECTO', est:0, ops:[
+    ['Mensaje de bienvenida (castellano, valenciano e inglés)','TA','OP/110'],['Emisión mensaje PlayRenfe (castellano, valenciano e inglés)*','TA','OP/181'],['Emisión mensaje equipajes (castellano, valenciano e inglés)','TA','OP/181'],
+    ['Supervisión equipajes / pase de atención','TA','OP/100'],['Conectar canal Renfe','TA','OP/140'],['Desconectar canal Renfe','TA','OP/360'],['Preparación servicio de restauración','TA','OP/170'],
+    ['Supervisión equipajes / pase de atención','TA','OP/210'],['Entrega de carta menú','TA','OP/200'],['Entrega/recogida de toallita caliente','TA','OP/210'],
+    ['Servicio de restauración (a todos)','TA','OP/220','D'],['Recogida prestación','TA','OP/240'],['Pase de bar móvil','TA','OP/160'],
+    ['Servicio copa de bienvenida/despedida (pax destino Valencia y Castellón)','TA','OP/150','BD',{s:[0],b:[1,2]}],['Recogida selectiva de residuos','TA','OP/250'],
+    ['Mensaje de despedida (castellano, valenciano e inglés)','TA','OP/310']]},
+   {h:'8:56', t:'Valencia Nord', est:1, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Mensaje de bienvenida (castellano, valenciano e inglés)','TA','OP/110'],['Emisión mensaje equipajes (castellano, valenciano e inglés)','TA','OP/181'],
+    ['Supervisión equipajes / pase de atención','TA','OP/100'],['Servicio restauración de cortesía (pax Valencia – Castellón)','TA','OP/155','C',{s:[1],b:[2]}],
+    ['Servicio copa de bienvenida/despedida (al resto de pax)','TA','OP/150','BD',[{s:[0],b:[3,4]},{s:[1],b:[3,4]}]],['Preparación servicio de restauración','TA','OP/170'],
+    ['Recogida prestación','TA','OP/240'],['Mensaje estación intermedia (castellano, valenciano e inglés)','TA','OP/180']]},
+   {h:'9:52', t:'Castellón', est:2, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Supervisión equipajes / pase de atención','TA','OP/100'],['Entrega de carta menú','TA','OP/200'],['Entrega/recogida de toallita caliente','TA','OP/210'],
+    ['Servicio de restauración (pax subidos en Valencia y Castellón)','TA','OP/220','D',{s:[1,2]}],['Recogida prestación','TA','OP/240'],['Pase de bar móvil','TA','OP/160'],
+    ['Servicio copa de bienvenida/despedida (pax Castellón)','TA','OP/150','BD',{s:[2]}],['Recogida selectiva de residuos','TA','OP/250'],['Mensaje estación intermedia (castellano, catalán e inglés)','TA','OP/180']]},
+   {h:'11:31', t:'Camp de Tarragona', est:3, ops:[
+    ['Acogida/despedida de clientes','TA','OP/90'],['Supervisión equipajes / pase de atención','TA','OP/100'],['Servicio restauración de cortesía (pax Camp – Barcelona)','TA','OP/155','C',{s:[3],b:[4]}],
+    ['Reposición consumibles WC','TA','OP/270'],['Desmontaje y recogida bar móvil','TA','OP/290'],['Cierre documentación con supervisor/OCE','TA','OP/300'],['Cierre documentación servicio','TA','OP/221'],
+    ['Mensaje de despedida (castellano, catalán e inglés)','TA','OP/310']]},
+   {h:'12:12', t:'Llegada a Barcelona Sants', fase:'FASE IV · FINALIZACIÓN DEL SERVICIO', est:4, ops:[
+    ['Cierre servicio de cafetería','TCF','OP/330'],['Despedida de viajeros','TA','OP/320'],['Recogida de dotaciones a bordo / revisión final del tren','TA·TCF','OP/340'],['Deje de servicio en centro operativo','TA·TCF','OP/350']]}
+  ],
+  notas:['Valencia Nord: llegada 8:56, salida 9:06.']
+ },
  '3933':{
   tren:'3933', tipo:'AVE', serie:'S-102', ruta:'Granada → Barcelona Sants', dur:'6 h 59', dias:'Todos los días (LMXJVSD)', rev:'Rev. 20 · 14/09/26',
   lleva:[['☕','Cafetería',1],['🛒','Bar móvil',1],['🙋','At. cliente',1],['🧒','Menores',1],['🍽️','A la plaza',1],['📺','Audio/vídeo',0],['📰','Prensa',0]],
@@ -3141,7 +3181,8 @@ var SQ_TIPO={D:{n:'Desayuno',e:'🥐',c:'#EA580C',k:'des'}, AP:{n:'Aperitivo',e:
   M:{n:'Merienda',e:'🧁',c:'#16A34A',k:'mer'}, CE:{n:'Cena',e:'🌙',c:'#1D4ED8',k:'cen'}};
 // Códigos de la pirámide de cada ficha: qué comida es y cómo se lee.
 var SQ_COD={D:{T:'D',txt:'🥐 Desayuno + 🥂 bebida',c:'#EA580C'}, AP:{T:'AP',txt:'🥨 Aperitivo + 🥂 bebida',c:'#2563EB'}, C:{T:'C',txt:'🍪 Cortesía',c:'#475569'},
-  'BB+M':{T:'M',txt:'🥂 Bebida de bienvenida + 🧁 merienda',c:'#16A34A'}, 'BB+C':{T:'CE',txt:'🥂 Bebida de bienvenida + 🌙 cena',c:'#1D4ED8'}, 'C+BD':{T:'CE',txt:'🌙 Cena + 🥂 bebida de despedida',c:'#0891B2'}};
+  'BB+M':{T:'M',txt:'🥂 Bebida de bienvenida + 🧁 merienda',c:'#16A34A'}, 'BB+C':{T:'CE',txt:'🥂 Bebida de bienvenida + 🌙 cena',c:'#1D4ED8'}, 'C+BD':{T:'CE',txt:'🌙 Cena + 🥂 bebida de despedida',c:'#0891B2'},
+  'D+BD':{T:'D',txt:'🥐 Desayuno + 🥂 bebida de despedida',c:'#EA580C'}, 'BB+D':{T:'D',txt:'🥂 Bebida de bienvenida + 🥐 desayuno',c:'#C2410C'}, 'Rest.C':{T:'C',txt:'🍪 Cortesía',c:'#475569'}};
 var SQ={tab:'ahora', todo:false, s:0, b:null};
 if(!MENUS_MAN.cor) MENUS_MAN.cor=['Cortesía'];
 function sqDe(num){ num=String(num||'').replace(/\D/g,''); return SECUENCIAS[num]||null; }
