@@ -37377,5 +37377,665 @@ if(document.readyState==='complete') setTimeout(arranca,300); else window.addEve
 })();
 
 </script>
+<script>
+/* ═══ NUEVO — Vacaciones y rotaciones (maquetas 1–10 aprobadas) ═══
+   - El admin sube el PDF «Turno de vacaciones» de cada base y año. Se lee solo: el cuadro de
+     rotaciones, la nota de la rotación con asterisco, y por cada matrícula sus 3 quincenas y cuál
+     es la de festivos (la celda salmón del PDF).
+   - En Horario: tu rotación, tus 3 quincenas, cargarlas en el calendario, el cuadro de la base,
+     quién está de vacaciones y la previsión del año siguiente (pasas a la rotación siguiente).
+   - En Calendario: vista «Año» con todo lo que tienes puesto, buscador de viajes y la previsión
+     con rayas (la previsión no se guarda como turno: es solo una capa encima del calendario).
+   Datos en localStorage 'vac5'. La 1.ª quincena es del 1 al 15; la 2.ª son 15 días desde el 16,
+   salvo en la rotación con asterisco, que usa las fechas de la nota del PDF. */
+var VAC_MESES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+function vacG(){ try{ var v=JSON.parse(localStorage.getItem('vac5')||'{}'); v.pubs=v.pubs||{}; v.cal=v.cal||{}; v.man=v.man||{}; return v; }catch(e){ return {pubs:{},cal:{},man:{}}; } }
+function vacS(v){ try{ localStorage.setItem('vac5',JSON.stringify(v)); }catch(e){} }
+function vacNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function vacRk(r){ return String(r||'').replace(/\*/g,'').toUpperCase(); }
+function vacMat(m){ return String(m||'').replace(/\D/g,'').replace(/^0+/,''); }
+function vacK(d){ return key(d.getFullYear(),d.getMonth()+1,d.getDate()); }
+function vacFmt(d){ return d.getDate()+' '+MESES_C[d.getMonth()]; }
+function vacNombre(n){ var p=String(n||'').split(','); var s=(p.length>1?p.slice(1).join(',').trim()+' '+p[0].trim():String(n||'')).toLowerCase();
+  return s.replace(/(^|[\s\-'.])([a-záéíóúñü])/g,function(a,b,c){ return b+c.toUpperCase(); }).replace(/\s+/g,' ').trim(); }
+function vacQtxt(q){ return (q[1]===1?'1ª':'2ª')+' '+MESES_C[q[0]-1]; }
+
+/* ── Lectura del PDF ── */
+async function vacParsear(buf){
+  await asegurarPdfWorkerSeguro();
+  var pdf=await pdfjsLib.getDocument({data:buf}).promise, R={sede:null,anio:null,tabla:[],nota:{},filas:[]};
+  var QRX=/^([12])\s*[ªº°a]?\s*(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)$/i, RRX=/^ROTACI[OÓ]N\s*([0-9]{1,2}[A-Z]?\*?)$/i;
+  for(var pi=1;pi<=pdf.numPages;pi++){
+    var page=await pdf.getPage(pi), vp=page.getViewport({scale:1}), H=vp.height, tc=await page.getTextContent();
+    var sc=2, v2=page.getViewport({scale:sc}), cv=document.createElement('canvas'); cv.width=Math.ceil(v2.width); cv.height=Math.ceil(v2.height);
+    var cx=cv.getContext('2d',{willReadFrequently:true}); await page.render({canvasContext:cx,viewport:v2}).promise;
+    var img=cx.getImageData(0,0,cv.width,cv.height).data;
+    var salmon=function(x,y){ var X=Math.round(x*sc), Y=Math.round(y*sc); if(X<0||Y<0||X>=cv.width||Y>=cv.height) return false;
+      var i=(Y*cv.width+X)*4, r=img[i], g=img[i+1], b=img[i+2]; return r>=232&&g>=175&&g<=232&&b>=140&&b<=210&&r-b>=35; };
+    var its=tc.items.filter(function(i){ return (i.str||'').trim(); }).map(function(i){ return {s:i.str.trim().replace(/\s+/g,' '),x:i.transform[4],y:H-i.transform[5],w:i.width||0,h:i.height||5}; });
+    its.sort(function(a,b){ return a.y-b.y||a.x-b.x; });
+    var filas=[], cur=null;
+    its.forEach(function(it){ if(cur&&Math.abs(it.y-cur.y)<2.2) cur.it.push(it); else { cur={y:it.y,it:[it]}; filas.push(cur); } });
+    filas.forEach(function(f){
+      var it=f.it.sort(function(a,b){ return a.x-b.x; }), m=[];
+      // une «1ª» + «FEBRERO» si vienen separados
+      for(var i=0;i<it.length;i++){ var a=it[i], b=it[i+1];
+        if(b&&/^[12]\s*[ªº°]?$/.test(a.s)&&/^[A-ZÁÉÍÓÚ]+$/i.test(b.s)){ m.push({s:a.s+' '+b.s,x:a.x,y:a.y,w:b.x+b.w-a.x,h:a.h}); i++; } else m.push(a); }
+      var txt=m.map(function(x){ return x.s; }).join(' ');
+      if(pi===1&&!R.anio){ var ya=m.filter(function(x){ return /^20\d\d$/.test(x.s); })[0]; if(ya) R.anio=parseInt(ya.s,10); }
+      if(pi===1&&!R.sede&&m.length===1&&/^[A-ZÁÉÍÓÚÑ ]{4,}$/.test(m[0].s)&&!/TURNO|TRIPULACI|VACACION/.test(m[0].s)) R.sede=m[0].s;
+      if(/\*/.test(txt)&&!RRX.test(m[0].s)){ var re=/(\d{1,2})\s*-\s*(\d{1,2})\s*([A-Za-zÁÉÍÓÚáéíóú]+)/g, x; while((x=re.exec(txt))){ var mi=VAC_MESES.indexOf(vacNorm(x[3]).toUpperCase()); if(mi>-1) R.nota[mi+1]=[+x[1],+x[2]]; } }
+      var qs=m.filter(function(x){ return QRX.test(x.s); }), rot=m.filter(function(x){ return RRX.test(x.s); }), mat=m.filter(function(x){ return /^\d{6,8}$/.test(x.s); })[0];
+      var qv=function(x){ var z=x.s.match(QRX); return [VAC_MESES.indexOf(vacNorm(z[2]).toUpperCase())+1, +z[1]]; };
+      if(mat&&qs.length>=3){
+        var nom=m.filter(function(x){ return x.x>mat.x&&x.x<qs[0].x&&!/^\d+$/.test(x.s); }).map(function(x){ return x.s; }).join(' ');
+        var fes=-1; qs.slice(0,3).forEach(function(q,qi){ var yc=q.y-q.h*0.5; if(salmon(q.x-1.2,yc)||salmon(q.x-2.5,yc)||salmon(q.x+q.w+1.2,yc)) fes=qi; });
+        R.filas.push({mat:mat.s,nom:nom,rot:rot.length?rot[rot.length-1].s.match(RRX)[1].toUpperCase():'',q:qs.slice(0,3).map(qv),fes:fes});
+      } else if(!mat&&rot.length&&rot[0]===m[0]&&qs.length>=3){
+        var r=rot[0].s.match(RRX)[1].toUpperCase(); if(!R.tabla.some(function(t){ return t.rot===r; })) R.tabla.push({rot:r,q:qs.slice(0,3).map(qv)});
+      }
+    });
+  }
+  return R;
+}
+
+/* ── Fechas de cada quincena ── */
+function vacStar(pub,rot){ var t=(pub.tabla||[]).filter(function(t){ return vacRk(t.rot)===vacRk(rot); })[0]; return !!(t&&/\*/.test(t.rot)); }
+function vacRango(pub,anio,rot,q){ var m=q[0], h=q[1], ini, fin, last=new Date(anio,m,0).getDate();
+  if(h===1){ ini=new Date(anio,m-1,1); fin=new Date(anio,m-1,15); }
+  else if(vacStar(pub,rot)&&pub.nota&&pub.nota[m]){ var n=pub.nota[m], nl=new Date(pub.anio,m,0).getDate(); ini=new Date(anio,m-1,n[0]); fin=new Date(anio,m-1,n[1]>=nl?last:Math.min(n[1],last)); }
+  else { ini=new Date(anio,m-1,16); fin=new Date(anio,m-1,30); }
+  return [ini,fin]; }
+function vacDiasQ(pub,anio,rot,q){ var r=vacRango(pub,anio,rot,q), out=[], d=new Date(r[0]); while(d<=r[1]){ out.push(vacK(d)); d.setDate(d.getDate()+1); } return out; }
+function vacFesComun(pub,rot){ var c=[0,0,0]; (pub.filas||[]).forEach(function(f){ if(vacRk(f.rot)===vacRk(rot)&&f.fes>-1) c[f.fes]++; }); var mx=Math.max.apply(null,c); return mx?c.indexOf(mx):-1; }
+// Tu fila: por matrícula, o la rotación elegida a mano si no apareces
+function vacMia(pub){ var me=vacMat(AJ.matricula); var f=(pub.filas||[]).filter(function(f){ return me&&vacMat(f.mat)===me; })[0]; if(f) return f;
+  var r=vacG().man[pub.anio], t=r&&(pub.tabla||[]).filter(function(t){ return vacRk(t.rot)===vacRk(r); })[0];
+  return t?{mat:'',nom:'',rot:vacRk(t.rot),q:t.q,fes:vacFesComun(pub,t.rot),mano:true}:null; }
+function vacMisDias(pub,f){ var out={}; f.q.forEach(function(q,qi){ vacDiasQ(pub,pub.anio,f.rot,q).forEach(function(k){ out[k]=qi===f.fes?'f':'v'; }); }); return out; }
+// Previsión: la rotación siguiente del cuadro (la última vuelve a la primera)
+function vacSigRot(pub,rot){ var T=pub.tabla||[], i=-1; T.forEach(function(t,j){ if(vacRk(t.rot)===vacRk(rot)) i=j; }); return i<0||!T.length?null:T[(i+1)%T.length]; }
+function vacPrevCalc(pub,f){ var t=vacSigRot(pub,f.rot); if(!t) return null; var A=pub.anio+1, fes=vacFesComun(pub,t.rot), dias={};
+  t.q.forEach(function(q,qi){ vacDiasQ(pub,A,t.rot,q).forEach(function(k){ dias[k]=qi===fes?'f':'v'; }); });
+  return {anio:A,de:vacRk(f.rot),rot:vacRk(t.rot),q:t.q,fes:fes,dias:dias,star:/\*/.test(t.rot)}; }
+/* ── Cambios ya hechos (los apuntas tú): se quitan los días que diste y se suman los que recibiste ── */
+function vacCambios(A){ var v=vacG(); return (v.camb&&v.camb[A])||[]; }
+function vacRangoK(a,b){ var p=a.split('-').map(Number), q=b.split('-').map(Number), d=new Date(p[0],p[1]-1,p[2]), e=new Date(q[0],q[1]-1,q[2]), out=[]; while(d<=e&&out.length<400){ out.push(vacK(d)); d.setDate(d.getDate()+1); } return out; }
+function vacDioK(c){ return c.dioK||vacRangoK(c.dio[0],c.dio[1]); }
+function vacRecK(c){ return c.recK||vacRangoK(c.rec[0],c.rec[1]); }
+// «17, 19, 21–23 jun, 1 jul»: agrupa por mes
+function vacListaTxt(ks){ var T=vacTramos(ks), out=[], mes=null, partes=[];
+  var cierra=function(){ if(partes.length) out.push(partes.join(', ')+' '+MESES_C[mes]); partes=[]; };
+  T.forEach(function(t){ var a=vacKD(t[0]), b=vacKD(t[1]);
+    if(a.getMonth()!==b.getMonth()){ cierra(); out.push(vacTramoTxt(t)); mes=null; return; }
+    if(a.getMonth()!==mes) cierra(); mes=a.getMonth(); partes.push(a.getDate()===b.getDate()?''+a.getDate():a.getDate()+'–'+b.getDate()); });
+  cierra(); return out.join(', '); }
+function vacCortoTxt(ks){ return vacTramos(ks).length>2?ks.length+' días sueltos':vacListaTxt(ks); }
+function vacConTxt(c){ return c.emp?'con la empresa':(c.con?'con '+limpioV(c.con.split(' · ')[0]):''); }
+function vacReal(pub,f){ var d=vacMisDias(pub,f), cam={}, cs=vacCambios(pub.anio);
+  cs.forEach(function(c){ vacDioK(c).forEach(function(k){ delete d[k]; }); });
+  cs.forEach(function(c){ var t=c.qi===f.fes?'f':'v'; vacRecK(c).forEach(function(k){ d[k]=t; cam[k]=1; }); });
+  return {d:d,cam:cam}; }
+// Días seguidos → tramos [desde,hasta]
+function vacTramos(ks){ ks=ks.slice().sort(); var out=[], ini=null, ant=null;
+  ks.forEach(function(k){ if(ant){ var p=ant.split('-').map(Number), n=new Date(p[0],p[1]-1,p[2]+1); if(vacK(n)===k){ ant=k; return; } out.push([ini,ant]); } ini=k; ant=k; });
+  if(ini) out.push([ini,ant]); return out; }
+function vacKD(k){ var p=k.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+function vacTramoTxt(t){ var a=vacKD(t[0]), b=vacKD(t[1]); return a.getMonth()===b.getMonth()?(a.getDate()===b.getDate()?vacFmt(a):a.getDate()+'–'+vacFmt(b)):vacFmt(a)+' – '+vacFmt(b); }
+function vacPrevDia(k){ var v=vacG(); return v.prev&&v.prev.en&&v.prev.dias?v.prev.dias[k]||null:null; }
+
+/* ── Guardar una publicación (y sustituir la previsión de ese año si la había) ── */
+function vacGuardarPub(R){ var v=vacG(), aviso='';
+  R.fecha=new Date().toISOString(); v.pubs[R.anio]=R;
+  if(v.prev&&v.prev.anio===R.anio){ var f=vacMia(R);
+    if(f){ var real=vacMisDias(R,f), ok=Object.keys(v.prev.dias).every(function(k){ return real[k]; })&&Object.keys(real).length===Object.keys(v.prev.dias).length;
+      aviso=ok?'La publicación de '+R.anio+' coincide con tu previsión.':'⚠️ La publicación de '+R.anio+' NO coincide con tu previsión: rotación '+f.rot+' (prevista '+v.prev.rot+').'; }
+    delete v.prev; }
+  vacS(v); return aviso; }
+
+/* ── Cargar / quitar en el calendario (como los días libres: turnos de verdad) ── */
+function vacCargarCal(anio,sync){ var v=vacG(), pub=v.pubs[anio], f=pub&&vacMia(pub); if(!f) return;
+  if(sync) Object.keys(TV).forEach(function(k){ if(TV[k]&&TV[k].vacPub==anio) delete TV[k]; });
+  var R=vacReal(pub,f), d=R.d, n=0, ocup=[], pon=function(k){ TV[k]={tipo:'vacaciones',vacPub:anio,vacFes:d[k]==='f'}; if(R.cam[k]) TV[k].vacCambio=true; n++; };
+  Object.keys(d).forEach(function(k){ var t=TV[k];
+    if(t&&t.tipo!=='vacaciones'){ ocup.push(k); return; }
+    if(t){ t.vacFes=d[k]==='f'; if(R.cam[k]) t.vacCambio=true; return; }
+    pon(k); });
+  if(ocup.length&&confirm(ocup.length+' día(s) de tus vacaciones ya tienen un turno puesto ('+ocup.slice(0,4).map(function(k){ return k.slice(8)+'/'+k.slice(5,7); }).join(', ')+(ocup.length>4?'…':'')+').\n\n¿Los cambias por vacaciones?')){
+    ocup.forEach(pon); ocup=[]; }
+  saveTV(); v.cal[anio]=true; vacS(v);
+  if(!sync) toast('✅ '+n+' días de vacaciones en tu calendario'+(ocup.length?' · '+ocup.length+' con turno, sin tocar':''));
+  if(typeof renderCal==='function') renderCal(); vacPintar(); }
+function vacQuitarCal(anio){ if(!confirm('¿Quitar del calendario las vacaciones de '+anio+' que cargó la app?')) return;
+  var v=vacG(), n=0; Object.keys(TV).forEach(function(k){ if(TV[k]&&TV[k].vacPub==anio){ delete TV[k]; n++; } });
+  saveTV(); delete v.cal[anio]; vacS(v); toast('Quitados '+n+' días'); if(typeof renderCal==='function') renderCal(); vacPintar(); }
+
+/* ── Buscar la publicación de tu base (lo que subió el admin) o leer un PDF del móvil ── */
+async function vacBuscarBase(){ var el=document.getElementById('vac-est'), sede=_baseSlug(_sedeUsuarioActual());
+  var dime=function(t){ if(el) el.textContent=t; };
+  if(!sede){ dime('Primero pon tu Estación Base en Ajustes.'); return; }
+  if(!sbAdmin){ dime('No se pudo conectar. Inténtalo en unos segundos.'); return; }
+  dime('Buscando la publicación de tu base...');
+  try{ var r=await sbAdmin.from('config_global').select('*').like('tipo','vacaciones_'+sede+'_%');
+    if(r.error){ dime('No se pudo comprobar: '+r.error.message); return; }
+    var fs=(r.data||[]).filter(function(f){ return /_(\d{4})$/.test(f.tipo); });
+    if(!fs.length){ dime('El admin todavía no ha publicado las vacaciones de tu base. Si tienes el PDF, ábrelo con «Tengo el PDF».'); return; }
+    var avisos=[], n=0;
+    for(var i=0;i<fs.length;i++){ dime('Leyendo '+fs[i].tipo.match(/_(\d{4})$/)[1]+'...');
+      var buf=await (await fetch(fs[i].url_archivo)).arrayBuffer(), R=await vacParsear(buf);
+      if(!R.anio) R.anio=parseInt(fs[i].tipo.match(/_(\d{4})$/)[1],10); R.sede=R.sede||fs[i].sede;
+      if(R.filas.length){ var a=vacGuardarPub(R); if(a) avisos.push(a); n++; } }
+    dime(n?'':'No se pudo leer la publicación.'); vacPintar(); if(avisos.length) alert(avisos.join('\n'));
+  }catch(e){ dime('No se pudo completar: '+(e&&e.message?e.message:e)); } }
+async function vacLeerArchivo(file){ if(!file) return; var el=document.getElementById('vac-est'); if(el) el.textContent='Leyendo el PDF...';
+  try{ var R=await vacParsear(await file.arrayBuffer());
+    if(!R.filas.length||!R.anio){ if(el) el.textContent='Este PDF no parece la publicación de vacaciones (no se reconoció ninguna matrícula).'; return; }
+    var a=vacGuardarPub(R); if(el) el.textContent=''; vacPintar(); toast('✅ Vacaciones '+R.anio+' · '+R.filas.length+' personas'); if(a) alert(a);
+  }catch(e){ if(el) el.textContent='No se pudo leer: '+(e&&e.message?e.message:e); } }
+
+/* ── Tarjeta en Horario ── */
+var vacAnioVer=null;
+function vacPintar(){ var box=document.getElementById('vac-card'); if(!box) return;
+  var v=vacG(), anios=Object.keys(v.pubs).map(Number).sort(), hoy=new Date(), Y=hoy.getFullYear();
+  if(!anios.length){ box.innerHTML='<div class="vac-h">🏖️ Vacaciones y rotaciones</div><div class="vac-sub">El admin publica el PDF de vacaciones de tu base: la app busca tu matrícula y te enseña tu rotación y tus quincenas.</div>'+
+    '<button class="vac-b vac-bv" onclick="vacBuscarBase()">🔎 Buscar la publicación de mi base</button><button class="vac-b vac-bg" onclick="document.getElementById(\'vac-file\').click()">📄 Tengo el PDF en el móvil</button><div class="upload-status" id="vac-est"></div>'; return; }
+  var A=vacAnioVer&&v.pubs[vacAnioVer]?vacAnioVer:(v.pubs[Y]?Y:anios[anios.length-1]), pub=v.pubs[A], f=vacMia(pub), h='';
+  h+='<div class="vac-h">🏖️ Mis vacaciones '+A+(pub.sede?' · '+limpioV(vacCap(pub.sede)):'')+'</div>';
+  if(anios.length>1) h+='<div class="vac-chips">'+anios.map(function(a){ return '<span class="'+(a===A?'on':'')+'" onclick="vacAnioVer='+a+';vacPintar()">'+a+'</span>'; }).join('')+'</div>';
+  if(!f){ h+='<div class="vac-sub">Tu matrícula'+(AJ.matricula?' ('+AJ.matricula+')':'')+' no aparece en esta publicación. Si eres nuevo o no sales, elige tu rotación:</div><div class="vac-chips">'+
+      (pub.tabla||[]).map(function(t){ return '<span onclick="vacElegirRot('+A+',\''+vacRk(t.rot)+'\')">'+t.rot+'</span>'; }).join('')+'</div>';
+    h+='<button class="vac-b vac-bg" onclick="vacCuadro('+A+')">🔁 Cuadro de rotaciones de la base</button>'; box.innerHTML=h+vacPie(); return; }
+  var RR=vacReal(pub,f), d=RR.d, hoyK=vacK(hoy), cs=vacCambios(A);
+  h+='<div class="vac-rot"><div class="vac-n">'+f.rot+'<small>ROTACIÓN</small></div><div>'+(f.mano?'Rotación elegida a mano <a onclick="vacElegirRot('+A+',null)">cambiar</a>':'Encontrado con tu matrícula en la publicación de vacaciones de '+(pub.sede?limpioV(vacCap(pub.sede)):'tu base')+' '+A)+'</div></div>';
+  h+='<div class="vac-q">'+f.q.map(function(q,qi){ var r=vacRango(pub,A,f.rot,q), fes=qi===f.fes, mis=cs.filter(function(c){ return c.qi===qi; });
+    if(!mis.length) return '<div class="'+(fes?'fes ':'')+(vacK(r[1])<hoyK?'ya':'')+'"><b>'+vacQtxt(q)+'</b>'+vacFmt(r[0])+' – '+vacFmt(r[1])+(fes?'<i>festivos</i>':'')+'</div>';
+    var qued=vacDiasQ(pub,A,f.rot,q).filter(function(k){ return d[k]&&!RR.cam[k]; }), rec=[]; mis.forEach(function(c){ rec=rec.concat(vacRecK(c)); });
+    var fin=qued.concat(rec).sort().pop()||'';
+    return '<div class="camb '+(fes?'fes ':'')+(fin&&fin<hoyK?'ya':'')+'"><b>'+vacQtxt(q)+'</b>'+(qued.length?vacCortoTxt(qued):'toda cambiada')+'<span>+ '+vacCortoTxt(rec)+'</span>'+(fes?'<i>festivos</i>':'')+'</div>'; }).join('')+'</div>';
+  if(cs.length) h+='<div class="vac-cbs">'+cs.map(function(c){ return '<div onclick="vacCambioVer('+A+','+c.id+')">🔁 '+vacListaTxt(vacDioK(c))+' ⇄ '+vacListaTxt(vacRecK(c))+' '+vacConTxt(c)+' <u>ver</u></div>'; }).join('')+'</div>';
+  h+='<div class="vac-ley"><span><i style="background:#0EA5E9"></i>Vacaciones (30 días naturales)</span><span><i style="background:#EA580C"></i>Festivos (15 efectivos)</span></div>';
+  if(f.fes<0) h+='<div class="vac-sub" style="margin-top:6px">⚠️ En el PDF no sale marcada tu quincena de festivos.</div>';
+  var bar='', mt={}; Object.keys(d).forEach(function(k){ if(+k.slice(0,4)!==A) return; var i=(+k.slice(5,7)-1)*2+(+k.slice(8)<=15?0:1); if(!mt[i]||d[k]==='f') mt[i]=d[k]; if(RR.cam[k]) mt['c'+i]=1; });
+  for(var i=0;i<24;i++){ var m=(i>>1)+1, hh=i%2+1, esHoy=A===Y&&hoy.getMonth()+1===m&&(hoy.getDate()<=15?1:2)===hh; bar+='<i class="'+(mt[i]||'')+(mt['c'+i]?' c':'')+(esHoy?' hoy':'')+'"></i>'; }
+  h+='<div class="vac-bar">'+bar+'</div><div class="vac-mes">'+MESES_C.map(function(x){ return '<span>'+x[0].toUpperCase()+'</span>'; }).join('')+'</div>';
+  var todas=Object.keys(d).every(function(k){ return k<hoyK; });
+  if(todas) h+='<div class="vac-ok">✅ Las 3 quincenas de '+A+' ya disfrutadas'+(v.pubs[A+1]?'':' · las de '+(A+1)+' saldrán con la nueva publicación')+'</div>';
+  h+=v.cal[A]?'<button class="vac-b vac-bok" onclick="vacQuitarCal('+A+')">✓ En tu calendario · quitar</button>':'<button class="vac-b vac-bv" onclick="vacCargarCal('+A+')">📅 Cargar en calendario</button>';
+  h+='<button class="vac-b vac-bm" onclick="vacApuntar('+A+')">🔁 Apuntar un cambio que ya hice</button><button class="vac-b vac-bg" onclick="vacTablon('+A+')">📣 Buscar cambio con compañeros</button>';
+  h+='<div class="vac-2"><button class="vac-b vac-bo" onclick="vacCuadro('+A+')">🔁 Cuadro de rotaciones</button><button class="vac-b vac-bo" onclick="vacQuien('+A+')">👥 ¿Quién está de vacaciones?</button></div>';
+  if(!v.pubs[A+1]) h+='<button class="vac-b vac-bp" onclick="vacPrevision('+A+')">⏳ Previsión '+(A+1)+' (estimada)'+(v.prev&&v.prev.en&&v.prev.anio===A+1?' · en tu calendario':'')+'</button>';
+  box.innerHTML=h+vacPie(); }
+function vacPie(){ return '<div class="vac-pie"><a onclick="vacBuscarBase()">🔄 Buscar otra publicación</a> · <a onclick="document.getElementById(\'vac-file\').click()">📄 Abrir un PDF</a></div><div class="upload-status" id="vac-est"></div>'; }
+function vacCap(s){ return String(s||'').toLowerCase().replace(/(^|\s)([a-záéíóúñ])/g,function(a,b,c){ return b+c.toUpperCase(); }); }
+function limpioV(s){ return String(s||'').replace(/[<>&"]/g,''); }
+function vacElegirRot(A,r){ var v=vacG(); if(r) v.man[A]=r; else delete v.man[A]; vacS(v); vacPintar(); }
+
+/* ── Pantallas a pantalla completa ── */
+function vacOv(tit,sub,html){ var o=document.getElementById('vac-ov'); if(!o){ o=document.createElement('div'); o.id='vac-ov'; document.body.appendChild(o); }
+  o.innerHTML='<div class="vac-ovh"><button onclick="vacCerrar()">‹</button><div><div class="t">'+tit+'</div><small>'+sub+'</small></div></div><div class="vac-ovb">'+html+'</div>';
+  o.style.display='block'; o.scrollTop=0; }
+function vacCerrar(){ var o=document.getElementById('vac-ov'); if(o) o.style.display='none'; }
+
+function vacCuadro(A,abierta){ var pub=vacG().pubs[A], f=vacMia(pub), h='<table class="vac-tab"><tr><th>Rot.</th><th>1.ª</th><th>2.ª</th><th>3.ª</th></tr>';
+  (pub.tabla||[]).forEach(function(t){ var yo=f&&vacRk(t.rot)===vacRk(f.rot), ab=abierta===vacRk(t.rot);
+    h+='<tr class="'+(yo?'yo':'')+'" onclick="vacCuadro('+A+','+(ab?'null':'\''+vacRk(t.rot)+'\'')+')"><td><b>'+t.rot+(yo?' · tú':'')+'</b></td>'+t.q.map(function(q){ return '<td>'+vacQtxt(q)+'</td>'; }).join('')+'</tr>';
+    if(ab){ var ps=pub.filas.filter(function(x){ return vacRk(x.rot)===vacRk(t.rot); });
+      h+='<tr><td colspan="4" class="vac-ps">'+ps.length+' personas: '+ps.map(function(x){ return vacNombre(x.nom); }).join(' · ')+'</td></tr>'; } });
+  h+='</table>';
+  var nt=Object.keys(pub.nota||{}); if(nt.length) h+='<div class="vac-nota">* Rotación '+((pub.tabla||[]).filter(function(t){ return /\*/.test(t.rot); }).map(function(t){ return vacRk(t.rot); })[0]||'')+': '+nt.map(function(m){ return pub.nota[m][0]+'–'+pub.nota[m][1]+' '+MESES_C[m-1]; }).join(' · ')+'. El resto: 1.ª del 1 al 15 y 2.ª 15 días desde el 16.</div>';
+  h+='<div class="vac-nota">Toca una rotación para ver quién está en ella. Cada año pasas a la rotación siguiente del cuadro (la última vuelve a la primera).</div>';
+  vacOv('ROTACIONES '+A,(pub.sede?limpioV(vacCap(pub.sede))+' · ':'')+pub.filas.length+' personas',h); }
+
+var vacQSel=null;
+function vacQuien(A,sel){ var pub=vacG().pubs[A], f=vacMia(pub), hoy=new Date();
+  if(sel) vacQSel=sel; if(!vacQSel||vacQSel[2]!==A) vacQSel=[hoy.getFullYear()===A?hoy.getMonth()+1:1, hoy.getFullYear()===A?(hoy.getDate()<=15?1:2):1, A];
+  var m=vacQSel[0], hh=vacQSel[1], ch='';
+  for(var i=0;i<24;i++){ var mm=(i>>1)+1, h2=i%2+1; ch+='<span class="'+(mm===m&&h2===hh?'on':'')+'" onclick="vacQuien('+A+',['+mm+','+h2+','+A+'])">'+(h2===1?'1ª':'2ª')+' '+MESES_C[mm-1]+'</span>'; }
+  var ps=pub.filas.map(function(x){ var qi=-1; x.q.forEach(function(q,j){ if(q[0]===m&&q[1]===hh) qi=j; }); return qi<0?null:{x:x,fes:qi===x.fes}; }).filter(Boolean);
+  // tú, con tus cambios apuntados: sales si tienes algún día real en esa quincena
+  if(f&&vacCambios(A).length){ var RR=vacReal(pub,f), last=new Date(A,m,0).getDate(), mios=[]; for(var dd=(hh===1?1:16);dd<=(hh===1?15:last);dd++){ var kk=key(A,m,dd); if(RR.d[kk]) mios.push(kk); }
+    ps=ps.filter(function(p){ return !(!f.mano&&p.x.mat===f.mat); });
+    if(mios.length) ps.push({x:f.mano?{mat:'',nom:(AJ.nombre||'Tú'),rot:f.rot}:f,fes:RR.d[mios[0]]==='f',yo:1,txt:vacTramos(mios).map(vacTramoTxt).join(', '),cb:mios.some(function(k){ return RR.cam[k]; })}); }
+  ps.sort(function(a,b){ return vacRk(a.x.rot)<vacRk(b.x.rot)?-1:vacRk(a.x.rot)>vacRk(b.x.rot)?1:a.x.nom<b.x.nom?-1:1; });
+  var rots={}; ps.forEach(function(p){ rots[p.x.rot]=1; });
+  var h='<div class="vac-qs">'+ch+'</div><div class="vac-cnt">'+ps.length+' personas · '+(Object.keys(rots).length?'rotaciones '+Object.keys(rots).join(', '):'nadie')+'</div>';
+  h+=ps.map(function(p){ var yo=p.yo||(f&&!f.mano&&p.x.mat===f.mat), ini=vacNombre(p.x.nom).split(' ').map(function(w){ return w[0]; }).slice(0,2).join('');
+    return '<div class="vac-per'+(yo?' yo':'')+'"><i>'+ini+'</i><span>'+vacNombre(p.x.nom)+(yo?' (tú)':'')+'<small>Rotación '+p.x.rot+(p.txt?' · '+p.txt:'')+'</small></span>'+(p.cb?'<em class="cb">cambio</em>':'')+(p.fes?'<em>festivos</em>':'')+'</div>'; }).join('');
+  h+='<div class="vac-nota">🔒 Sale lo que publica la empresa en el PDF de vacaciones de tu base. Puedes cambiar con compañeros de cualquier rotación.</div>';
+  vacOv((hh===1?'1ª ':'2ª ')+MESES[m-1].toUpperCase(),'¿Quién está de vacaciones? · '+A,h); }
+
+function vacPrevision(A){ var v=vacG(), pub=v.pubs[A], f=vacMia(pub), P=f&&vacPrevCalc(pub,f);
+  if(!P){ vacOv('PREVISIÓN '+(A+1),'Estimada','<div class="vac-nota">No se pudo calcular: no se encuentra tu rotación en el cuadro.</div>'); return; }
+  var en=v.prev&&v.prev.en&&v.prev.anio===P.anio, h='<div class="vac-card vac-est"><div class="vac-lab">⏳ ESTIMADO · NO OFICIAL</div>'+
+    '<div class="vac-rot"><div class="vac-n gr">'+P.de+'<small>'+A+'</small></div><div style="font-size:20px">→</div><div class="vac-n">'+P.rot+'<small>'+P.anio+'</small></div><div>Cada año pasas a la rotación siguiente</div></div>'+
+    '<div class="vac-q">'+P.q.map(function(q,qi){ var r=vacRango(pub,P.anio,P.rot,q), fes=qi===P.fes; return '<div class="'+(fes?'fes':'')+'"><b>'+vacQtxt(q)+'</b>'+vacFmt(r[0])+' – '+vacFmt(r[1])+(fes?'<i>festivos</i>':'')+'</div>'; }).join('')+'</div>'+
+    '<div class="vac-nota">Fechas de la rotación '+P.rot+' del cuadro de '+A+', pasadas a '+P.anio+'.'+(P.fes>-1?' La quincena de festivos es la que tenía la mayoría de esa rotación en '+A+'.':'')+'</div></div>'+
+    '<div class="vac-card"><div class="vac-lab">CUANDO SALGA LA PUBLICACIÓN '+P.anio+'</div><div class="vac-sub">El admin sube el PDF nuevo y la previsión se sustituye por tus fechas oficiales. Si no coinciden, te avisa.</div></div>';
+  h+=en?'<button class="vac-b vac-bok" onclick="vacPrevQuitar('+A+')">🗑️ Quitar la previsión del calendario</button>':'<button class="vac-b vac-bv" onclick="vacPrevPoner('+A+')">➕ Añadir todo '+P.anio+' al calendario</button>';
+  h+='<button class="vac-b vac-bg" onclick="vacCerrar();vacAnio('+P.anio+')">📅 Ver la previsión en el calendario</button><div class="vac-nota">En el calendario la previsión sale con rayas, para no confundirla con lo oficial.</div>';
+  vacOv('VACACIONES '+P.anio,'Previsión · hasta que salga la publicación',h); }
+function vacPrevPoner(A){ var v=vacG(), pub=v.pubs[A], P=vacPrevCalc(pub,vacMia(pub)); P.en=true; v.prev=P; vacS(v); toast('✅ Previsión '+P.anio+' añadida al calendario'); if(typeof renderCal==='function') renderCal(); vacPintar(); vacPrevision(A); }
+function vacPrevQuitar(A){ var v=vacG(); delete v.prev; vacS(v); toast('Previsión quitada'); if(typeof renderCal==='function') renderCal(); vacPintar(); vacPrevision(A); }
+
+/* ── Apuntar un cambio ya hecho ──
+   Lo que das: la quincena entera, 7 u 8 días seguidos (tocando el primero) o días sueltos.
+   Lo que recibes: fechas seguidas (desde–hasta) o días sueltos en un calendario.
+   Con quién: un compañero (opcional) o la empresa. */
+var vacAF=null;
+function vacApuntar(A,id){ var pub=vacG().pubs[A], f=vacMia(pub); if(!f) return;
+  var c=id&&vacCambios(A).filter(function(x){ return x.id===id; })[0], hoy=new Date();
+  vacAF={A:A,id:c?c.id:null,qi:c?c.qi:0,len:'q',ini:0,selD:{},modoR:'seg',rd:'',rh:'',selR:{},rm:null,emp:c?!!c.emp:false,con:c?c.con||'':''};
+  if(c){ var qd=vacDiasQ(pub,A,f.rot,f.q[c.qi]), dk=vacDioK(c), rk=vacRecK(c), seg=vacTramos(dk).length===1;
+    if(seg&&dk.length===qd.length) vacAF.len='q'; else if(seg&&(dk.length===7||dk.length===8)){ vacAF.len=dk.length; vacAF.ini=Math.max(0,qd.indexOf(dk[0])); } else { vacAF.len='s'; dk.forEach(function(k){ vacAF.selD[k]=1; }); }
+    if(vacTramos(rk).length===1){ vacAF.rd=rk[0]; vacAF.rh=rk[rk.length-1]; } else { vacAF.modoR='s'; rk.forEach(function(k){ vacAF.selR[k]=1; }); }
+    vacAF.rm=rk[0].slice(0,7); }
+  if(!vacAF.rm) vacAF.rm=vacAFmesQ();
+  vacApPinta(); }
+function vacAFset(k,v){ var S=vacAF; S[k]=v; if(k==='qi'){ S.ini=0; S.selD={}; if(!Object.keys(S.selR).length) S.rm=vacAFmesQ(); } vacApPinta(); }
+function vacAFmesQ(){ var S=vacAF, pub=vacG().pubs[S.A], f=vacMia(pub); return vacDiasQ(pub,S.A,f.rot,f.q[S.qi])[0].slice(0,7); }
+function vacAFtog(campo,k){ var o=vacAF[campo]; if(o[k]) delete o[k]; else o[k]=1; vacApPinta(); }
+function vacAFmes(n){ var p=vacAF.rm.split('-').map(Number), d=new Date(p[0],p[1]-1+n,1); vacAF.rm=vacK(d).slice(0,7); vacApPinta(); }
+function vacApDio(S,qd){ if(S.len==='s') return qd.filter(function(k){ return S.selD[k]; });
+  var len=S.len==='q'?qd.length:Math.min(S.len,qd.length); S.ini=Math.max(0,Math.min(S.ini,qd.length-len)); return qd.slice(S.ini,S.ini+len); }
+function vacApRec(S){ if(S.modoR==='s') return Object.keys(S.selR).sort(); return S.rd&&S.rh&&S.rh>=S.rd?vacRangoK(S.rd,S.rh):[]; }
+function vacApPinta(){ var S=vacAF, pub=vacG().pubs[S.A], f=vacMia(pub), qd=vacDiasQ(pub,S.A,f.rot,f.q[S.qi]), dio=vacApDio(S,qd), otros={}, n=dio.length;
+  vacCambios(S.A).forEach(function(c){ if(c.id!==S.id) vacDioK(c).forEach(function(k){ otros[k]=1; }); });
+  var h='<div class="vac-card"><div class="vac-lab">1 · ¿QUÉ DISTE?</div><div class="vac-seg">'+f.q.map(function(q,qi){ return '<span class="'+(qi===S.qi?'on':'')+'" onclick="vacAFset(\'qi\','+qi+')">'+vacQtxt(q)+(qi===f.fes?'<small>festivos</small>':'')+'</span>'; }).join('')+'</div>'+
+    '<div class="vac-seg">'+[['q','Toda ('+qd.length+')'],[7,'7 días'],[8,'8 días'],['s','Sueltos']].map(function(o){ return '<span class="'+(S.len===o[0]?'on':'')+'" onclick="vacAFset(\'len\','+(typeof o[0]==='string'?'\''+o[0]+'\'':o[0])+')">'+o[1]+'</span>'; }).join('')+'</div>'+
+    (S.len!=='q'?'<div class="vac-lab" style="margin-top:10px">'+(S.len==='s'?'TOCA CADA DÍA QUE DISTE':'TOCA EL PRIMER DÍA')+'</div>':'')+
+    '<div class="vac-dd">'+qd.map(function(k,i){ var en=dio.indexOf(k)>-1; return '<i class="'+(en?'d':'')+(otros[k]?' x':'')+'" onclick="'+(S.len==='s'?'vacAFtog(\'selD\',\''+k+'\')':'vacAFset(\'ini\','+i+')')+'">'+(+k.slice(8))+'</i>'; }).join('')+'</div>'+
+    '<div class="vac-dio">'+(n?'Diste '+vacListaTxt(dio)+' · '+n+' día'+(n===1?'':'s'):'Toca los días que diste')+'</div>'+(dio.some(function(k){ return otros[k]; })?'<div class="vac-aviso">⚠️ Parte de esos días ya está en otro cambio apuntado.</div>':'')+'</div>';
+  // lo que recibiste
+  var rec=vacApRec(S), n2=rec.length, msg='';
+  if(n2&&n) msg=n2===n?'<div class="vac-okt">✓ '+n+' días por '+n2+' días</div>':(Math.min(n2,n)===7&&Math.max(n2,n)===8?'<div class="vac-aviso">7 por 8: vale si los dos estáis de acuerdo.</div>':'<div class="vac-aviso">Diste '+n+' días y recibes '+n2+'.</div>');
+  else if(S.modoR==='seg'&&S.rd&&S.rh&&S.rh<S.rd) msg='<div class="vac-aviso">La fecha «hasta» tiene que ser igual o posterior a «desde».</div>';
+  h+='<div class="vac-card"><div class="vac-lab">2 · ¿QUÉ RECIBISTE?</div><div class="vac-seg"><span class="'+(S.modoR==='seg'?'on':'')+'" onclick="vacAFset(\'modoR\',\'seg\')">Días seguidos</span><span class="'+(S.modoR==='s'?'on':'')+'" onclick="vacAFset(\'modoR\',\'s\')">Días sueltos</span></div>';
+  if(S.modoR==='seg') h+='<div class="vac-fe" style="margin-top:8px"><label>Desde<input type="date" value="'+S.rd+'" onchange="vacAF.rd=this.value;if(!vacAF.rh||vacAF.rh<this.value){ var p=this.value.split(\'-\').map(Number), e=new Date(p[0],p[1]-1,p[2]+'+Math.max(0,n-1)+'); vacAF.rh=vacK(e); } vacApPinta()"></label><label>Hasta<input type="date" value="'+S.rh+'" onchange="vacAF.rh=this.value;vacApPinta()"></label></div>';
+  else { var p=S.rm.split('-').map(Number), off=new Date(p[0],p[1]-1,1).getDay(), last=new Date(p[0],p[1],0).getDate(), cel='', mias=vacReal(pub,f).d; off=off===0?6:off-1;
+    for(var i=0;i<off;i++) cel+='<i class="e"></i>';
+    for(var d=1;d<=last;d++){ var k=key(p[0],p[1],d); cel+='<i class="'+(S.selR[k]?'on':'')+(mias[k]&&!S.selR[k]?' ya':'')+'" onclick="vacAFtog(\'selR\',\''+k+'\')">'+d+'</i>'; }
+    h+='<div class="vac-mc"><div class="vac-mch"><b onclick="vacAFmes(-1)">‹</b><span>'+MESES[p[1]-1]+' '+p[0]+'</span><b onclick="vacAFmes(1)">›</b></div><div class="vac-mcg">'+['L','M','X','J','V','S','D'].map(function(x){ return '<i class="e h">'+x+'</i>'; }).join('')+cel+'</div></div>'+
+      '<div class="vac-dio" style="color:#D8B4FE">'+(n2?'Recibiste '+vacListaTxt(rec)+' · '+n2+' día'+(n2===1?'':'s'):'Toca los días que recibiste (puedes cambiar de mes)')+'</div>'; }
+  h+=msg+'</div>';
+  h+='<div class="vac-card"><div class="vac-lab">3 · ¿CON QUIÉN?</div><div class="vac-seg"><span class="'+(!S.emp?'on':'')+'" onclick="vacAFset(\'emp\',false)">👤 Con un compañero</span><span class="'+(S.emp?'on':'')+'" onclick="vacAFset(\'emp\',true)">🏢 Con la empresa</span></div>'+
+    (S.emp?'<div class="vac-sub">Cambio acordado directamente con la empresa.</div>':'<input class="vac-in" style="margin-top:8px" list="vac-noms" placeholder="Nombre del compañero (opcional)…" value="'+limpioV(S.con)+'" oninput="vacAF.con=this.value"><datalist id="vac-noms">'+
+    pub.filas.map(function(x){ return '<option value="'+limpioV(vacNombre(x.nom))+' · Rotación '+x.rot+'">'; }).join('')+'</datalist>')+'</div>';
+  h+='<button class="vac-b vac-bv" onclick="vacApGuardar()">✓ Guardar el cambio</button>'+(S.id?'<button class="vac-b vac-bdel" onclick="vacCambioBorrar('+S.A+','+S.id+')">🗑️ Borrar este cambio</button>':'')+
+    '<div class="vac-nota">Apunta aquí los cambios que ya están aprobados. Los días que diste se quitan de tus vacaciones y los que recibiste se suman (con borde morado en el calendario).</div>';
+  var sc=(document.getElementById('vac-ov')||{}).scrollTop||0;
+  vacOv(S.id?'EDITAR CAMBIO':'APUNTAR CAMBIO','Vacaciones '+S.A+' · un cambio que ya está aprobado',h);
+  var ov=document.getElementById('vac-ov'); if(ov&&vacAF._abierto) ov.scrollTop=sc; vacAF._abierto=1;
+  S.dioK=dio; S.recK=rec; }
+function vacApGuardar(){ var S=vacAF;
+  if(!S.dioK.length){ toast('Elige los días que diste'); return; }
+  if(!S.recK.length){ toast(S.modoR==='s'?'Toca los días que recibiste':'Pon las fechas que recibiste (desde y hasta)'); return; }
+  if(S.recK.length>31){ toast('Como mucho 31 días'); return; }
+  var v=vacG(); v.camb=v.camb||{}; var L=v.camb[S.A]=(v.camb[S.A]||[]).filter(function(c){ return c.id!==S.id; });
+  L.push({id:S.id||Date.now(),qi:S.qi,dioK:S.dioK,recK:S.recK,emp:!!S.emp,con:S.emp?'':(S.con||'').trim()}); L.sort(function(a,b){ return vacDioK(a)[0]<vacDioK(b)[0]?-1:1; }); vacS(v);
+  if(v.cal[S.A]) vacCargarCal(S.A,true);
+  vacCerrar(); vacPintar(); if(typeof renderCal==='function') renderCal(); toast('✅ Cambio guardado: '+vacListaTxt(S.dioK)+' ⇄ '+vacListaTxt(S.recK)); }
+function vacCambioVer(A,id){ var c=vacCambios(A).filter(function(x){ return x.id===id; })[0]; if(!c) return; var dk=vacDioK(c), rk=vacRecK(c);
+  var h='<div class="vac-card"><div class="vac-antes"><div>Diste<b>'+vacListaTxt(dk)+'</b>'+dk.length+' días</div><div>Recibiste<b>'+vacListaTxt(rk)+'</b>'+rk.length+' días</div></div>'+(c.emp?'<div class="vac-sub">🏢 Cambio con la empresa</div>':c.con?'<div class="vac-sub">👤 '+limpioV(c.con)+'</div>':'')+'</div>'+
+    '<button class="vac-b vac-bg" onclick="vacApuntar('+A+','+id+')">✏️ Editar</button><button class="vac-b vac-bdel" onclick="vacCambioBorrar('+A+','+id+')">🗑️ Borrar este cambio</button>';
+  vacOv('CAMBIO APUNTADO','Vacaciones '+A,h); }
+function vacCambioBorrar(A,id){ if(!confirm('¿Borrar este cambio? Tus vacaciones vuelven a las fechas del PDF.')) return;
+  var v=vacG(); v.camb=v.camb||{}; v.camb[A]=(v.camb[A]||[]).filter(function(c){ return c.id!==id; }); vacS(v);
+  if(v.cal[A]) vacCargarCal(A,true); vacCerrar(); vacPintar(); if(typeof renderCal==='function') renderCal(); toast('Cambio borrado'); }
+
+/* ── Tablón de cambios con compañeros (maqueta 5–7) ──
+   Se guarda en Supabase con las funciones vc_* (ver supabase-cambios-vacaciones.sql).
+   Publicas qué das y qué buscas → los compañeros de tu base dicen «Me interesa» y ofrecen
+   sus días → aceptas una oferta → «acordado» → la empresa lo aprueba → se apunta solo como
+   cambio en las vacaciones de los dos (cada móvil apunta su parte al abrir el tablón). */
+var vacTP=null, vacTabDat=null, vacTabErr='';
+function vacYo(pub){ var f=vacMia(pub); return {mat:String(AJ.matricula||'').trim(),nombre:f&&f.nom?vacNombre(f.nom):(AJ.nombre||'Compañero'),rot:f?f.rot:''}; }
+function vacSede(pub){ return _baseSlug(_sedeUsuarioActual())||_baseSlug(pub&&pub.sede||''); }
+async function vacRpc(fn,args){ if(!sbAdmin) throw new Error('No hay conexión.');
+  var r=await sbAdmin.rpc(fn,args); if(r.error){ var m=r.error.message||''; if(/function|does not exist|schema cache/i.test(m)&&/vc_/.test(m)) throw new Error('Falta preparar el tablón en el servidor (SQL de cambios de vacaciones).'); throw new Error(m); } return r.data; }
+async function vacTabCargar(A){ var pub=vacG().pubs[A], yo=vacYo(pub);
+  if(!yo.mat){ throw new Error('Pon tu matrícula en Ajustes.'); }
+  var d=await vacRpc('vc_listar',{p_sede:vacSede(pub),p_anio:A,p_mat:yo.mat}); vacTabDat={A:A,cambios:(d&&d.cambios)||[],t:Date.now()};
+  vacTabAplicar(A); return vacTabDat; }
+// Los aprobados en los que participas se apuntan solos en tus vacaciones (una vez)
+function vacTabAplicar(A){ var v=vacG(), pub=v.pubs[A], f=vacMia(pub), yo=vacYo(pub); if(!f||!vacTabDat) return; v.camb=v.camb||{}; var L=v.camb[A]=v.camb[A]||[], n=0;
+  vacTabDat.cambios.forEach(function(c){ if(c.estado!=='aprobada'||!c.acuerdo) return; if(L.some(function(x){ return x.tablon===c.id; })) return;
+    var mio=c.mat===yo.mat, dio=mio?c.da:c.acuerdo.ofrece, rec=mio?c.acuerdo.ofrece:c.da, con=mio?c.acuerdo.nombre+(c.acuerdo.rot?' · Rotación '+c.acuerdo.rot:''):c.nombre+(c.rot?' · Rotación '+c.rot:'');
+    var qi=0; f.q.forEach(function(q,j){ if(vacDiasQ(pub,A,f.rot,q).indexOf(dio[0])>-1) qi=j; });
+    L.push({id:Date.now()+n,qi:qi,dioK:dio.slice().sort(),recK:rec.slice().sort(),con:con,tablon:c.id}); n++; });
+  if(n){ vacS(v); if(v.cal[A]) vacCargarCal(A,true); if(typeof renderCal==='function') renderCal(); vacPintar(); toast('✅ '+n+' cambio(s) aprobado(s) apuntado(s) en tus vacaciones'); } }
+function vacBuscaTxt(b){ if(!b||b==='cualquiera') return 'cualquier fecha'; var m=/^mes:(\d+)$/.exec(b); return m?'algo en '+MESES[+m[1]-1].toLowerCase():b; }
+function vacEstTag(c,yo){ var e=c.estado; return e==='aprobada'?'<span class="vac-et ok">✓ Aprobado</span>':e==='acordada'?'<span class="vac-et ac">🤝 Acordado</span>':e==='retirada'?'<span class="vac-et re">Retirado</span>':''; }
+async function vacTablon(A,filtro){ vacOv('CAMBIOS PUBLICADOS','Cargando…','<div class="vac-nota">Cargando el tablón…</div>');
+  try{ await vacTabCargar(A); vacTabErr=''; }catch(e){ vacTabErr=e.message||String(e); }
+  vacTabPinta(A,filtro); }
+var vacTabFil='todos';
+function vacTabPinta(A,filtro){ if(filtro) vacTabFil=filtro; var pub=vacG().pubs[A], yo=vacYo(pub), h='';
+  if(vacTabErr){ vacOv('CAMBIOS PUBLICADOS',(pub.sede?vacCap(pub.sede)+' · ':'')+A,'<div class="vac-card"><div class="vac-sub">⚠️ '+limpioV(vacTabErr)+'</div></div><button class="vac-b vac-bg" onclick="vacTablon('+A+')">🔄 Reintentar</button>'); return; }
+  var C=vacTabDat.cambios, mios=C.filter(function(c){ return c.mat===yo.mat&&c.estado!=='retirada'; }), ofr=C.filter(function(c){ return c.mat!==yo.mat&&c.mi_interes; }),
+      otros=C.filter(function(c){ return c.mat!==yo.mat&&c.estado==='activa'&&!c.mi_interes; });
+  var fil=function(c){ var n=c.da.length; return vacTabFil==='todos'||(vacTabFil==='7'&&n===7)||(vacTabFil==='8'&&n===8)||(vacTabFil==='15'&&n>=13); };
+  h+='<button class="vac-b vac-bv" onclick="vacPublicar('+A+')">📣 Publicar lo que doy</button>';
+  if(mios.length) h+='<div class="vac-cnt">TUS CAMBIOS</div>'+mios.map(function(c){
+    var ac=c.estado!=='activa', ni=+c.n_interes||0;
+    return '<div class="vac-of mio"><div class="k"><b>Das '+vacListaTxt(c.da)+'</b><span class="vac-tg2">'+c.da.length+' días</span></div>Buscas <b>'+limpioV(vacBuscaTxt(c.busca))+'</b>'+vacEstTag(c,yo)+
+      (ac&&c.acuerdo?'<div class="acc"><span class="si" onclick="vacAcuerdo('+A+',\''+c.id+'\')">🤝 Ver acuerdo con '+limpioV(c.acuerdo.nombre.split(' ')[0])+'</span></div>':
+       '<div class="acc"><span class="'+(ni?'si':'no')+'" onclick="vacOfertas('+A+',\''+c.id+'\')">'+(ni?'💬 '+ni+' compañero'+(ni>1?'s':'')+' interesado'+(ni>1?'s':''):'Nadie interesado todavía')+'</span><span class="no" onclick="vacRetirar('+A+',\''+c.id+'\')">Retirar</span></div>')+'</div>'; }).join('');
+  if(ofr.length) h+='<div class="vac-cnt">TUS OFERTAS</div>'+ofr.map(function(c){ var i=c.mi_interes, est=c.acuerdo&&c.acuerdo.id===i.id?(c.estado==='aprobada'?'<span class="vac-et ok">✓ Aprobado</span>':'<span class="vac-et ac">🤝 Aceptada</span>'):i.estado==='rechazada'?'<span class="vac-et re">No aceptada</span>':'<span class="vac-et pe">⏳ Esperando respuesta</span>';
+    return '<div class="vac-of"><div class="k"><b>'+limpioV(c.nombre)+' · Rot. '+limpioV(c.rot||'')+'</b>'+est+'</div>Da <b>'+vacListaTxt(c.da)+'</b> · tú ofreces <b>'+vacListaTxt(i.ofrece)+'</b>'+
+      '<div class="acc">'+(c.acuerdo&&c.acuerdo.id===i.id?'<span class="si" onclick="vacAcuerdo('+A+',\''+c.id+'\')">🤝 Ver acuerdo</span>':'')+(c.estado!=='aprobada'?'<span class="no" onclick="vacRetirarInteres('+A+',\''+i.id+'\')">Retirar mi oferta</span>':'')+'</div></div>'; }).join('');
+  h+='<div class="vac-cnt">DE TUS COMPAÑEROS · '+otros.length+'</div><div class="vac-chips">'+[['todos','Todos'],['7','7 días'],['8','8 días'],['15','Quincena']].map(function(x){ return '<span class="'+(vacTabFil===x[0]?'on':'')+'" onclick="vacTabPinta('+A+',\''+x[0]+'\')">'+x[1]+'</span>'; }).join('')+'</div>';
+  var ot=otros.filter(fil); h+=ot.length?ot.map(function(c){ var n=c.da.length;
+    return '<div class="vac-of"><div class="k"><b>'+limpioV(c.nombre)+' · Rotación '+limpioV(c.rot||'')+'</b><span class="vac-tg2 '+(n===8?'t8':'')+'">'+n+' días</span></div>Da <b>'+vacListaTxt(c.da)+'</b> · busca <b>'+limpioV(vacBuscaTxt(c.busca))+'</b>'+(c.nota?'<div class="vac-sub">“'+limpioV(c.nota)+'”</div>':'')+
+      '<div class="acc"><span class="si" onclick="vacInteres('+A+',\''+c.id+'\')">💬 Me interesa</span></div></div>'; }).join(''):'<div class="vac-nota">No hay cambios publicados'+(vacTabFil!=='todos'?' con ese filtro':'')+' en tu base. ¡Publica el tuyo!</div>';
+  h+='<div class="vac-nota">Se puede cambiar con compañeros de cualquier rotación: quincena por quincena, 7 por 7, 8 por 8 o 7 por 8 si los dos estáis de acuerdo.</div>';
+  vacOv('CAMBIOS PUBLICADOS',(pub.sede?vacCap(pub.sede)+' · ':'')+'vacaciones '+A,h); }
+
+/* Selector de días propios (para publicar y para ofrecer) */
+function vacMisQ(pub,f){ var RR=vacReal(pub,f); return f.q.map(function(q){ return vacDiasQ(pub,pub.anio,f.rot,q).filter(function(k){ return RR.d[k]&&!RR.cam[k]; }); }); }
+function vacTPset(k,v){ vacTP[k]=v; if(k==='qi'){ vacTP.ini=0; vacTP.selD={}; } vacTPpinta(); }
+function vacTPtog(k){ var o=vacTP.selD; if(o[k]) delete o[k]; else o[k]=1; vacTPpinta(); }
+function vacTPpick(S,pub,f){ var Q=vacMisQ(pub,f); if(!Q[S.qi]||!Q[S.qi].length){ for(var j=0;j<Q.length;j++) if(Q[j].length){ S.qi=j; break; } } var qd=Q[S.qi]||[];
+  var dias=S.len==='s'?qd.filter(function(k){ return S.selD[k]; }):(function(){ var len=S.len==='q'?qd.length:Math.min(S.len,qd.length); S.ini=Math.max(0,Math.min(S.ini,qd.length-len)); return qd.slice(S.ini,S.ini+len); })();
+  var h='<div class="vac-seg">'+f.q.map(function(q,qi){ return '<span class="'+(qi===S.qi?'on':'')+(Q[qi].length?'':' off')+'" onclick="'+(Q[qi].length?'vacTPset(\'qi\','+qi+')':'')+'">'+vacQtxt(q)+(qi===f.fes?'<small>festivos</small>':'')+'</span>'; }).join('')+'</div>'+
+    '<div class="vac-seg">'+[['q','Toda ('+qd.length+')'],[7,'7 días'],[8,'8 días'],['s','Sueltos']].map(function(o){ return '<span class="'+(S.len===o[0]?'on':'')+'" onclick="vacTPset(\'len\','+(typeof o[0]==='string'?'\''+o[0]+'\'':o[0])+')">'+o[1]+'</span>'; }).join('')+'</div>'+
+    (S.len!=='q'?'<div class="vac-lab" style="margin-top:10px">'+(S.len==='s'?'TOCA CADA DÍA':'TOCA EL PRIMER DÍA')+'</div>':'')+
+    '<div class="vac-dd">'+qd.map(function(k,i){ return '<i class="'+(dias.indexOf(k)>-1?'d':'')+'" onclick="'+(S.len==='s'?'vacTPtog(\''+k+'\')':'vacTPset(\'ini\','+i+')')+'">'+(+k.slice(8))+'</i>'; }).join('')+'</div>'+
+    '<div class="vac-dio">'+(dias.length?vacListaTxt(dias)+' · '+dias.length+' días':'Toca los días')+'</div>';
+  S.dias=dias; return h; }
+function vacPublicar(A){ vacTP={modo:'pub',A:A,qi:0,len:7,ini:0,selD:{},busca:'cualquiera',nota:''}; vacTPpinta(); }
+function vacInteres(A,id){ var c=vacTabDat.cambios.filter(function(x){ return x.id===id; })[0]; if(!c) return; vacTP={modo:'int',A:A,id:id,c:c,qi:0,len:Math.min(c.da.length,15)===c.da.length&&(c.da.length===7||c.da.length===8)?c.da.length:'q',ini:0,selD:{},nota:''}; vacTPpinta(); }
+function vacTPpinta(){ var S=vacTP, pub=vacG().pubs[S.A], f=vacMia(pub), h='', sc=(document.getElementById('vac-ov')||{}).scrollTop||0;
+  if(S.modo==='pub'){
+    h+='<div class="vac-card"><div class="vac-lab">¿QUÉ PARTE DAS?</div>'+vacTPpick(S,pub,f)+'</div>';
+    h+='<div class="vac-card"><div class="vac-lab">¿QUÉ BUSCAS A CAMBIO?</div><div class="vac-seg"><span class="'+(S.busca==='cualquiera'?'on':'')+'" onclick="vacTPset(\'busca\',\'cualquiera\')">Cualquier fecha</span><span class="'+(/^mes:/.test(S.busca)?'on':'')+'" onclick="vacTPset(\'busca\',\'mes:'+(new Date().getMonth()+1)+'\')">Un mes</span></div>'+
+      (/^mes:/.test(S.busca)?'<div class="vac-chips">'+MESES_C.map(function(m,i){ return '<span class="'+(S.busca==='mes:'+(i+1)?'on':'')+'" onclick="vacTPset(\'busca\',\'mes:'+(i+1)+'\')">'+m+'</span>'; }).join('')+'</div>':'')+
+      '<input class="vac-in" style="margin-top:8px" placeholder="Nota para tus compañeros (opcional)" value="'+limpioV(S.nota)+'" oninput="vacTP.nota=this.value"></div>';
+    h+='<button class="vac-b vac-bv" onclick="vacTPenviar()">📣 Publicar el cambio</button><div class="vac-nota">Lo verán los compañeros de tu base. Cuando alguien diga «Me interesa», te sale aquí y eliges.</div>';
+    var ov='CAMBIAR VACACIONES', sub='Lo que das de tus vacaciones '+S.A;
+  } else { var c=S.c;
+    h+='<div class="vac-card"><div class="vac-lab">'+limpioV(c.nombre).toUpperCase()+' DA</div><div class="vac-big">'+vacListaTxt(c.da)+' · '+c.da.length+' días</div><div class="vac-sub">Busca '+limpioV(vacBuscaTxt(c.busca))+(c.nota?' · “'+limpioV(c.nota)+'”':'')+'</div></div>';
+    h+='<div class="vac-card"><div class="vac-lab">¿QUÉ LE OFRECES A CAMBIO?</div>'+vacTPpick(S,pub,f);
+    if(S.dias.length&&S.dias.length!==c.da.length) h+=(Math.min(S.dias.length,c.da.length)===7&&Math.max(S.dias.length,c.da.length)===8?'<div class="vac-aviso">7 por 8: vale si los dos estáis de acuerdo.</div>':'<div class="vac-aviso">Da '+c.da.length+' días y ofreces '+S.dias.length+'.</div>');
+    else if(S.dias.length) h+='<div class="vac-okt">✓ '+c.da.length+' por '+S.dias.length+'</div>';
+    h+='<input class="vac-in" style="margin-top:8px" placeholder="Mensaje (opcional)" value="'+limpioV(S.nota)+'" oninput="vacTP.nota=this.value"></div>';
+    h+='<button class="vac-b vac-bv" onclick="vacTPenviar()">💬 Enviar mi oferta</button>';
+    var ov='ME INTERESA', sub='Cambio con '+limpioV(c.nombre); }
+  h+='<button class="vac-b vac-bg" onclick="vacTabPinta('+S.A+')">‹ Volver al tablón</button>';
+  vacOv(ov,sub,h); var o=document.getElementById('vac-ov'); if(o&&S._ab) o.scrollTop=sc; S._ab=1; }
+async function vacTPenviar(){ var S=vacTP, pub=vacG().pubs[S.A], yo=vacYo(pub);
+  if(!S.dias||!S.dias.length){ toast('Elige los días'); return; }
+  try{ if(S.modo==='pub') await vacRpc('vc_publicar',{p_sede:vacSede(pub),p_anio:S.A,p_mat:yo.mat,p_nombre:yo.nombre,p_rot:yo.rot,p_da:S.dias,p_busca:S.busca,p_nota:(S.nota||'').trim()||null});
+    else await vacRpc('vc_interes',{p_cambio:S.id,p_mat:yo.mat,p_nombre:yo.nombre,p_rot:yo.rot,p_ofrece:S.dias,p_nota:(S.nota||'').trim()||null});
+    toast(S.modo==='pub'?'✅ Cambio publicado':'✅ Oferta enviada'); vacTablon(S.A);
+  }catch(e){ toast('⚠️ '+(e.message||e)); } }
+function vacOfertas(A,id){ var c=vacTabDat.cambios.filter(function(x){ return x.id===id; })[0]; if(!c) return; var L=(c.intereses||[]).filter(function(i){ return i.estado==='pendiente'; });
+  var h='<div class="vac-card"><div class="vac-lab">TÚ DAS</div><div class="vac-big">'+vacListaTxt(c.da)+' · '+c.da.length+' días</div></div>'+
+    (L.length?L.map(function(i){ return '<div class="vac-of"><div class="k"><b>'+limpioV(i.nombre)+' · Rotación '+limpioV(i.rot||'')+'</b><span class="vac-tg2">'+i.ofrece.length+' días</span></div>Te ofrece <b>'+vacListaTxt(i.ofrece)+'</b>'+(i.nota?'<div class="vac-sub">“'+limpioV(i.nota)+'”</div>':'')+
+      '<div class="acc"><span class="si" onclick="vacAceptar('+A+',\''+i.id+'\',\''+id+'\')">✓ Aceptar</span></div></div>'; }).join(''):'<div class="vac-nota">Todavía nadie ha dicho «Me interesa».</div>')+
+    '<button class="vac-b vac-bg" onclick="vacTabPinta('+A+')">‹ Volver al tablón</button>';
+  vacOv('INTERESADOS',L.length+' oferta'+(L.length===1?'':'s'),h); }
+async function vacAceptar(A,iid,cid){ if(!confirm('¿Aceptar esta oferta? Las demás se rechazan y el cambio queda acordado.')) return;
+  try{ await vacRpc('vc_aceptar',{p_interes:iid,p_mat:vacYo(vacG().pubs[A]).mat}); await vacTabCargar(A); vacAcuerdo(A,cid); }catch(e){ toast('⚠️ '+(e.message||e)); } }
+async function vacRetirar(A,id){ if(!confirm('¿Retirar este cambio del tablón?')) return; try{ await vacRpc('vc_retirar',{p_cambio:id,p_mat:vacYo(vacG().pubs[A]).mat}); vacTablon(A); }catch(e){ toast('⚠️ '+(e.message||e)); } }
+async function vacRetirarInteres(A,id){ if(!confirm('¿Retirar tu oferta?')) return; try{ await vacRpc('vc_retirar_interes',{p_interes:id,p_mat:vacYo(vacG().pubs[A]).mat}); vacTablon(A); }catch(e){ toast('⚠️ '+(e.message||e)); } }
+function vacAcuerdo(A,id){ var c=vacTabDat.cambios.filter(function(x){ return x.id===id; })[0]; if(!c||!c.acuerdo) return; var yo=vacYo(vacG().pubs[A]), mio=c.mat===yo.mat, otro=mio?c.acuerdo.nombre:c.nombre, das=mio?c.da:c.acuerdo.ofrece, rec=mio?c.acuerdo.ofrece:c.da, ok=c.estado==='aprobada';
+  var h='<div class="vac-card"><div class="vac-antes"><div>Tú das<b>'+vacListaTxt(das)+'</b>recibes '+vacListaTxt(rec)+'</div><div>'+limpioV(otro.split(' ')[0])+' da<b>'+vacListaTxt(rec)+'</b>recibe '+vacListaTxt(das)+'</div></div></div>'+
+    '<div class="vac-paso"><i class="ok">✓</i><div><b>Los dos estáis de acuerdo</b><br>Aceptado por ti y por '+limpioV(otro.split(' ')[0])+'.</div></div>'+
+    '<div class="vac-paso"><i class="'+(ok?'ok':'pe')+'">'+(ok?'✓':'2')+'</i><div><b>'+(ok?'Aprobado por la empresa':'Pendiente de la empresa')+'</b><br>'+(ok?'Ya está apuntado en tus vacaciones.':'Presentad la solicitud de cambio. La app os da el resumen para entregarlo.')+'</div></div>'+
+    '<div class="vac-paso"><i class="'+(ok?'ok':'gr')+'">'+(ok?'✓':'3')+'</i><div><b>Aprobado</b><br>Al marcarlo como aprobado, se actualizan las vacaciones y el calendario de los dos.</div></div>'+
+    '<button class="vac-b vac-bg" onclick="vacResumenEmpresa('+A+',\''+id+'\')">📄 Resumen del cambio para la empresa</button>'+
+    (ok?'':'<button class="vac-b vac-bo" onclick="vacAprobar('+A+',\''+id+'\')">✓ Marcar como aprobado</button><button class="vac-b vac-bdel" onclick="'+(mio?'vacRetirar('+A+',\''+id+'\')':'vacRetirarInteres('+A+',\''+c.acuerdo.id+'\')')+'">Deshacer el acuerdo</button>')+
+    '<button class="vac-b vac-bg" onclick="vacTabPinta('+A+')">‹ Volver al tablón</button>'+
+    '<div class="vac-nota">La app no sustituye la aprobación de la empresa: ayuda a encontrar con quién cambiar y deja constancia del acuerdo.</div>';
+  vacOv(ok?'CAMBIO APROBADO':'CAMBIO ACORDADO','Con '+limpioV(otro)+' · '+das.length+' por '+rec.length+' días',h); }
+async function vacAprobar(A,id){ if(!confirm('¿La empresa ya ha aprobado el cambio? Se apuntará en las vacaciones de los dos.')) return;
+  try{ await vacRpc('vc_aprobar',{p_cambio:id,p_mat:vacYo(vacG().pubs[A]).mat}); await vacTabCargar(A); vacAcuerdo(A,id); }catch(e){ toast('⚠️ '+(e.message||e)); } }
+function vacResumenEmpresa(A,id){ var c=vacTabDat.cambios.filter(function(x){ return x.id===id; })[0]; if(!c||!c.acuerdo) return; var i=c.acuerdo;
+  var t='Solicitud de cambio de vacaciones '+A+'\n\n'+c.nombre+' (matrícula '+c.mat+', rotación '+(c.rot||'-')+') cede: '+vacListaTxt(c.da)+' ('+c.da.length+' días).\n'+
+    i.nombre+' (matrícula '+i.mat+', rotación '+(i.rot||'-')+') cede: '+vacListaTxt(i.ofrece)+' ('+i.ofrece.length+' días).\n\nAmbos estamos de acuerdo con el cambio.';
+  if(navigator.share){ navigator.share({title:'Cambio de vacaciones',text:t}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(t); toast('📋 Resumen copiado'); }catch(e){ prompt('Copia el resumen:',t); } }
+
+/* ── Calendario: vista «Año» con todo lo tuyo + buscador ── */
+var vacAnioCal=null, vacBusca='';
+function vacTxtDia(k,t){ var i=TIPO_INFO[t.tipo]||{}; return vacNorm([i.lbl,t.tipo,t.numTren,t.numTrenVuelta,t.origen,t.destino,t.vacFes?'festivos':'',JSON.stringify(t)].join(' ')); }
+function vacResumenDia(t){ var i=TIPO_INFO[t.tipo]||{}, tr=[t.numTren,t.numTrenVuelta].filter(Boolean).join(' / '), ruta=[t.origen,t.destino].filter(Boolean).join(' → ');
+  return (t.vacCambio?'🔁 ':'')+(t.vacFes?'🟧 Festivos':(i.ico||'')+' '+(i.lbl||t.tipo))+(tr?' · '+tr:'')+(ruta?' · '+ruta:''); }
+function vacAnio(A){ var hoy=new Date(); vacAnioCal=A||vacAnioCal||curM.getFullYear(); var Y=vacAnioCal, v=vacG();
+  var ys={}; ys[hoy.getFullYear()]=1; Object.keys(TV).forEach(function(k){ ys[k.slice(0,4)]=1; }); Object.keys(v.pubs).forEach(function(a){ ys[a]=1; }); if(v.prev&&v.prev.en) ys[v.prev.anio]=1; ys[Y]=1;
+  var anios=Object.keys(ys).map(Number).sort(), q=vacNorm(vacBusca.trim()), hits=[];
+  var mes='';
+  for(var m=1;m<=12;m++){ var off=new Date(Y,m-1,1).getDay(); off=off===0?6:off-1; var n=new Date(Y,m,0).getDate(), cel='';
+    for(var i=0;i<off;i++) cel+='<i></i>';
+    for(var d=1;d<=n;d++){ var k=key(Y,m,d), t=TV[k], pv=!t&&vacPrevDia(k), st='', cl='';
+      if(t){ var inf=TIPO_INFO[t.tipo]; st='background:'+(t.vacFes?'#EA580C':(inf?inf.col:'#64748B'))+';color:#fff'+(t.vacCambio?';box-shadow:inset 0 0 0 1.5px #C084FC':''); }
+      else if(pv) cl=pv==='f'?'pf':'pv';
+      if(q){ if(t&&vacTxtDia(k,t).indexOf(q)>-1){ cl+=' hit'; hits.push(k); } else cl+=' dim'; }
+      if(k===vacK(hoy)) cl+=' hoy';
+      cel+='<i class="'+cl+'" style="'+st+'" onclick="vacIrDia(\''+k+'\')">'+d+'</i>'; }
+    mes+='<div class="vac-mm'+(Y===hoy.getFullYear()&&m===hoy.getMonth()+1?' act':'')+'"><b onclick="vacIrMes('+Y+','+m+')">'+MESES_C[m-1].toUpperCase()+'</b><div class="vac-mg">'+cel+'</div></div>'; }
+  var esPrev=v.prev&&v.prev.en&&v.prev.anio===Y&&!v.pubs[Y];
+  var h='<div class="vac-tg"><span onclick="vacCerrar()">Mes</span><span class="on">Año</span></div>'+
+    '<div class="vac-ys">'+anios.map(function(a){ return '<span class="'+(a===Y?'on':'')+'" onclick="vacAnio('+a+')">'+a+(v.prev&&v.prev.en&&v.prev.anio===a&&!v.pubs[a]?' · previsión':'')+'</span>'; }).join('')+'</div>'+
+    '<div class="vac-sb"><span>🔎</span><input id="vac-q" placeholder="Buscar tren, estación, compañero o tipo de día…" value="'+limpioV(vacBusca)+'" oninput="vacBusca=this.value;vacAnioRepinta()">'+(vacBusca?'<b onclick="vacBusca=\'\';vacAnio()">✕</b>':'')+'</div>'+
+    '<div class="vac-card"><div class="vac-yr">'+mes+'</div><div class="vac-ley">'+
+    ['ordinario','reserva','descanso','vacaciones','baja','dop','comp'].map(function(t){ return '<span><i style="background:'+TIPO_INFO[t].col+'"></i>'+TIPO_INFO[t].lbl+'</span>'; }).join('')+
+    '<span><i style="background:#EA580C"></i>Festivos</span><span><i style="background:#0EA5E9;box-shadow:inset 0 0 0 1.5px #C084FC"></i>Cambio</span>'+(esPrev?'<span><i class="pv"></i>Previsión</span>':'')+'</div></div>';
+  if(q){ h+='<div class="vac-cnt">'+hits.length+' día'+(hits.length===1?'':'s')+' con «'+limpioV(vacBusca.trim())+'» en '+Y+'</div>'+
+      hits.slice(0,80).map(function(k){ var p=k.split('-'); return '<div class="vac-rs" onclick="vacIrDia(\''+k+'\')"><b>'+(+p[2])+' '+MESES_C[+p[1]-1]+'</b><span>'+limpioV(vacResumenDia(TV[k]))+'</span><em>›</em></div>'; }).join(''); }
+  else if(esPrev) h+='<div class="vac-nota">⏳ '+Y+': previsión de la rotación '+v.prev.rot+', con rayas hasta que salga la publicación oficial.</div>';
+  else h+='<div class="vac-nota">Toca un día para abrirlo, o el nombre de un mes para ir a ese mes.</div>';
+  vacOv('CALENDARIO',Y+(esPrev?' · previsión rotación '+v.prev.rot:''),h);
+  var inp=document.getElementById('vac-q'); if(inp&&vacBusca){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); } }
+var _vacT=null; function vacAnioRepinta(){ clearTimeout(_vacT); _vacT=setTimeout(function(){ vacAnio(); },250); }
+function vacIrMes(y,m){ vacCerrar(); curM=new Date(y,m-1,1); goP('cal'); renderCal(); }
+function vacIrDia(k){ var p=k.split('-').map(Number); vacCerrar(); goP('cal'); curM=new Date(p[0],p[1]-1,1); selDay=null; renderCal();
+  if(TV[k]) clickDia(p[2],k,TV[k]); else if(vacPrevDia(k)) toast('⏳ Previsión: '+(vacPrevDia(k)==='f'?'quincena de festivos':'vacaciones')+' (estimado)'); }
+
+/* ── Calendario mensual: festivos en naranja y previsión con rayas ── */
+var _vacSlide=renderSlide;
+renderSlide=function(gridId,fecha){ _vacSlide(gridId,fecha); try{ var g=document.getElementById(gridId); if(!g) return;
+  g.querySelectorAll('[data-k]').forEach(function(c){ var k=c.dataset.k, t=TV[k];
+    if(t&&t.tipo==='vacaciones'&&t.vacCambio) c.classList.add('vac-camb-c');
+    if(t&&t.tipo==='vacaciones'&&t.vacFes) c.classList.add('vac-fes-c');
+    else if(!t){ var pv=vacPrevDia(k); if(pv){ c.classList.add(pv==='f'?'vac-pf-c':'vac-pv-c'); if(!c.querySelector('.vac-lbl')) c.insertAdjacentHTML('beforeend','<span class="vac-lbl">'+(pv==='f'?'FEST.':'VAC.')+'</span>'); } } });
+  }catch(e){} };
+
+/* ── Admin: subir la publicación de vacaciones de una base ── */
+async function vacSubirAdmin(){ if(!perfilAdminActual||perfilAdminActual.rol!=='admin') return;
+  var el=document.getElementById('vacAdmEst'), file=document.getElementById('vacAdmFile').files[0], sede=(document.getElementById('vacAdmSede').value||'').trim(), anio=parseInt(document.getElementById('vacAdmAnio').value,10);
+  var dime=function(t){ el.classList.remove('sin-archivo'); el.textContent=t; };
+  if(!sede){ dime('Escribe antes la sede (paso 1).'); return; } if(!file){ dime('Elige antes el PDF (paso 3).'); return; }
+  dime('Leyendo el archivo...'); var buf=await file.arrayBuffer(), R=null;
+  try{ R=await vacParsear(buf.slice(0)); }catch(e){ R=null; }
+  if(!R||!R.filas.length){ if(!confirm('No se ha reconocido ninguna matrícula en este PDF. ¿Publicarlo de todas formas?')){ dime('Subida cancelada.'); return; } }
+  if(!anio&&R&&R.anio){ anio=R.anio; document.getElementById('vacAdmAnio').value=anio; }
+  if(!anio){ dime('Indica el año (paso 2).'); return; }
+  var tipo='vacaciones_'+_baseSlug(sede)+'_'+anio, path=tipo+'/'+Date.now()+'_'+_nombreArchivoSeguro(file.name);
+  dime('Subiendo...'); var up=await sbAdmin.storage.from('admin-archivos').upload(path,buf,{upsert:true,contentType:file.type||'application/pdf'});
+  if(up.error){ dime('Error al subir: '+up.error.message); return; }
+  var url=sbAdmin.storage.from('admin-archivos').getPublicUrl(path).data.publicUrl;
+  var tb=await sbAdmin.from('config_global').upsert({tipo:tipo,sede:sede,nombre_archivo:file.name,url_archivo:url,fecha_subida:new Date().toISOString(),subido_por:perfilAdminActual.id,subido_por_email:perfilAdminActual.email||''});
+  if(tb.error){ dime('Archivo subido, pero no se pudo registrar: '+tb.error.message); return; }
+  var nf=R?R.filas.filter(function(f){ return f.fes>-1; }).length:0;
+  dime('✅ '+anio+' · '+sede+' · '+(R?R.filas.length:0)+' personas · '+(R?R.tabla.length:0)+' rotaciones · festivos marcados en '+nf); toast('✅ Vacaciones publicadas para '+sede); vacListaAdmin(); }
+async function vacListaAdmin(){ var c=document.getElementById('vacAdmLista'); if(!c||!sbAdmin) return; c.innerHTML='<div class="estado-archivo sin-archivo">Cargando...</div>';
+  var r=await sbAdmin.from('config_global').select('*').like('tipo','vacaciones_%');
+  if(!r||r.error){ c.innerHTML='<div class="estado-archivo sin-archivo">No se pudo cargar la lista.</div>'; return; }
+  var fs=(r.data||[]).filter(function(f){ return /_(\d{4})$/.test(f.tipo); });
+  c.innerHTML=fs.length?fs.map(function(f){ return '<div class="hg-hist-item"><div class="hg-hist-mes">'+limpioV(f.sede||'')+' · '+f.tipo.match(/_(\d{4})$/)[1]+'</div><div class="hg-hist-meta">Subido '+(f.fecha_subida?new Date(f.fecha_subida).toLocaleDateString('es-ES'):'')+'</div><button class="nadm-hist-del" onclick="vacBorrarAdmin(\''+f.tipo+'\')">🗑 Eliminar</button></div>'; }).join('')
+    :'<div class="estado-archivo sin-archivo">Aún no se ha publicado ninguna.</div>'; }
+async function vacBorrarAdmin(tipo){ if(!perfilAdminActual||perfilAdminActual.rol!=='admin') return; if(!confirm('¿Eliminar esta publicación de vacaciones?')) return;
+  var r=await sbAdmin.from('config_global').delete().eq('tipo',tipo); if(r.error){ alert('No se pudo eliminar: '+r.error.message); return; } vacListaAdmin(); }
+
+/* ── Montaje ── */
+(function(){
+  var s=document.createElement('style'); s.textContent=
+  '#vac-card{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:16px;padding:14px;margin:14px 0 6px}'+
+  '.vac-h{font-size:13px;font-weight:900;letter-spacing:.6px;color:var(--amber2,#FCD34D);text-transform:uppercase}.vac-sub{font-size:13px;color:var(--tx2,#94A3B8);line-height:1.45;margin-top:6px}'+
+  '.vac-b{display:block;width:100%;border-radius:12px;padding:12px;font-weight:800;font-size:14.5px;font-family:inherit;margin-top:9px;cursor:pointer;border:0;text-align:center}'+
+  '.vac-bv{background:#16A34A;color:#fff}.vac-bg{background:none;border:1.5px solid #0EA5E9;color:#7DD3FC}.vac-bo{background:#2A1C05;border:1.5px solid #B45309;color:#FCD34D}.vac-bp{background:none;border:1.5px dashed #B45309;color:#FCD34D}.vac-bok{background:#052e1a;border:1.5px solid #16A34A;color:#86EFAC}'+
+  '.vac-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vac-2 .vac-b{font-size:13px;padding:11px 6px}'+
+  '.vac-rot{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:13px;color:var(--tx,#E2E8F0);line-height:1.4}.vac-rot a{color:#7DD3FC;text-decoration:underline;cursor:pointer}'+
+  '.vac-n{flex:none;background:#0EA5E9;color:#fff;border-radius:12px;padding:8px 12px;font-weight:900;font-size:22px;text-align:center;line-height:1}.vac-n small{display:block;font-size:8.5px;font-weight:800;margin-top:3px}.vac-n.gr{background:#475569}'+
+  '.vac-q{display:flex;gap:6px;margin-top:12px}.vac-q div{flex:1;border-radius:10px;padding:7px 3px;text-align:center;font-size:11px;font-weight:700;background:rgba(0,0,0,.2);border:1.5px solid #0EA5E9;color:var(--tx2,#94A3B8)}'+
+  '.vac-q b{display:block;font-size:13.5px;color:var(--tx,#E2E8F0)}.vac-q i{display:block;font-style:normal;color:#FDBA74;font-size:10px;font-weight:900;text-transform:uppercase}.vac-q .fes{border-color:#EA580C}.vac-q .ya{opacity:.5}.vac-q .ya b{text-decoration:line-through}'+
+  '.vac-ley{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:10.5px;color:var(--tx2,#94A3B8);margin-top:9px}.vac-ley i{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:3px}'+
+  '.vac-bar{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;margin-top:10px}.vac-bar i{height:15px;border-radius:3px;background:rgba(148,163,184,.18)}.vac-bar i.v{background:#0EA5E9}.vac-bar i.f{background:#EA580C}.vac-bar i.hoy{outline:2px solid #F59E0B}'+
+  '.vac-mes{display:grid;grid-template-columns:repeat(12,1fr);font-size:8.5px;color:var(--tx3,#64748B);text-align:center;margin-top:2px}'+
+  '.vac-ok{font-size:12px;color:#86EFAC;margin-top:8px}.vac-pie{font-size:11.5px;color:var(--tx2,#94A3B8);margin-top:10px;text-align:center}.vac-pie a{text-decoration:underline;cursor:pointer}'+
+  '.vac-chips,.vac-qs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.vac-chips span,.vac-qs span{border:1px solid #334155;border-radius:20px;padding:5px 11px;font-size:12px;font-weight:800;color:var(--tx2,#94A3B8);cursor:pointer}.vac-chips .on,.vac-qs .on{background:#F59E0B;color:#111;border-color:#F59E0B}'+
+  '.vac-qs span{padding:4px 8px;font-size:11px}'+
+  '#vac-ov{display:none;position:fixed;inset:0;z-index:9000;overflow-y:auto;background:var(--bg,#0B1628);color:var(--tx,#F8FAFC);padding-bottom:40px}'+
+  '.vac-ovh{position:sticky;top:0;z-index:2;display:flex;gap:10px;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 14px 10px;background:var(--bg,#0B1628);border-bottom:1px solid var(--div,#1E3350)}'+
+  '.vac-ovh button{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);color:var(--tx,#fff);width:40px;height:40px;border-radius:12px;font-size:24px;cursor:pointer}'+
+  '.vac-ovh .t{font:900 20px "DejaVu Sans Mono",monospace;color:#F59E0B;letter-spacing:1.5px}.vac-ovh small{display:block;color:var(--tx2,#94A3B8);font-size:12px}'+
+  '.vac-ovb{padding:4px 12px;max-width:560px;margin:0 auto}.vac-card{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:16px;padding:12px;margin:10px 0}.vac-est{border-color:#B45309}'+
+  '.vac-lab{font-size:11px;color:#FCD34D;font-weight:900;letter-spacing:1px;margin-bottom:6px}.vac-nota{font-size:12px;color:var(--tx2,#94A3B8);line-height:1.45;margin:10px 2px}'+
+  '.vac-tab{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}.vac-tab td,.vac-tab th{border-bottom:1px solid var(--div,#1E3350);padding:8px 5px;text-align:left}.vac-tab th{color:var(--tx2,#94A3B8);font-size:11px}.vac-tab tr{cursor:pointer}'+
+  '.vac-tab tr.yo td{background:rgba(14,165,233,.15);color:#7DD3FC;font-weight:800}.vac-ps{font-size:11.5px;color:var(--tx2,#94A3B8);line-height:1.5;background:rgba(0,0,0,.2)}'+
+  '.vac-cnt{font-size:11.5px;font-weight:900;color:#FACC15;letter-spacing:.4px;margin:12px 2px 6px}'+
+  '.vac-per{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--div,#1E3350);font-size:13.5px}.vac-per i{flex:none;width:32px;height:32px;border-radius:50%;background:#334155;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;font-weight:800}'+
+  '.vac-per span{flex:1}.vac-per small{display:block;color:var(--tx2,#94A3B8);font-size:11px}.vac-per em{font-style:normal;font-size:10px;font-weight:900;background:#EA580C;color:#fff;border-radius:6px;padding:2px 6px}.vac-per.yo{background:rgba(14,165,233,.12);border-radius:10px}'+
+  '.vac-tg,.vac-ys{display:flex;margin:8px 0;background:rgba(0,0,0,.25);border:1px solid var(--div,#1E3350);border-radius:12px;padding:3px}.vac-tg span,.vac-ys span{flex:1;text-align:center;padding:8px 4px;border-radius:9px;font-weight:900;font-size:13px;color:var(--tx2,#94A3B8);cursor:pointer}'+
+  '.vac-tg .on{background:#0EA5E9;color:#fff}.vac-ys .on{background:#F59E0B;color:#111}'+
+  '.vac-sb{display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.25);border:1px solid var(--div,#1E3350);border-radius:12px;padding:4px 12px}.vac-sb input{flex:1;background:none;border:0;color:var(--tx,#fff);font-weight:600;font-size:14px;font-family:inherit;padding:8px 0;outline:none;min-width:0}.vac-sb b{cursor:pointer;color:var(--tx2,#94A3B8)}'+
+  '.vac-yr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 9px}.vac-mm b{display:inline-block;font-size:11px;color:#FBBF24;margin-bottom:3px;cursor:pointer;padding:0 3px;border-radius:4px}.vac-mm.act b{background:#B45309;color:#fff}'+
+  '.vac-mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1.5px}.vac-mg i{font-style:normal;font-size:7.5px;color:var(--tx2,#94A3B8);background:rgba(148,163,184,.12);border-radius:2px;text-align:center;line-height:13px;height:13px;cursor:pointer;overflow:hidden}.vac-mg i:empty{background:none;cursor:default}'+
+  '.vac-mg i.pv,.vac-ley i.pv{background:repeating-linear-gradient(45deg,#0EA5E9 0 3px,#075985 3px 6px)!important;color:#fff}.vac-mg i.pf{background:repeating-linear-gradient(45deg,#EA580C 0 3px,#9A3412 3px 6px);color:#fff}'+
+  '.vac-mg i.hoy{outline:2px solid #fff;outline-offset:-1px}.vac-mg i.dim{opacity:.15}.vac-mg i.hit{background:#FACC15!important;color:#111!important;outline:1px solid #fff}'+
+  '.vac-rs{display:flex;gap:10px;align-items:center;margin:5px 0;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:10px;padding:9px 11px;font-size:13px;cursor:pointer}.vac-rs b{flex:none;width:56px;color:#FACC15}.vac-rs span{flex:1;min-width:0}.vac-rs em{font-style:normal;color:var(--tx2,#94A3B8)}'+
+  '.vac-mesano{display:flex;justify-content:flex-end;margin:4px 6px 6px}.vac-mesano>div{display:flex;background:rgba(0,0,0,.25);border:1px solid var(--div,#1E3350);border-radius:10px;padding:2px}.vac-mesano span{padding:5px 16px;border-radius:8px;font-weight:900;font-size:12.5px;color:var(--tx2,#94A3B8);cursor:pointer}.vac-mesano .on{background:#0EA5E9;color:#fff}'+
+  '.vac-bm{background:#2E1065;border:1.5px solid #A855F7;color:#E9D5FF}.vac-bdel{background:none;border:1.5px solid #7F1D1D;color:#FCA5A5}'+
+  '.vac-q .camb{border-color:#A855F7}.vac-q .camb span{display:block;color:#D8B4FE;font-weight:800}.vac-bar i.c{box-shadow:inset 0 0 0 2px #C084FC}'+
+  '.vac-cbs{margin-top:8px}.vac-cbs div{font-size:12px;color:#D8B4FE;padding:3px 0;cursor:pointer}.vac-cbs u{color:#94A3B8}'+
+  '.vac-seg{display:flex;gap:6px;margin-top:8px}.vac-seg span{flex:1;text-align:center;border:1px solid #334155;border-radius:10px;padding:9px 3px;font-weight:800;font-size:13px;color:var(--tx,#E2E8F0);cursor:pointer}.vac-seg span small{display:block;font-size:9.5px;color:#FDBA74}.vac-seg .on{border:2px solid #F59E0B;background:#2A1C05;color:#FCD34D}'+
+  '.vac-dd{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}.vac-dd i{flex:0 0 calc(12.5% - 3px);font-style:normal;text-align:center;font-size:12px;font-weight:800;border-radius:6px;padding:7px 0;background:#0369A1;color:#E0F2FE;cursor:pointer}.vac-dd i.d{background:#C2410C;color:#fff}.vac-dd i.x{opacity:.4;text-decoration:line-through}'+
+  '.vac-dio{font-size:13px;color:#FCD34D;font-weight:800;margin-top:8px}.vac-aviso{font-size:12px;color:#FCD34D;margin-top:8px}.vac-okt{font-size:12.5px;color:#86EFAC;margin-top:8px;font-weight:800}'+
+  '.vac-fe{display:flex;gap:8px}.vac-fe label{flex:1;font-size:11.5px;color:var(--tx2,#94A3B8)}.vac-fe input,.vac-in{display:block;width:100%;margin-top:4px;background:rgba(0,0,0,.25);border:1px solid #334155;border-radius:10px;color:var(--tx,#fff);padding:9px;font-size:15px;font-family:inherit;color-scheme:dark}'+
+  '.vac-antes{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--tx2,#94A3B8)}.vac-antes div{border:1px solid #334155;border-radius:10px;padding:9px}.vac-antes b{display:block;font-size:15px;color:#fff;margin:2px 0}'+
+  '.vac-seg span{font-size:12.5px}.vac-mc{margin-top:8px;border:1px solid #334155;border-radius:12px;padding:8px}.vac-mch{display:flex;align-items:center;justify-content:space-between;font-weight:900;font-size:14px;margin-bottom:6px}.vac-mch b{cursor:pointer;padding:2px 12px;font-size:20px;color:#7DD3FC}'+
+  '.vac-mcg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.vac-mcg i{font-style:normal;text-align:center;font-size:13px;font-weight:800;border-radius:7px;padding:8px 0;background:rgba(148,163,184,.12);color:var(--tx,#E2E8F0);cursor:pointer}.vac-mcg i.e{background:none;cursor:default}.vac-mcg i.h{font-size:10px;color:var(--tx2,#94A3B8);padding:2px 0}.vac-mcg i.on{background:#7E22CE;color:#fff;box-shadow:inset 0 0 0 2px #C084FC}.vac-mcg i.ya{background:rgba(14,165,233,.35)}'+
+  '.vac-of{border:1px solid var(--div,#1E3350);border-radius:14px;padding:10px 12px;margin:8px 0;background:var(--s2,#132236);font-size:13px;line-height:1.45}.vac-of.mio{border-color:#F59E0B}.vac-of .k{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}'+
+  '.vac-tg2{flex:none;border-radius:8px;padding:2px 7px;font-size:10.5px;font-weight:900;background:#0369A1;color:#E0F2FE}.vac-tg2.t8{background:#7C3AED;color:#EDE9FE}'+
+  '.vac-of .acc{display:flex;gap:6px;margin-top:8px}.vac-of .acc span{flex:1;text-align:center;border-radius:9px;padding:8px;font-weight:800;font-size:12.5px;cursor:pointer}.vac-of .si{background:#16A34A;color:#fff}.vac-of .no{border:1px solid #334155;color:var(--tx2,#CBD5E1)}'+
+  '.vac-et{display:inline-block;margin-left:6px;border-radius:7px;padding:2px 7px;font-size:10.5px;font-weight:900}.vac-et.ok{background:#14532D;color:#86EFAC}.vac-et.ac{background:#713F12;color:#FDE68A}.vac-et.pe{background:#1E3A8A;color:#BFDBFE}.vac-et.re{background:#334155;color:#CBD5E1}'+
+  '.vac-big{font-size:16px;font-weight:900}.vac-seg span.off{opacity:.35}.vac-paso{display:flex;gap:10px;margin:12px 4px;font-size:13px;line-height:1.4;color:var(--tx2,#CBD5E1)}.vac-paso b{color:var(--tx,#fff)}.vac-paso i{flex:none;width:24px;height:24px;border-radius:50%;font-style:normal;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center}.vac-paso i.ok{background:#16A34A;color:#fff}.vac-paso i.pe{background:#B45309;color:#fff}.vac-paso i.gr{background:#334155;color:#94A3B8}'+
+  '.vac-per em.cb{background:#7E22CE;margin-right:4px}.dc.vac-camb-c{box-shadow:inset 0 0 0 2px #A855F7!important}'+
+  '.dc.vac-fes-c{background:rgba(234,88,12,.28)!important;box-shadow:inset 0 0 0 1.5px #EA580C}'+
+  '.dc.vac-pv-c{background:repeating-linear-gradient(45deg,rgba(14,165,233,.30) 0 5px,rgba(14,165,233,.10) 5px 10px)!important}.dc.vac-pf-c{background:repeating-linear-gradient(45deg,rgba(234,88,12,.35) 0 5px,rgba(234,88,12,.12) 5px 10px)!important}'+
+  '.vac-lbl{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:6.5px;font-weight:900;color:#E0F2FE;letter-spacing:.2px}';
+  document.head.appendChild(s);
+  function montar(){
+    // Horario: tarjeta debajo de «Días Libres»
+    var dl=document.getElementById('btnCargarDiasLibres'), paso=dl&&dl.closest('.paso-h');
+    if(paso&&!document.getElementById('vac-card')){ paso.insertAdjacentHTML('afterend','<div id="vac-card"></div><input type="file" id="vac-file" accept="application/pdf" hidden onchange="vacLeerArchivo(this.files[0]);this.value=\'\'">'); vacPintar(); }
+    // Calendario: Mes | Año
+    var sw=document.getElementById('cal-swipe');
+    if(sw&&!document.getElementById('vac-mesano')) sw.insertAdjacentHTML('beforebegin','<div class="vac-mesano" id="vac-mesano"><div><span class="on">Mes</span><span onclick="vacAnio(curM.getFullYear())">Año</span></div></div>');
+    // Admin: tarjeta debajo de «Días Libres guardados»
+    var tits=document.querySelectorAll('.admin-card-tit'), ref=null; tits.forEach(function(t){ if(t.textContent.trim()==='Días Libres guardados') ref=t.closest('.admin-card'); });
+    if(ref&&!document.getElementById('vacAdmFile')) ref.insertAdjacentHTML('afterend','<div class="admin-card"><div class="admin-card-hdr"><div class="admin-card-ico" style="background:rgba(14,165,233,.15);color:#7DD3FC">🏖️</div><div><div class="admin-card-tit">Vacaciones (rotaciones)</div><div class="admin-card-sub">El PDF «Turno de vacaciones» de cada base y año. Cada tripulante ve su rotación, sus quincenas y la de festivos.</div></div></div>'+
+      '<label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--tx3);display:block;margin-bottom:4px">1. SEDE DE ESTE ARCHIVO</label><input class="aj-nombre-inp" id="vacAdmSede" list="listaSedes" placeholder="Barcelona, Madrid..." autocomplete="off" style="margin-bottom:10px">'+
+      '<label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--tx3);display:block;margin-bottom:4px">2. AÑO (si lo dejas vacío, se lee del PDF)</label><input type="number" class="aj-nombre-inp" id="vacAdmAnio" placeholder="'+new Date().getFullYear()+'" style="margin-bottom:10px">'+
+      '<label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--tx3);display:block;margin-bottom:4px">3. ARCHIVO</label><div class="filepick" onclick="document.getElementById(\'vacAdmFile\').click()"><div class="fp-ico">📄</div><div class="fp-txt" id="vacAdmTxt">Toca para elegir el PDF</div></div>'+
+      '<input type="file" id="vacAdmFile" accept="application/pdf" style="display:none" onchange="document.getElementById(\'vacAdmTxt\').textContent=this.files[0]?this.files[0].name:\'Toca para elegir el PDF\'">'+
+      '<button class="m-save" style="width:100%;margin-top:8px" onclick="vacSubirAdmin()">4. Subir y Publicar</button><div class="estado-archivo sin-archivo" id="vacAdmEst">Aún no has subido ninguna en esta sesión.</div>'+
+      '<button class="m-save" style="width:100%;margin-top:8px" onclick="vacListaAdmin()">🔄 Ver las publicadas</button><div id="vacAdmLista"></div></div>');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',montar); else montar();
+  setTimeout(montar,1500);
+})();
+
+/* ═══ NUEVO — Horario en acordeón (maqueta A aprobada) ═══
+   Arriba se quedan el título y «Hoy». Lo demás pasa a bloques plegables con su resumen en una
+   línea: Horario individual · Días del mes · Días Libres · Vacaciones · Otras acciones.
+   Solo uno abierto a la vez; se recuerda el último. No se crea nada nuevo: se mueven los mismos
+   elementos de siempre (mismos IDs), así que su lógica no cambia. */
+var HA_SECS=[
+  {s:'hor',ico:'📄',bg:'rgba(245,158,11,.18)',tit:'Horario individual'},
+  {s:'dias',ico:'📋',bg:'rgba(37,99,235,.18)',tit:'Días del mes'},
+  {s:'lib',ico:'🧘',bg:'rgba(124,58,237,.18)',tit:'Días Libres'},
+  {s:'vac',ico:'🏖️',bg:'rgba(14,165,233,.18)',tit:'Vacaciones'},
+  {s:'otr',ico:'⚙️',bg:'rgba(148,163,184,.15)',tit:'Otras acciones'}];
+var haLargo=false;
+function haAbierto(){ try{ return localStorage.getItem('haAbierto')||''; }catch(e){ return ''; } }
+function haTog(s){ var ab=haAbierto()===s?'':s; try{ localStorage.setItem('haAbierto',ab); }catch(e){}
+  document.querySelectorAll('.ha-ac').forEach(function(a){ a.classList.toggle('on',a.dataset.s===ab); });
+  haResumen(); var el=ab&&document.querySelector('.ha-ac[data-s="'+ab+'"]'); if(el) setTimeout(function(){ el.scrollIntoView({block:'nearest',behavior:'smooth'}); },60); }
+function haMontar(){
+  var board=document.querySelector('#p-horario .board'), wrap=document.getElementById('horario-wrap'); if(!board||!wrap||document.getElementById('ha-wrap')) return;
+  if(!document.getElementById('vac-card')) return; // espera a que esté la tarjeta de vacaciones
+  var hijos=function(sel){ return Array.prototype.slice.call(board.querySelectorAll(':scope > '+sel)); };
+  var lbls=hijos('.otras-lbl'), pasos=hijos('.paso-h'), $=function(id){ return document.getElementById(id); };
+  var grupos={
+    hor:[lbls[0],$('monthRow'),hijos('.stats')[0],lbls[1],pasos[0],pasos[1]],
+    dias:[wrap.querySelector(':scope > .legend'),$('days-horario')],
+    lib:[pasos[2]],
+    vac:[$('vac-card'),$('vac-file')],
+    otr:[hijos('.otras-grid-h')[0],$('gestionarMesesAcc')]};
+  if(lbls[2]) lbls[2].style.display='none'; // «Otras acciones» ya es un bloque
+  var ha=document.createElement('div'); ha.id='ha-wrap'; board.appendChild(ha);
+  HA_SECS.forEach(function(x){
+    var ac=document.createElement('div'); ac.className='ha-ac'; ac.dataset.s=x.s;
+    ac.innerHTML='<div class="ha-h" onclick="haTog(\''+x.s+'\')"><div class="ha-i" style="background:'+x.bg+'">'+x.ico+'</div><div class="ha-x"><b>'+x.tit+'</b><span id="ha-r-'+x.s+'"></span></div><span class="ha-tag" id="ha-t-'+x.s+'"></span><div class="ha-c">⌄</div></div><div class="ha-b"></div>';
+    var body=ac.querySelector('.ha-b'); (grupos[x.s]||[]).forEach(function(n){ if(n) body.appendChild(n); });
+    if(x.s==='dias') body.insertAdjacentHTML('beforeend','<div class="ha-mas" id="ha-mas" onclick="haLargo=!haLargo;haResumen()"></div>');
+    ha.appendChild(ac); });
+  // el último que usaste se queda abierto
+  var ab=haAbierto(); document.querySelectorAll('.ha-ac').forEach(function(a){ a.classList.toggle('on',a.dataset.s===ab); });
+  haResumen();
+}
+function haTxt(s,r,tag){ var a=document.getElementById('ha-r-'+s), b=document.getElementById('ha-t-'+s);
+  if(a&&a.textContent!==r) a.textContent=r; if(b){ b.textContent=tag||''; b.style.display=tag?'':'none'; } }
+function haResumen(){ if(!document.getElementById('ha-wrap')) return; var hoy=new Date();
+  try{ // Horario individual
+    var sub=(document.querySelector('.board-sub')||{}).textContent||'', ns=(document.getElementById('cServicio')||{}).textContent||'', hay=sub&&!/Sin horario/i.test(sub);
+    var mes=hay&&typeof horarioActualMeta!=='undefined'&&horarioActualMeta&&horarioActualMeta.mes?String(horarioActualMeta.mes):'';
+    haTxt('hor',hay?(mes?mes.charAt(0).toUpperCase()+mes.slice(1).toLowerCase()+' cargado':'Cargado')+(ns&&ns!=='–'?' · '+ns+' días de servicio':''):'Sin horario cargado · súbelo aquí',hay?'✓ Cargado':'');
+  }catch(e){}
+  try{ // Días del mes: corto = 6 días desde hoy (si es el mes actual)
+    var ds=Array.prototype.slice.call(document.querySelectorAll('#days-horario > .day')), n=ds.length, ini=0;
+    if(n&&typeof _pdfMesAnio==='function'&&typeof horarioActualMeta!=='undefined'&&horarioActualMeta){ var ma=_pdfMesAnio(horarioActualMeta.mes);
+      if(ma&&ma.anio===hoy.getFullYear()&&ma.mes===hoy.getMonth()+1) ds.forEach(function(d,i){ if(+d.dataset.dayNum===hoy.getDate()) ini=i; }); }
+    ini=Math.max(0,Math.min(ini,n-6));
+    ds.forEach(function(d,i){ d.style.display=haLargo||n<=8||(i>=ini&&i<ini+6)?'':'none'; });
+    var mas=document.getElementById('ha-mas'); if(mas){ mas.style.display=n>8?'':'none'; mas.textContent=haLargo?'Ver menos ⌃':'Ver los '+n+' días ⌄'; }
+    haTxt('dias',n?n+' días · '+(haLargo?'lista completa':'toca para ver la lista'):'Aparecen al subir tu horario individual');
+  }catch(e){}
+  try{ // Días Libres
+    var idx=typeof diasLibresPrevistosIndice==='function'?diasLibresPrevistosIndice():{}, ks=Object.keys(idx), meses={};
+    ks.forEach(function(k){ meses[k.slice(0,7)]=1; }); var ml=Object.keys(meses).sort();
+    haTxt('lib',ks.length?ml.slice(-2).map(function(m){ return MESES[+m.slice(5,7)-1]+' '+m.slice(0,4); }).join(' y ')+' cargado'+(ml.length>1?'s':'')+' · '+ks.length+' días':'El admin los publica para tu base');
+  }catch(e){}
+  try{ // Vacaciones: rotación y próxima quincena
+    var v=vacG(), an=Object.keys(v.pubs).map(Number).sort(), hk=vacK(new Date()), r='Sin cargar · busca la publicación de tu base', prox=null, rot='';
+    an.forEach(function(A){ var p=v.pubs[A], f=vacMia(p); if(!f) return; if(A<=hoy.getFullYear()||!rot) rot=f.rot; var RR=vacReal(p,f);
+      vacTramos(Object.keys(RR.d)).forEach(function(t){ if(t[1]>=hk&&(!prox||t[0]<prox[0])) prox=[t[0],t[1],RR.d[t[0]]==='f',false,!!RR.cam[t[0]]]; }); });
+    if(!prox&&v.prev&&v.prev.en){ var pk=Object.keys(v.prev.dias).sort(); if(pk.length) prox=[pk[0],null,false,true]; }
+    if(an.length) r=(rot?'Rotación '+rot:'Publicación '+an[an.length-1])+(prox?' · próxima: '+(prox[3]?'≈ '+vacFmt(vacKD(prox[0]))+' '+prox[0].slice(0,4)+' (previsión)':vacTramoTxt([prox[0],prox[1]])+' '+prox[1].slice(0,4)+(prox[2]?' (festivos)':'')+(prox[4]?' (cambio)':'')):(an.length?' · '+an[an.length-1]+' ya disfrutadas':''));
+    haTxt('vac',r);
+  }catch(e){}
+  haTxt('otr','HTDL · cambiar rol · meses guardados');
+}
+(function(){
+  var s=document.createElement('style'); s.textContent=
+  '#ha-wrap{margin-top:12px}.ha-ac{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:16px;margin:0 0 9px;overflow:hidden}'+
+  '.ha-h{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent}'+
+  '.ha-i{flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}'+
+  '.ha-x{flex:1;min-width:0}.ha-x b{display:block;font-size:15.5px;color:var(--tx,#F8FAFC)}.ha-x span{display:block;font-size:12.5px;color:var(--tx2,#94A3B8);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+  '.ha-tag{flex:none;font-size:10.5px;font-weight:900;border-radius:7px;padding:3px 7px;background:#14532D;color:#86EFAC}'+
+  '.ha-c{flex:none;color:var(--tx2,#64748B);font-size:18px;transition:transform .2s}.ha-ac.on{border-color:#F59E0B}.ha-ac.on .ha-c{color:#F59E0B;transform:rotate(180deg)}'+
+  '.ha-b{display:none;padding:2px 13px 13px;border-top:1px solid var(--div,#1E3350)}.ha-ac.on .ha-b{display:block}'+
+  '.ha-b>.otras-lbl:first-child{margin-top:10px!important}.ha-b #vac-card{margin:10px 0 0;border:0;padding:0;background:none}.ha-b #vac-card>.vac-h{display:none}'+
+  '.ha-b .legend{margin:10px 0 6px;padding:0}.ha-b #days-horario{margin:0;padding:0}.ha-mas{text-align:center;font-size:13px;font-weight:800;color:#7DD3FC;padding:10px 0 2px;cursor:pointer}';
+  document.head.appendChild(s);
+  var _haGo=goP; goP=function(n){ _haGo.apply(this,arguments); if(n==='horario'){ haMontar(); haResumen(); } };
+  var _haRA=renderAll; renderAll=function(){ var r=_haRA.apply(this,arguments); haResumen(); return r; };
+  var _haVP=vacPintar; vacPintar=function(){ _haVP.apply(this,arguments); haResumen(); };
+  setTimeout(haMontar,1700); setTimeout(haMontar,3500);
+})();
+
+</script>
 </body>
 </html>
