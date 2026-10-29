@@ -37283,5 +37283,129 @@ function haResumen(){ if(!document.getElementById('ha-wrap')) return; var hoy=ne
 })();
 
 </script>
+<script>
+/* ═══ NUEVO — Avisos de retraso automáticos y retraso de llegada (maquetas aprobadas) ═══
+   - La app sube al servidor tus trenes (ayer → +31 días), con los cambios de turno ya aplicados
+     (si hay un cambio, se vigila el tren del cambio, no el grafiado). Ver supabase/avisos-retraso.sql.
+   - El servidor (vigila-retrasos) mira Renfe cada 5 min: avisa cada 20 min si va con retraso y,
+     al llegar, guarda el retraso de llegada. Sin datos de Renfe no avisa ni guarda nada.
+   - Al abrir la app sale el pop-up: retraso de llegada + deje (15 fuera de base, 20 en base).
+     Cuenta para horas y dinero, o solo se anota:
+       · jornada normal: ida y vuelta cuentan;
+       · HTDL / Art. 51-52 por dinero: cuenta solo el último tramo del día (de la toma al deje);
+         en pernocta la ida es el último tramo de ese día;
+       · HTDL / Art. 51-52 por días: solo se anota.
+     Lo que cuenta se guarda igual que «⏱ Retraso»; lo anotado va en retrasosAnotados (no calcula). */
+function rtG(){ var a=(typeof AJ!=='undefined'&&AJ.vig)||{}; return {activo:a.activo!==false,cada20:a.cada20!==false,llegada:a.llegada!==false}; }
+function rtNum(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
+function rtHtdl(t){ return t&&(t.tipo==='trabajado'||t.tipo==='art5152'); }
+function rtComp(t){ return t?(t.tipo==='art5152'?t.compensacion:t.comp):null; }
+// Trenes de un día, con la regla de si cuenta. Si hay un cambio de turno apuntado, manda el cambio.
+function rtViajesDia(k){ var t=TV[k], out=[];
+  var ref=((typeof TV2!=='undefined'&&TV2[k])||[]).filter(function(r){ return r&&r.turno_referencia_externa&&(r.numTren||r.numTrenVuelta); }).pop();
+  var base=(typeof AJ!=='undefined'&&AJ.base)||'';
+  if(ref){ var con=ref.companeroNombre||'compañero';
+    if(ref.numTren) out.push({tramo:1,tren:ref.numTren,sale:ref.hF,llega:ref.hL,destino:ref.lle||'',en_base:false,cuenta:true,tipo:'cambio',cambio_con:con});
+    if(ref.numTrenVuelta&&ref.tipoServicio!=='pernocta2'&&ref.tipoServicio!=='pernocta3') out.push({tramo:2,tren:ref.numTrenVuelta,sale:ref.hF2||null,llega:ref.hL2||null,destino:base,en_base:true,cuenta:true,tipo:'cambio',cambio_con:con});
+    return out; }
+  if(!t) return out;
+  if(t.tipo==='vuelta-pernocta'){ var o=TV[t.origenPernocta]||t, dias=rtHtdl(o)&&rtComp(o)==='dias';
+    if(t.numTren) out.push({tramo:2,tren:t.numTren,sale:t.hF,llega:t.hL,destino:t.lle||base,en_base:true,cuenta:!dias,tipo:rtHtdl(o)?'htdl':'ordinario'}); return out; }
+  if(t.tipo!=='ordinario'&&t.tipo!=='trabajado'&&t.tipo!=='art5152') return out;
+  var htdl=rtHtdl(t), dias=htdl&&rtComp(t)==='dias', pern=t.modo==='pernocta'||t.modo==='pernocta3', hayV=!pern&&t.numTrenVuelta;
+  if(t.numTren) out.push({tramo:1,tren:t.numTren,sale:t.hF,llega:t.hL,destino:t.lle||'',en_base:false,cuenta:!dias&&(!htdl||!hayV),tipo:htdl?'htdl':'ordinario'});
+  if(hayV) out.push({tramo:2,tren:t.numTrenVuelta,sale:t.hF2,llega:t.hL2,destino:t.lle2||base,en_base:true,cuenta:!dias,tipo:htdl?'htdl':'ordinario'});
+  return out; }
+function rtViajes(){ var out=[], d=new Date(); d.setDate(d.getDate()-1);
+  for(var i=0;i<33;i++){ var k=key(d.getFullYear(),d.getMonth()+1,d.getDate());
+    rtViajesDia(k).forEach(function(v){ v.tren=rtNum(v.tren); if(v.tren&&v.sale&&v.llega){ v.fecha=k; out.push(v); } }); d.setDate(d.getDate()+1); }
+  return out; }
+var _rtT=null, _rtUlt='';
+function rtSubir(ya){ clearTimeout(_rtT); _rtT=setTimeout(async function(){
+  try{ var mat=String(AJ.matricula||'').trim(); if(!mat||!sbAdmin) return; var V=rtViajes(), aj=rtG(), firma=JSON.stringify([V,aj]); if(firma===_rtUlt) return;
+    var r=await sbAdmin.rpc('vig_subir',{p_mat:mat,p_viajes:V,p_ajustes:aj}); if(!r.error) _rtUlt=firma; else console.warn('vig_subir',r.error.message); }catch(e){ console.warn('vig_subir',e); } }, ya?300:12000); }
+
+/* ── Pop-up al llegar ── */
+var rtCola=[], rtEnPop=false;
+async function rtPendientes(){ try{ var mat=String(AJ.matricula||'').trim(); if(!mat||!sbAdmin||rtEnPop) return;
+  var r=await sbAdmin.rpc('vig_pendientes',{p_mat:mat}); if(r.error||!r.data) return; rtCola=r.data||[]; rtSiguiente(); }catch(e){} }
+function rtSiguiente(){ var v=rtCola.shift(); if(!v){ rtEnPop=false; return; } rtEnPop=true; rtPop(v,null); }
+function rtHmas(h,m){ var x=/(\d{1,2}):(\d{2})/.exec(h||''); if(!x) return ''; var t=((+x[1])*60+(+x[2])+m+1440)%1440; return Math.floor(t/60)+':'+('0'+t%60).slice(-2); }
+function rtPop(v,min){ var deje=v.en_base?20:15, r=min!=null?min:v.ret_llegada, tot=r+deje, ida=v.tramo!==2, k=v.fecha, t=TV[k], fd=k.split('-');
+  var htdlDin=v.cuenta&&v.tipo==='htdl'&&t&&(t.tipo==='trabajado'||(t.tipo==='vuelta-pernocta'&&TV[t.origenPernocta]&&TV[t.origenPernocta].tipo==='trabajado'));
+  var eur=htdlDin&&AJ.vh?Math.round(tot/60*AJ.vh*100)/100:null;
+  var razon=v.cuenta?'':(v.tipo==='cambio'?'':(v.tipo==='htdl'&&ida?'En un HTDL de ida y vuelta, la ida no es el último tramo: <b>queda apuntada pero no suma</b> horas ni dinero. Lo que vale es la vuelta.':'HTDL por días: el retraso <b>solo queda apuntado</b>, no suma dinero.'));
+  var h='<div class="rt-pop"><div class="rt-h"><div class="rt-i">'+(ida?'🚆':'🏠')+'</div><div><b>'+(ida?'Ida':'Vuelta')+' · '+v.tren+' llegó'+(v.destino?' a '+limpioV(v.destino):'')+'</b><span>'+(+fd[2])+' '+MESES_C[+fd[1]-1]+' · '+(v.tipo==='cambio'?'🔁 cambio con '+limpioV(v.cambio_con||''):v.tipo==='htdl'?'HTDL':'Jornada grafiada')+' · 📡 Renfe en directo</span></div></div>'+
+    '<div class="rt-tab"><div><span>Llegada prevista → real</span><b>'+(v.llega||'')+' → '+rtHmas(v.llega,r)+'</b></div><div><span>Retraso de llegada</span><b>+'+r+' min</b></div><div class="f"><span>Deje '+(v.en_base?'en base':'fuera de base')+'</span><b>+'+deje+' min</b></div><div class="tot"><span>Retraso que se anota</span><b>+'+tot+' min</b></div></div>'+
+    '<span class="rt-regla '+(v.cuenta?'c':'a')+'">'+(v.cuenta?'✅ CUENTA PARA HORAS Y DINERO':'📝 SOLO SE ANOTA')+'</span>'+
+    '<div class="rt-big">Se anota <b>+'+tot+' min en la '+(ida?'Ida':'Vuelta')+' ('+v.tren+')</b>:<br>'+r+' min de retraso de llegada + '+deje+' min de deje '+(v.en_base?'en base':'fuera de base')+'.</div>'+
+    (eur!=null?'<div class="rt-din">💶 HTDL por dinero: es el último tramo (de la toma al deje), así que cuenta.<br><b>+'+tot+' min × '+String(AJ.vh).replace('.',',')+' €/h = +'+eur.toFixed(2).replace('.',',')+' €</b></div>':'')+
+    (razon?'<div class="rt-no">'+razon+'</div>':'')+(!t&&v.tipo!=='cambio'?'<div class="rt-no">⚠️ Ese día no tienes ningún turno en el calendario: no hay dónde anotarlo.</div>':'')+
+    '<button class="rt-b '+(v.cuenta?'si':'gr')+'" onclick="rtAplicar('+r+')">'+(v.cuenta?'✓ Añadir +'+tot+' min a la '+(ida?'Ida':'Vuelta'):'📝 Anotar +'+tot+' min en la '+(ida?'Ida':'Vuelta'))+'</button>'+
+    '<div class="rt-2"><button class="rt-b no" onclick="rtCambiar('+r+')">✏️ Cambiar minutos</button><button class="rt-b no" onclick="rtResolver(\'no\')">Ahora no</button></div></div>';
+  var o=document.getElementById('rt-ov'); if(!o){ o=document.createElement('div'); o.id='rt-ov'; document.body.appendChild(o); }
+  o.innerHTML=h; o.style.display='flex'; o._v=v; }
+function rtCambiar(r){ var x=prompt('Minutos de retraso de llegada (sin contar el deje):',r); if(x==null) return; var n=parseInt(x,10); if(isNaN(n)||n<0||n>600){ toast('Escribe un número de minutos'); return; } rtPop(document.getElementById('rt-ov')._v,n); }
+async function rtResolver(como){ var o=document.getElementById('rt-ov'), v=o&&o._v; if(o) o.style.display='none';
+  try{ if(v) await sbAdmin.rpc('vig_resolver',{p_id:v.id,p_mat:String(AJ.matricula||'').trim(),p_como:como}); }catch(e){}
+  rtSiguiente(); }
+function rtAplicar(r){ var v=document.getElementById('rt-ov')._v, deje=v.en_base?20:15, tot=r+deje, k=v.fecha, tramo=v.tramo===2?2:1;
+  var nota={tramo:tramo,minutos:tot,tren:v.tren,llegada:r,deje:deje,fuente:'renfe'};
+  if(v.tipo==='cambio'){ var ref=((TV2[k])||[]).filter(function(x){ return x&&x.turno_referencia_externa; }).pop();
+    if(ref){ ref.retrasosAnotados=(ref.retrasosAnotados||[]).filter(function(x){ return x.tramo!==tramo; }).concat([nota]); if(typeof saveTV2==='function') saveTV2(); } }
+  else if(TV[k]){ var t=TV[k];
+    if(v.cuenta){ t.retrasos=(t.retrasos||[]).filter(function(x){ return x.tramo!==tramo; }); t.retrasos.push(nota); t.retrasoMin=tot;
+      if(t.retrasosAnotados) t.retrasosAnotados=t.retrasosAnotados.filter(function(x){ return x.tramo!==tramo; }); }
+    else t.retrasosAnotados=(t.retrasosAnotados||[]).filter(function(x){ return x.tramo!==tramo; }).concat([nota]);
+    saveTV(); }
+  toast((v.cuenta&&v.tipo!=='cambio'?'✅ Añadido':'📝 Anotado')+' +'+tot+' min en la '+(tramo===2?'Vuelta':'Ida')+' ('+v.tren+')');
+  try{ if(typeof renderCal==='function') renderCal(); }catch(e){}
+  rtResolver(v.cuenta&&v.tipo!=='cambio'?'anadido':'anotado'); }
+
+/* ── En el día: desglose de los retrasos que vinieron de Renfe ── */
+function rtDiaHtml(k){ var t=TV[k]||{}, ref=((typeof TV2!=='undefined'&&TV2[k])||[]).filter(function(x){ return x&&x.retrasosAnotados; }).pop()||{};
+  var L=(t.retrasos||[]).filter(function(x){ return x.fuente==='renfe'; }).map(function(x){ return [x,1]; })
+    .concat((t.retrasosAnotados||[]).map(function(x){ return [x,0]; })).concat((ref.retrasosAnotados||[]).map(function(x){ return [x,0]; }));
+  if(!L.length) return '';
+  return '<div class="rt-dia"><div class="l">⏱ RETRASOS DE LLEGADA (📡 Renfe)</div>'+L.map(function(p){ var x=p[0];
+    return '<div class="r"><div>'+(x.tramo===2?'Vuelta':'Ida')+' · '+limpioV(x.tren||'')+'<small>llegada +'+x.llegada+' · deje '+(x.deje===20?'en base':'fuera de base')+' +'+x.deje+(p[1]?'':' · solo anotado')+'</small></div><b class="'+(p[1]?'':'a')+'">+'+x.minutos+' min '+(p[1]?'':'📝')+'</b></div>'; }).join('')+'</div>'; }
+var _rtDA=renderDiaArea; renderDiaArea=function(){ _rtDA.apply(this,arguments); try{ if(!selDay||!selDay.k) return; var html=rtDiaHtml(selDay.k); if(!html) return;
+  ['dia-card-body','dia-area'].forEach(function(id){ var a=document.getElementById(id); if(a&&a.innerHTML&&!a.querySelector('.rt-dia')) a.insertAdjacentHTML('beforeend',html); }); }catch(e){} };
+
+/* ── Ajustes → Notificaciones: interruptores ── */
+function rtAjPinta(){ var c=document.getElementById('rt-aj'); if(!c) return; var a=rtG();
+  var fila=function(k,t,s){ return '<div class="rt-sw" onclick="rtAjTog(\''+k+'\')"><div>'+t+'<small>'+s+'</small></div><div class="rt-tg'+(a[k]?'':' off')+'"></div></div>'; };
+  c.innerHTML='<div class="aj-card"><div style="font-weight:900;font-size:14px;margin-bottom:4px">🚆 Avisos de retraso de tus trenes</div>'+
+    fila('activo','Avisos de retraso automáticos','Vigila tus trenes de hoy aunque no abras la app')+
+    (a.activo?fila('cada20','Cada 20 min si va con retraso','Mientras el tren está en marcha')+fila('llegada','Aviso al llegar para añadir el retraso','Retraso de llegada + deje (15 fuera / 20 en base)'):'')+
+    '<div style="font-size:11.5px;color:var(--tx2);line-height:1.5;margin-top:8px">Para que funcione: tu horario del mes cargado, las notificaciones activadas (botón de arriba) y la app de Android. Si hay un cambio de turno apuntado, se vigila el tren del cambio. Sin datos de Renfe no se avisa ni se anota nada.</div></div>'; }
+function rtAjTog(k){ var a=rtG(); a[k]=!a[k]; AJ.vig=a; try{ localStorage.setItem('aj5',JSON.stringify(AJ)); }catch(e){} rtAjPinta(); rtSubir(true); }
+
+(function(){
+  var s=document.createElement('style'); s.textContent=
+  '#rt-ov{display:none;position:fixed;inset:0;z-index:9500;background:rgba(2,6,23,.62);align-items:flex-end;justify-content:center}'+
+  '.rt-pop{width:100%;max-width:480px;margin:0 10px calc(12px + env(safe-area-inset-bottom));background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:22px;padding:16px;color:var(--tx,#F8FAFC);max-height:92vh;overflow-y:auto}'+
+  '.rt-h{display:flex;gap:10px;align-items:center}.rt-i{flex:none;width:44px;height:44px;border-radius:12px;background:#7C2D12;display:flex;align-items:center;justify-content:center;font-size:22px}.rt-h b{display:block;font-size:17px}.rt-h span{display:block;font-size:12px;color:var(--tx2,#94A3B8)}'+
+  '.rt-tab{margin-top:12px;border:1px solid var(--div,#1E3350);border-radius:14px;overflow:hidden}.rt-tab div{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;border-top:1px solid var(--div,#1E3350);color:var(--tx2,#94A3B8)}.rt-tab div:first-child{border-top:0}.rt-tab b{color:var(--tx,#fff)}'+
+  '.rt-tab .f{background:var(--s2,#132236)}.rt-tab .f b{color:#FCD34D}.rt-tab .tot{background:#3B0D0D}.rt-tab .tot b{color:#FCA5A5;font-size:17px}'+
+  '.rt-regla{display:inline-block;margin-top:10px;font-size:11px;font-weight:900;letter-spacing:.6px;border-radius:7px;padding:3px 8px}.rt-regla.c{background:#14532D;color:#86EFAC}.rt-regla.a{background:#334155;color:#CBD5E1}'+
+  '.rt-big{margin-top:10px;background:#2A1C05;border:1.5px solid #F59E0B;border-radius:14px;padding:10px 12px;font-size:13px;color:#FDE68A;line-height:1.45}.rt-big b{color:#fff}'+
+  '.rt-din{margin-top:8px;background:#052e1a;border:1px solid #16A34A;border-radius:12px;padding:9px 12px;font-size:12.5px;color:#86EFAC;line-height:1.45}.rt-din b{color:#fff}'+
+  '.rt-no{margin-top:8px;background:#1E293B;border:1px solid #475569;border-radius:12px;padding:9px 12px;font-size:12.5px;color:#CBD5E1;line-height:1.45}.rt-no b{color:#fff}'+
+  '.rt-b{display:block;width:100%;border:0;border-radius:13px;padding:13px;font-weight:900;font-size:15px;margin-top:9px;cursor:pointer;font-family:inherit;color:#fff}.rt-b.si{background:#16A34A}.rt-b.gr{background:#334155}.rt-b.no{background:none;border:1.5px solid #334155;color:#CBD5E1;font-size:13.5px;font-weight:800}'+
+  '.rt-2{display:flex;gap:8px}.rt-2 .rt-b{flex:1}'+
+  '.rt-dia{margin:10px 0;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:14px;padding:10px 12px}.rt-dia .l{font-size:10.5px;color:var(--tx2,#94A3B8);font-weight:800;letter-spacing:1px}.rt-dia .r{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--div,#1E3350);padding:7px 0;font-size:13px}.rt-dia .r:first-of-type{border-top:0}.rt-dia small{display:block;color:var(--tx2,#94A3B8);font-size:11px}.rt-dia b{color:#FCA5A5}.rt-dia b.a{color:#94A3B8}'+
+  '.rt-sw{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--div,#1E3350);font-size:13.5px;cursor:pointer}.rt-sw small{display:block;color:var(--tx2,#94A3B8);font-size:11.5px;margin-top:2px}'+
+  '.rt-tg{flex:none;width:46px;height:27px;border-radius:14px;background:#16A34A;position:relative}.rt-tg:after{content:"";position:absolute;right:3px;top:3px;width:21px;height:21px;border-radius:50%;background:#fff}.rt-tg.off{background:#334155}.rt-tg.off:after{left:3px;right:auto}';
+  document.head.appendChild(s);
+  var _rtSave=saveTV; saveTV=function(){ var x=_rtSave.apply(this,arguments); rtSubir(false); return x; };
+  function montar(){ var n=document.querySelector('#aj-acc-notificaciones .aj-acc-body'); if(n&&!document.getElementById('rt-aj')){ n.insertAdjacentHTML('beforeend','<div id="rt-aj"></div>'); rtAjPinta(); } }
+  montar(); setTimeout(montar,1500);
+  setTimeout(function(){ rtSubir(true); rtPendientes(); },4500);
+  setInterval(rtPendientes,120000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden){ rtPendientes(); rtSubir(false); } });
+})();
+
+</script>
 </body>
 </html>
