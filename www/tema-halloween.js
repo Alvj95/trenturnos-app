@@ -19,7 +19,7 @@
 // tener que subir nada. La opción elegida se guarda en AJ.estetica
 // ('a' Brasas · 'b' Niebla y fantasmas · 'c' Murciélagos · 'n' Normal).
 window.HW_DESDE = '2026-10-01';
-window.HW_HASTA = '2026-11-05'; // último día incluido; el 6 de noviembre vuelve solo a lo normal
+window.HW_HASTA = '2026-10-28'; // Halloween se termina antes: del 29 de octubre al 1 de noviembre va la pantalla de luto
 (function(){
   try{
     var d = new Date();
