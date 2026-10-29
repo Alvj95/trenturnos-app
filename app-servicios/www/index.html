@@ -97,6 +97,72 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;backgrou
 </div>
 
 <script>
+/* ═══ NUEVO — Ventanas de confirmar / aviso / escribir con el diseño de la app ═══
+   Sustituyen a las grises del móvil (confirm / alert / prompt).
+   · ttConfirm(texto) → promesa con true/false   · ttAlert(texto) → promesa
+   · ttPrompt(texto, valor) → promesa con el texto o null
+   El botón «atrás» cierra la ventana como «Cancelar» (ttDlgAtras()).
+   Si algo fallara al pintarla, se usa la ventana gris de siempre: nunca se queda bloqueado. */
+(function(){
+  if(window.ttConfirm) return;
+  var NAT={confirm:window.confirm.bind(window), alert:window.alert.bind(window), prompt:window.prompt.bind(window)};
+  window._dlgNativo=NAT;
+  var cola=[], abierta=null;
+  var PELIGRO=/(eliminar|borrar|quitar|retirar|rechazar|bloquear|denegar|dejar de|vaciar)/i;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function css(){
+    if(document.getElementById('tt-dlg-css')) return;
+    var st=document.createElement('style'); st.id='tt-dlg-css'; st.textContent=
+    '#tt-dlg{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.62);-webkit-tap-highlight-color:transparent;animation:ttDlgIn .15s ease-out}'+
+    '@keyframes ttDlgIn{from{opacity:0}to{opacity:1}}'+
+    '#tt-dlg .tt-c{width:100%;max-width:400px;background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:20px;padding:18px 16px 14px;color:var(--tx,#F8FAFC);box-shadow:0 18px 50px rgba(0,0,0,.55);font-family:inherit;animation:ttDlgUp .18s ease-out}'+
+    '@keyframes ttDlgUp{from{transform:translateY(14px) scale(.98)}to{transform:none}}'+
+    '#tt-dlg .tt-i{font-size:28px;line-height:1;margin-bottom:8px}'+
+    '#tt-dlg .tt-t{font-size:15px;line-height:1.5;white-space:pre-line;word-wrap:break-word;max-height:55vh;overflow-y:auto}'+
+    '#tt-dlg .tt-in{display:block;width:100%;margin-top:12px;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:12px;color:var(--tx,#fff);padding:12px;font-size:16px;font-family:inherit;outline:none}'+
+    '#tt-dlg .tt-in:focus{border-color:var(--acc2,#3B82F6)}'+
+    '#tt-dlg .tt-b{display:flex;gap:10px;margin-top:16px}'+
+    '#tt-dlg .tt-b button{flex:1;border:0;border-radius:13px;padding:13px 10px;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer}'+
+    '#tt-dlg .tt-no{background:none!important;border:1.5px solid var(--div,#334155)!important;color:var(--tx2,#CBD5E1)}'+
+    '#tt-dlg .tt-si{background:var(--acc,#2563EB);color:#fff}'+
+    '#tt-dlg .tt-si.peligro{background:#DC2626}';
+    (document.head||document.documentElement).appendChild(st);
+  }
+  function siguiente(){ if(abierta||!cola.length) return; var d=cola.shift();
+    try{ pintar(d); }catch(e){ // si no se puede pintar: la de siempre
+      try{ d.fin(d.tipo==='confirm'?NAT.confirm(d.texto):d.tipo==='prompt'?NAT.prompt(d.texto,d.valor||''):(NAT.alert(d.texto),undefined)); }catch(e2){ d.fin(d.tipo==='confirm'?false:d.tipo==='prompt'?null:undefined); }
+      abierta=null; siguiente(); } }
+  function pintar(d){
+    if(!document.body) throw new Error('sin body');
+    css(); abierta=d;
+    var el=document.createElement('div'); el.id='tt-dlg'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true');
+    var peligro=d.tipo==='confirm'&&PELIGRO.test(d.texto);
+    var verbo=d.tipo!=='confirm'?'Aceptar':((d.texto.match(/^¿?\s*(Eliminar|Borrar|Quitar|Retirar|Rechazar|Bloquear|Denegar|Desbloquear|Aceptar|Volver)/i)||[])[1]||'Aceptar');
+    var icono=d.tipo==='alert'?(/^(⚠️|❌|✅|🔒|ℹ️)/.test(d.texto)?'':'ℹ️'):d.tipo==='prompt'?'✏️':(peligro?'🗑️':'❓');
+    el.innerHTML='<div class="tt-c">'+(icono?'<div class="tt-i">'+icono+'</div>':'')+'<div class="tt-t">'+esc(d.texto)+'</div>'+
+      (d.tipo==='prompt'?'<input class="tt-in" id="tt-dlg-in" value="'+esc(d.valor||'')+'" autocomplete="off">':'')+
+      '<div class="tt-b">'+(d.tipo==='alert'?'':'<button type="button" class="tt-no">Cancelar</button>')+
+      '<button type="button" class="tt-si'+(peligro?' peligro':'')+'">'+esc(verbo.charAt(0).toUpperCase()+verbo.slice(1).toLowerCase())+'</button></div></div>';
+    document.body.appendChild(el);
+    var si=el.querySelector('.tt-si'), no=el.querySelector('.tt-no'), inp=el.querySelector('.tt-in');
+    function cerrar(v){ if(abierta!==d) return; abierta=null; try{ el.remove(); }catch(e){} d.fin(v); setTimeout(siguiente,0); }
+    d.cerrar=function(){ cerrar(d.tipo==='confirm'?false:d.tipo==='prompt'?null:undefined); };
+    si.onclick=function(){ cerrar(d.tipo==='confirm'?true:d.tipo==='prompt'?(inp?inp.value:''):undefined); };
+    if(no) no.onclick=function(){ d.cerrar(); };
+    el.addEventListener('click',function(ev){ if(ev.target===el&&d.tipo!=='alert') d.cerrar(); });
+    if(inp){ inp.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); si.click(); } }); setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} },60); }
+  }
+  function pedir(tipo,texto,valor){ return new Promise(function(res){ cola.push({tipo:tipo,texto:String(texto==null?'':texto),valor:valor,fin:res}); siguiente(); }); }
+  window.ttConfirm=function(t){ return pedir('confirm',t); };
+  window.ttAlert=function(t){ return pedir('alert',t); };
+  window.ttPrompt=function(t,v){ return pedir('prompt',t,v); };
+  window.ttDlgAbierto=function(){ return !!abierta; };
+  window.ttDlgAtras=function(){ if(!abierta) return false; try{ abierta.cerrar(); }catch(e){} return true; };
+  // Los avisos (alert) ya no paran nada: se muestran con el diseño de la app y el código sigue.
+  window.alert=function(t){ window.ttAlert(t); };
+})();
+</script>
+<script>
 var K_NOMBRE = 'svSoloNombre', K_MAT = 'svSoloMatricula', K_MAT_MOD = 'trenturnosServiciosMatricula';
 function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){} return null; }
 function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
@@ -153,7 +219,7 @@ function arrancarModulo(){
   if(arrancado) return;
   arrancado = true;
   f.addEventListener('load', function(){ prepararModulo(); comprobarCompartidos(); });
-  f.src = 'servicios.html?v=19';
+  f.src = 'servicios.html?v=25';
 }
 // Ajustes de la versión independiente dentro del módulo, sin tocar su código:
 // 🔁 (cambiar de perfil) pasa a ser ⚙️, saludo con el nombre y sitio para el aviso de MOL compartido.
@@ -207,7 +273,7 @@ window.abrirCompartido = function(i){
   else window.__svPendienteAbrir = a;
 };
 window.rechazarCompartido = async function(i){
-  var a = avisos[i]; if(!a || !confirm('¿Rechazar el MOL de ' + a.de_matricula + '?')) return;
+  var a = avisos[i]; if(!a || !await ttConfirm('¿Rechazar el MOL de ' + a.de_matricula + '?')) return;
   try{ await sbAdmin.rpc('sv_rechazar', { p_id: a.id, p_matricula: AJ.matricula }); }catch(e){}
   comprobarCompartidos();
 };
@@ -235,20 +301,39 @@ function instalar(){
     : 'En Chrome, toca el menú <b>⋮</b> (arriba a la derecha) y luego <b>«Añadir a pantalla de inicio»</b> o <b>«Instalar aplicación»</b>.';
   el.classList.add('on');
 }
-function borrarServicios(){
-  if(!confirm('¿Borrar los pasajeros y MOL guardados en este móvil? Tu nombre y matrícula se mantienen.')) return;
+async function borrarServicios(){
+  if(!await ttConfirm('¿Borrar los pasajeros y MOL guardados en este móvil? Tu nombre y matrícula se mantienen.')) return;
   ['trenturnosServiciosAbordo', 'trenturnosServiciosSerie', 'trenturnosServiciosEspejo'].forEach(function(k){ ls(k, null); });
   location.reload();
 }
 
 // Botón «atrás» de Android: primero decide el módulo (cerrar ficha, volver al mapa…).
 history.pushState({ sv: 1 }, '');
+// Si no queda nada que cerrar: el primer «atrás» solo avisa y el segundo (en menos de 2 s) sale.
+var ultimoAtras = 0;
+function avisoSalir(){
+  var el = document.getElementById('aviso-salir');
+  if(!el){ el = document.createElement('div'); el.id = 'aviso-salir';
+    el.style.cssText = 'position:fixed;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2147483001;background:var(--s1,#0F1A2B);color:var(--tx,#E8EDF5);border:1px solid var(--div,#223149);border-radius:999px;padding:10px 18px;font:700 14px system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.45);white-space:nowrap;pointer-events:none';
+    el.textContent = 'Pulsa atrás otra vez para salir'; document.body.appendChild(el); }
+  el.style.display = 'block'; clearTimeout(avisoSalir.t); avisoSalir.t = setTimeout(function(){ el.style.display = 'none'; }, 2000);
+}
+function salir(){
+  var App = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App;
+  if(App && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) App.exitApp();
+  else history.back();
+}
+// El módulo lo llama cuando ya se ha confirmado salir (p. ej. poniendo un servicio a mano).
+window.__svSalir = function(){ ultimoAtras = 0; salir(); };
 window.addEventListener('popstate', function(){
+  if(window.ttDlgAtras && ttDlgAtras()){ history.pushState({ sv: 1 }, ''); return; }
   if(document.getElementById('aj').classList.contains('on')){ cerrarAjustes(); history.pushState({ sv: 1 }, ''); return; }
   var w = mod(), hecho = false;
   try{ hecho = !!(w && w.svAtras && w.svAtras()); }catch(e){}
-  if(hecho) history.pushState({ sv: 1 }, '');
-  else history.back();
+  if(hecho){ history.pushState({ sv: 1 }, ''); return; }
+  if(Date.now() - ultimoAtras < 2000){ ultimoAtras = 0; salir(); return; }
+  ultimoAtras = Date.now(); avisoSalir();
+  history.pushState({ sv: 1 }, '');
 });
 
 // (En la app de Android no hace falta el service worker.)
