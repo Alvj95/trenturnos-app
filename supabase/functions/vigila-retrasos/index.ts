@@ -1,7 +1,7 @@
 // TrenTurnos · vigila-retrasos
 // Se ejecuta sola cada 5 minutos (pg_cron, ver supabase/avisos-retraso.sql).
 //  · Lee los trenes de hoy de quien tiene avisos activados (tabla vig_viajes).
-//  · Mira el visor público de Renfe: si el tren va con retraso, avisa cada 20 min.
+//  · Mira el visor público de Renfe y va guardando el retraso (ya no avisa cada 20 min: quitado por Alex).
 //  · Al llegar, guarda el retraso de llegada y avisa para añadirlo al turno.
 //  · Si Renfe no da datos de un tren, no avisa ni guarda nada.
 // Los avisos se mandan apuntándolos en eventos_push (como el resto de la app):
@@ -13,8 +13,6 @@
 type Obj = Record<string, any>;
 const env = (k: string) => (globalThis as any).Deno?.env.get(k) ?? "";
 const RENFE = "https://tiempo-real.largorecorrido.renfe.com";
-const UMBRAL = 5;       // minutos a partir de los que se considera «con retraso»
-const CADA = 20;        // minutos entre avisos mientras va con retraso
 const sinCeros = (s: unknown) => String(s ?? "").replace(/^0+/, "");
 
 // Hora de Madrid como minutos desde medianoche y fecha YYYY-MM-DD
@@ -31,7 +29,7 @@ function diasEntre(a: string, b: string) { return Math.round((Date.parse(b + "T0
 export function procesar(viajes: Obj[], flota: Record<string, Obj>, est: Record<string, string>, ahora: Date, ajustes: Record<string, Obj>) {
   const M = madrid(ahora), cambios: { id: number; set: Obj }[] = [], avisos: Obj[] = [];
   for (const v of viajes) {
-    const aj = ajustes[v.mat] || { activo: true, cada20: true, llegada: true };
+    const aj = ajustes[v.mat] || { activo: true, llegada: true };
     // minutos «ahora» relativos al día del viaje (para trenes que cruzan la medianoche)
     const ah = M.min + diasEntre(v.fecha, M.fecha) * 1440;
     const sale = aMin(v.sale), llega0 = aMin(v.llega);
@@ -44,11 +42,6 @@ export function procesar(viajes: Obj[], flota: Record<string, Obj>, est: Record<
       const set: Obj = { ult_ret: ret, ult_visto: ahora.toISOString(), ult_est: est[sinCeros(vivo.codEstAnt)] || est[sinCeros(vivo.codEstSig)] || null };
       // ¿ya ha llegado? (sigue saliendo en el visor pero la hora real de llegada ya pasó de largo)
       if (ah > llega + Math.max(ret, 0) + 15) { set.llegado = true; set.ret_llegada = Math.max(ret, 0); }
-      else if (aj.cada20 && ret >= UMBRAL && (!v.ult_aviso || (ahora.getTime() - Date.parse(v.ult_aviso)) >= CADA * 60000 - 30000)) {
-        set.ult_aviso = ahora.toISOString(); set.aviso_ret = ret;
-        avisos.push({ matricula_destino: v.mat, titulo: `🚆 El ${v.tren} va con +${ret} min`,
-          cuerpo: (set.ult_est ? `Última referencia: ${set.ult_est}. ` : "") + `Te aviso cada ${CADA} min mientras vaya con retraso.` + (v.cambio_con ? ` (Cambio con ${v.cambio_con})` : "") });
-      }
       cambios.push({ id: v.id, set });
       if (set.llegado && set.ret_llegada > 0 && aj.llegada) avisos.push(avisoLlegada(v, set.ret_llegada));
     } else if (v.ult_visto) {

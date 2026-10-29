@@ -6,8 +6,7 @@
 --  · La app sube los trenes de cada uno (hoy y los próximos días), ya con
 --    los cambios de turno aplicados, y si quiere avisos.
 --  · La función «vigila-retrasos» (Edge Function) se ejecuta sola cada
---    5 minutos: mira Renfe en directo, avisa cada 20 min si el tren va con
---    retraso y, al llegar, guarda el retraso de llegada y avisa.
+--    5 minutos: mira Renfe en directo y, al llegar, guarda el retraso de llegada y avisa.
 --  · Si Renfe no da datos de un tren, no se avisa ni se guarda nada.
 --  · Al abrir la app, sale el pop-up para añadir el retraso al turno.
 -- ═══════════════════════════════════════════════════════════════════
@@ -42,7 +41,7 @@ create index if not exists vig_viajes_fecha on public.vig_viajes (fecha, llegado
 create table if not exists public.vig_ajustes (
   mat      text primary key,
   activo   boolean not null default true,
-  cada20   boolean not null default true,
+  cada20   boolean not null default false,  -- aviso cada 20 min: quitado para todos
   llegada  boolean not null default true,
   actualizado_en timestamptz not null default now()
 );
@@ -60,8 +59,8 @@ begin
   if coalesce(p_mat,'') !~ '^\d{4,10}$' then raise exception 'matrícula no válida'; end if;
   if p_viajes is null or jsonb_typeof(p_viajes) <> 'array' or jsonb_array_length(p_viajes) > 200 then raise exception 'viajes no válidos'; end if;
   insert into vig_ajustes (mat, activo, cada20, llegada, actualizado_en)
-  values (p_mat, coalesce((p_ajustes->>'activo')::boolean, true), coalesce((p_ajustes->>'cada20')::boolean, true), coalesce((p_ajustes->>'llegada')::boolean, true), now())
-  on conflict (mat) do update set activo = excluded.activo, cada20 = excluded.cada20, llegada = excluded.llegada, actualizado_en = now();
+  values (p_mat, coalesce((p_ajustes->>'activo')::boolean, true), false, coalesce((p_ajustes->>'llegada')::boolean, true), now())
+  on conflict (mat) do update set activo = excluded.activo, cada20 = false, llegada = excluded.llegada, actualizado_en = now();
   -- se borran los viajes futuros que ya no están (cambios de turno, turnos borrados…)
   delete from vig_viajes w where w.mat = p_mat and w.fecha >= current_date and w.ult_visto is null and not w.llegado
     and not exists (select 1 from jsonb_array_elements(p_viajes) x
