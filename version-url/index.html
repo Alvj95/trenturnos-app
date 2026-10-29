@@ -37417,8 +37417,8 @@ function haResumen(){ if(!document.getElementById('ha-wrap')) return; var hoy=ne
 /* ═══ NUEVO — Avisos de retraso automáticos y retraso de llegada (maquetas aprobadas) ═══
    - La app sube al servidor tus trenes (ayer → +31 días), con los cambios de turno ya aplicados
      (si hay un cambio, se vigila el tren del cambio, no el grafiado). Ver supabase/avisos-retraso.sql.
-   - El servidor (vigila-retrasos) mira Renfe cada 5 min: avisa cada 20 min si va con retraso y,
-     al llegar, guarda el retraso de llegada. Sin datos de Renfe no avisa ni guarda nada.
+   - El servidor (vigila-retrasos) mira Renfe cada 5 min: va guardando el retraso y, al llegar,
+     guarda el retraso de llegada y avisa (el aviso de cada 20 min se quitó para todos). Sin datos de Renfe no avisa ni guarda nada.
    - Al abrir la app sale el pop-up: retraso de llegada + deje (15 fuera de base, 20 en base).
      Cuenta para horas y dinero, o solo se anota:
        · jornada normal: ida y vuelta cuentan;
@@ -37426,7 +37426,7 @@ function haResumen(){ if(!document.getElementById('ha-wrap')) return; var hoy=ne
          en pernocta la ida es el último tramo de ese día;
        · HTDL / Art. 51-52 por días: solo se anota.
      Lo que cuenta se guarda igual que «⏱ Retraso»; lo anotado va en retrasosAnotados (no calcula). */
-function rtG(){ var a=(typeof AJ!=='undefined'&&AJ.vig)||{}; return {activo:a.activo!==false,cada20:a.cada20!==false,llegada:a.llegada!==false}; }
+function rtG(){ var a=(typeof AJ!=='undefined'&&AJ.vig)||{}; return {activo:a.activo!==false,cada20:false,llegada:a.llegada!==false}; }
 function rtNum(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
 function rtHtdl(t){ return t&&(t.tipo==='trabajado'||t.tipo==='art5152'); }
 function rtComp(t){ return t?(t.tipo==='art5152'?t.compensacion:t.comp):null; }
@@ -37506,8 +37506,8 @@ var _rtDA=renderDiaArea; renderDiaArea=function(){ _rtDA.apply(this,arguments); 
 function rtAjPinta(){ var c=document.getElementById('rt-aj'); if(!c) return; var a=rtG();
   var fila=function(k,t,s){ return '<div class="rt-sw" onclick="rtAjTog(\''+k+'\')"><div>'+t+'<small>'+s+'</small></div><div class="rt-tg'+(a[k]?'':' off')+'"></div></div>'; };
   c.innerHTML='<div class="aj-card"><div style="font-weight:900;font-size:14px;margin-bottom:4px">🚆 Avisos de retraso de tus trenes</div>'+
-    fila('activo','Avisos de retraso automáticos','Vigila tus trenes de hoy aunque no abras la app')+
-    (a.activo?fila('cada20','Cada 20 min si va con retraso','Mientras el tren está en marcha')+fila('llegada','Aviso al llegar para añadir el retraso','Retraso de llegada + deje (15 fuera / 20 en base)'):'')+
+    fila('activo','Avisos de retraso automáticos','Vigila tus trenes de hoy y guarda el retraso de llegada')+
+    (a.activo?fila('llegada','Aviso al llegar para añadir el retraso','Retraso de llegada + deje (15 fuera / 20 en base)'):'')+
     '<div style="font-size:11.5px;color:var(--tx2);line-height:1.5;margin-top:8px">Para que funcione: tu horario del mes cargado, las notificaciones activadas (botón de arriba) y la app de Android. Si hay un cambio de turno apuntado, se vigila el tren del cambio. Sin datos de Renfe no se avisa ni se anota nada.</div></div>'; }
 function rtAjTog(k){ var a=rtG(); a[k]=!a[k]; AJ.vig=a; try{ localStorage.setItem('aj5',JSON.stringify(AJ)); }catch(e){} rtAjPinta(); rtSubir(true); }
 
