@@ -3414,81 +3414,6 @@ html[data-estetica="b"] #splash-screen{--neon:#84cc16;--neon2:#d9f99d;background
 .tren-suggest-item:hover,.tren-suggest-item.activo{background:rgba(59,127,255,.14)}
 .tren-suggest-num{font-weight:800;color:var(--acc3);font-size:12px}
 .tren-suggest-ruta{font-size:10px;color:var(--tx3)}
-/* ═══════════════════════════════════════════════════════════
-   MÓDULO CHECK-IN DEL DÍA — v2 (reconstruido). Mismo lenguaje
-   visual que el resto de píldoras/botones de la app.
-═══════════════════════════════════════════════════════════ */
-.ci-pill{font-size:10px;color:var(--acc2);font-weight:700;cursor:pointer;padding:3px 10px;
-  background:var(--s2);border:1px solid var(--acc);border-radius:20px;flex-shrink:0;
-  display:flex;align-items:center;gap:4px;white-space:nowrap}
-.ci-pill.ci-pill-bloqueado{color:var(--green2);border-color:var(--green)}
-.ci-day-nav{display:flex;align-items:center;gap:4px;padding:12px 16px 8px}
-.ci-day-btn{background:rgba(255,255,255,.06);border:none;color:var(--tx2);font-size:16px;cursor:pointer;
-  width:30px;height:30px;border-radius:8px;flex-shrink:0}
-.ci-day-btn:disabled{opacity:.25;cursor:default}
-.ci-day-lbl{flex:1;text-align:center;font-size:13px;font-weight:800;letter-spacing:-.2px}
-.ci-day-hoy-badge{font-size:9px;font-weight:800;color:var(--nar2);background:rgba(249,115,22,.12);
-  border:1px solid rgba(249,115,22,.35);border-radius:8px;padding:2px 7px}
-.ci-hist-note{margin:4px 16px 10px;font-size:10px;color:var(--tx3);text-align:center;line-height:1.4}
-.ci-empty{background:var(--s2);border:1.5px dashed var(--div);border-radius:14px;margin:4px 16px 14px;
-  padding:26px 18px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.ci-empty-ico{font-size:30px;opacity:.5}
-.ci-empty-tit{font-size:13px;font-weight:700;text-align:center;color:var(--tx)}
-.ci-empty-sub{font-size:11px;color:var(--tx2);line-height:1.5;text-align:center;margin-top:2px}
-.ci-btn-subir{margin-top:6px;background:var(--acc);color:#fff;border:none;border-radius:9px;
-  padding:11px 20px;font-size:12.5px;font-weight:800;cursor:pointer}
-.ci-consejo{font-size:9.5px;color:var(--tx3);line-height:1.5;margin-top:10px;text-align:center;padding:0 6px}
-.ci-locked-foot{margin:6px 16px 10px;padding:9px 12px;background:var(--s1);border:1px solid var(--div);
-  border-radius:10px;font-size:10.5px;color:var(--tx2);text-align:center}
-.ci-seccion-hdr{display:flex;align-items:center;gap:6px;margin:16px 16px 8px}
-.ci-seccion-hdr-tit{font-size:11px;font-weight:800;letter-spacing:.3px;color:var(--tx2);text-transform:uppercase}
-.ci-seccion-hdr::after{content:'';flex:1;height:1px;background:var(--div)}
-.ci-res-tramo{color:var(--tx3);font-size:9px}
-.ci-res-horas{font-size:11px;font-weight:800;color:var(--tx2);font-variant-numeric:tabular-nums;flex-shrink:0}
-.ci-btn-eliminar{width:100%;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);
-  color:#fca5a5;border-radius:9px;padding:11px;font-size:12px;font-weight:700;cursor:pointer}
-.ci-grupo{margin:0 16px 12px;border-radius:16px;background:var(--s1);border:1px solid var(--div);overflow:hidden}
-.ci-ghdr{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--s2);border-bottom:1px solid var(--div)}
-.ci-hora{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--acc3);width:48px;flex-shrink:0}
-.ci-hora.est-falta{font-size:12px;color:var(--tx3);font-weight:700}
-.ci-count{font-size:8.5px;color:var(--tx3);font-weight:800;background:var(--s3);padding:2px 7px;border-radius:20px;margin-left:auto;flex-shrink:0}
-.ci-persona{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.05)}
-.ci-persona:last-child{border-bottom:none}
-.ci-mat{font-size:8.5px;color:var(--tx3);font-family:monospace;width:52px;flex-shrink:0}
-.ci-editable{cursor:pointer;border-bottom:1px dashed rgba(148,163,184,.4);padding-bottom:1px}
-.ci-editable:active{background:rgba(249,115,22,.12);border-radius:4px}
-.ci-nom{flex:1;min-width:0}
-.ci-nom-tx{font-size:11.5px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ci-ruta{display:flex;gap:3px;align-items:baseline;margin-top:2px;font-size:8px;flex-wrap:wrap}
-.ci-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.ci-vistazo-note{margin:4px 16px 12px;padding:10px 12px;background:rgba(249,115,22,.08);
-  border:1px solid rgba(249,115,22,.25);border-radius:10px;font-size:10.5px;color:var(--nar3);line-height:1.5}
-.ci-vistazo-btns{position:sticky;bottom:0;background:var(--s1);border-top:1px solid var(--div);
-  padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px}
-.ci-btn-cancelar{height:42px;padding:0 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
-  color:#fca5a5;border-radius:10px;font-size:11.5px;font-weight:700;cursor:pointer}
-.ci-btn-confirmar{flex:1;height:42px;background:var(--acc);border:none;border-radius:10px;color:#fff;
-  font-size:13px;font-weight:800;cursor:pointer}
-.ci-progreso{padding:30px 20px;text-align:center;font-size:12px;color:var(--tx2)}
-.ci-progreso-ico{font-size:28px;margin-bottom:10px;animation:ciSpin 1.4s linear infinite;display:inline-block}
-@keyframes ciSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.ci-progreso-bar{height:4px;background:var(--s2);border-radius:3px;margin:14px 20px 0;overflow:hidden}
-.ci-progreso-fill{height:100%;background:var(--acc);border-radius:3px;transition:width .2s;width:0%}
-/* Ruta de tren (cabecera de grupo y por persona) + chips de posición */
-.turno-code{display:flex;align-items:center;gap:4px;flex:1;min-width:0}
-.tc-first{font-size:13px;font-weight:900;color:var(--tx)}
-.tc-first-mini{font-size:9.5px;font-weight:800;color:var(--tx2)}
-.tc-rest{font-size:9.5px;font-weight:700;color:var(--tx3)}
-.tc-arrow{font-size:8px;color:var(--tx3);margin:0 1px}
-.tc-warn{color:var(--nar2)!important}
-.tc-warn-ico{font-size:8px;margin-right:2px}
-.est-falta{font-size:10px;color:var(--tx3);font-style:italic}
-.est-obs{font-size:9px;color:var(--tx3);margin-left:4px}
-.pos-chip{font-size:8px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--s3);color:var(--tx2);flex-shrink:0}
-.pos-chip.pos-CP{background:rgba(37,99,235,.15);color:#93c5fd}
-.pos-chip.pos-TCF{background:rgba(16,185,129,.15);color:#6ee7b7}
-.pos-chip.pos-JT{background:rgba(249,115,22,.15);color:#fdba74}
-.pos-chip.pos-CC{background:rgba(168,85,247,.15);color:#d8b4fe}
 /* NUEVO — Tutorial (acordeón por tema) */
 .tut-item{border-bottom:1px solid var(--div)}
 .tut-item-hdr{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer}
@@ -3626,24 +3551,6 @@ html[data-estetica="b"] #splash-screen{--neon:#84cc16;--neon2:#d9f99d;background
 .chat-bubble .tut-step-n{width:16px;height:16px;font-size:9px}
 .chat-wa-btn{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#25D366;color:#fff;
   border:none;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;text-decoration:none;cursor:pointer}
-/* NUEVO — vista "Vía" del check-in (maqueta 3, aprobada por Alex):
-   carril vertical con una parada por hora de toma, y los trenes de
-   esa hora colgando a la derecha como bloques. */
-.m3-track{padding:10px 16px 4px}
-.m3-item{display:flex;gap:14px}
-.m3-rail{width:14px;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
-.m3-dot{width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--bg);box-shadow:0 0 0 2px var(--acc);margin-top:4px;flex-shrink:0}
-.m3-line{width:2px;flex:1;background:var(--div);margin-top:2px;min-height:12px}
-.m3-item:last-child .m3-line{display:none}
-.m3-content{flex:1;padding-bottom:14px;min-width:0}
-.m3-hora{font-size:13px;font-weight:900;color:var(--tx);margin-bottom:8px;font-variant-numeric:tabular-nums}
-.m3-hora.est-falta{font-size:11.5px;color:var(--tx3);font-weight:700}
-.m3-tren-block{background:var(--s1);border:1px solid var(--div);border-radius:12px;padding:8px 10px;margin-bottom:8px}
-.m3-tren-block .ci-persona{padding:8px 2px}
-.m3-tren-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;padding:0 2px}
-.m3-tren{font-size:12px;font-weight:800;color:var(--tx)}
-.m3-warn{color:var(--nar2)}
-.m3-cnt{font-size:8px;color:var(--tx3);font-weight:700;background:var(--s3);padding:1px 6px;border-radius:10px}
 /* ═══════════════════════════════════════════════════════════
    NUEVO — AVISO SOBRE EL SERVICIO EN LA NUBE (pestaña Compañeros)
    Usa las mismas variables y el mismo estilo de "boletín" que ya
@@ -4359,7 +4266,6 @@ function megafoniaDingDong(ctx, t){
         <button id="vista-ambos" class="vista-btn"     onclick="setVistaMode('ambos')">⚖ Comparar</button>
         <button id="vista-quitar-comp" class="vista-btn" onclick="quitarCompanero()" title="Quitar compañero" style="flex:0;padding:0 8px;color:var(--tx3)">✕</button>
       </div>
-      <button class="ci-pill" id="btn-ci-pill" style="display:none" onclick="abrirCheckin()">✅ Check-in</button>
       <div class="mn-hoy" onclick="irHoy()">Hoy</div>
       <button class="mn-btn" onclick="chM(1)" title="Mes siguiente">›</button>
     </div>
@@ -5635,26 +5541,6 @@ function megafoniaDingDong(ctx, t){
   <button class="bni" id="nav-ajustes" onclick="goP('ajustes')"><div class="bi">⚙️</div><div class="bl">AJUSTES</div><div class="bd"></div></button>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MÓDULO CHECK-IN DEL DÍA — v2. Overlay estándar (.ov/.sh).
-     Contenido 100% dinámico, ver renderCiXxx() ("MÓDULO CHECK-IN
-     DEL DÍA — v2" en el bloque de JS). Se abre con la píldora del
-     mes-nav del Calendario (btn-ci-pill), visible para todo el
-     mundo en cuanto hay Estación Base configurada.
-═══════════════════════════════════════════════════════════ -->
-<div class="ov" id="ov-checkin" onclick="closeOv('ov-checkin')">
-  <div class="sh" onclick="event.stopPropagation()" style="max-height:88%">
-    <div class="sh-handle"></div>
-    <div class="sh-hdr">
-      <div class="sh-ico">✅</div>
-      <div><div class="sh-tit">Check-in del día</div><div class="sh-sub" id="ci-sub">—</div></div>
-      <button class="sh-close" onclick="closeOv('ov-checkin')">✕</button>
-    </div>
-    <div style="margin:8px 16px 0;padding:7px 10px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:8px;font-size:9.5px;color:var(--nar3);text-align:center;font-weight:700">🧪 Función en fase de prueba — revisa siempre los datos antes de confiar en ellos del todo</div>
-    <div id="ci-body" style="flex:1;min-height:0;overflow-y:auto;padding-bottom:10px"></div>
-  </div>
-</div>
-<input type="file" id="ci-file-input" accept="application/pdf" multiple style="display:none" onchange="ciArchivosSeleccionados(this.files)">
 
 <!-- ═══════════════════════════════════════════════════════════
      NUEVO — TUTORIAL. Overlay estándar (.ov/.sh), con un acordeón
@@ -5710,7 +5596,7 @@ function megafoniaDingDong(ctx, t){
     <div class="sh-handle"></div>
     <div class="sh-hdr">
       <div class="sh-ico">💬</div>
-      <div><div class="sh-tit">Ayuda</div><div class="sh-sub">Escribe qué necesitas, por ejemplo "check-in" o "retraso"</div></div>
+      <div><div class="sh-tit">Ayuda</div><div class="sh-sub">Escribe qué necesitas, por ejemplo "pernocta" o "retraso"</div></div>
       <button class="sh-close" onclick="closeOv('ov-chatbot')">✕</button>
     </div>
     <div id="chatbot-conversacion" style="flex:1;min-height:0;overflow-y:auto;padding:12px 16px"></div>
@@ -8461,15 +8347,6 @@ var TUTORIAL_TEMAS = [
     ]
   },
   {
-    ico: '✅', titulo: 'Subir el Check-in del día',
-    pasos: [
-      'Con tu Estación Base configurada, verás la píldora <b>✅ Check-in</b> en la parte de arriba del Calendario.',
-      'Tócala, y si nadie ha subido el check-in de hoy todavía, pulsa <b>📤 Subir PDF del check-in</b>.',
-      'Revisa el vistazo antes de confirmar — puedes tocar cualquier dato para corregirlo si algo salió mal.',
-      'Una vez confirmado, queda guardado y visible para toda tu base — puedes navegar a días anteriores con las flechitas ‹ › para consultarlos.'
-    ]
-  },
-  {
     ico: '📊', titulo: 'Auditoría de Horas y desglose económico en Stats',
     pasos: [
       'Ve a la pestaña <b>Stats</b> y pulsa <b>🔍 Auditoría de Horas</b>.',
@@ -8482,7 +8359,7 @@ var TUTORIAL_TEMAS = [
     pasos: [
       'Ve a la pestaña <b>Ajustes</b>.',
       'Rellena tu nombre, matrícula, y tu rol (esto autocompleta las tarifas de HTDL, nocturnidad y Art.51/52 según tu rol).',
-      'Configura tu Estación Base — la necesitas para el Check-in del día y para varios cálculos de descanso.',
+      'Configura tu Estación Base — la necesitas para varios cálculos de descanso y para las publicaciones de tu base.',
       'Puedes ajustar cualquier tarifa a mano si la tuya es distinta a la de tu rol.'
     ]
   },
@@ -8491,7 +8368,7 @@ var TUTORIAL_TEMAS = [
     pasos: [
       'Esta función es solo para el Administrador de la base.',
       'Desde el Panel de Administrador puedes subir el Horario General en PDF — se publica al instante para todo el mundo.',
-      'También puedes gestionar accesos, ver quién ha entrado al Buscador de Compañeros, y administrar el Check-in y el Portal de Interventor.'
+      'También puedes gestionar accesos, ver quién ha entrado al Buscador de Compañeros, y administrar el Portal de Interventor.'
     ]
   },
   {
@@ -9906,7 +9783,7 @@ var CHATBOT_PALABRAS_VACIAS = ['de','la','el','en','un','una','como','que','para
 function abrirChatbot(){
   var conv = document.getElementById('chatbot-conversacion');
   if(conv && !conv.dataset.iniciado){
-    conv.innerHTML = '<div class="chat-bienvenida">👋 Hola, escribe qué necesitas (por ejemplo "check-in", "pernocta", "retraso"...) y te muestro los pasos. Si no encuentro nada, te dejo hablar directamente conmigo.</div>';
+    conv.innerHTML = '<div class="chat-bienvenida">👋 Hola, escribe qué necesitas (por ejemplo "pernocta", "retraso", "vacaciones"...) y te muestro los pasos. Si no encuentro nada, te dejo hablar directamente conmigo.</div>';
     conv.dataset.iniciado = '1';
   }
   openOv('ov-chatbot');
@@ -13211,11 +13088,6 @@ function renderCal(){
   document.getElementById('mn-lbl').textContent=MESES[m]+' '+y;
   document.getElementById('mn-sub').textContent=y;
 
-  // NUEVO — píldora de Check-in del día: visible para todo el mundo
-  // en cuanto hay Estación Base configurada (si no, no tendría sede
-  // con la que consultar/subir el check-in).
-  var pillCi = document.getElementById('btn-ci-pill');
-  if(pillCi) pillCi.style.display = (typeof AJ!=='undefined' && AJ.base) ? '' : 'none';
 
   // OPTIMIZACIÓN: sincronizar TV con localStorage UNA sola vez aquí,
   // en vez de 3 veces (una por cada renderSlide). Mismo resultado,
@@ -19802,10 +19674,6 @@ function goP(n){
     mostrarAvisoNominaSiCorresponde();
   }
   // NUEVO — Confirmado por Alex: el Social Bar (Adsterra) solo debe
-  // NUEVO — refresca la píldora ✅ Check-in (visible/oculta según rol,
-  // y en azul si ya hay check-in subido hoy) cada vez que se entra en
-  // Calendario, para que nunca quede desactualizada de una sesión a otra.
-  if(n==='cal' && typeof mostrarPillCheckinSiCorresponde==='function') mostrarPillCheckinSiCorresponde();
   // NUEVO — al entrar en Calendario, refresca las Notificaciones del
   // Admin (banner arriba del todo) por si hay algo nuevo publicado
   // desde la última vez. Mismo patrón defensivo que el check-in de
@@ -26103,620 +25971,6 @@ try{
   sbAdmin = supabase.createClient(SUPABASE_URL_ADMIN, SUPABASE_KEY_ADMIN, { global: { fetch: _sbFetchProtegido } });
 }catch(errSbAdminInit){
   console.error('No se pudo inicializar Supabase (revisa la conexión/CDN):', errSbAdminInit);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MÓDULO CHECK-IN DEL DÍA — v2, reconstruido desde cero.
-   Mismo objetivo que antes (foto de la hoja de check-in de la
-   oficina → OCR → datos compartidos por Supabase para todo el
-   mundo), pero MÁS SIMPLE a propósito: se le pasa la foto EN CRUDO
-   a Tesseract, sin ningún procesado propio de rotación/recorte/
-   contraste — exactamente el mismo patrón que ya usa con éxito la
-   función de "sube tu horario con una foto" (ver fileInput más
-   arriba), en vez de una heurística propia que era mucho más difícil
-   de depurar. Reutiliza sbAdmin/Tesseract.js ya cargados por el
-   resto de la app — no crea ninguna dependencia nueva.
-
-   Tabla checkin_diario (fecha,sede) como clave primaria: solo la
-   primera persona que confirma una subida puede crear la fila
-   (política RLS "insertar si no existe"); a partir de ahí cualquier
-   intento de volver a subir usa upsert() → Postgres lo convierte en
-   UPDATE, y la política RLS "solo admin edita" bloquea ese UPDATE
-   para cualquiera que no sea Admin. El "primero gana, solo Admin
-   corrige" vive en las políticas de la base de datos, no en este JS.
-
-   TODA llamada a Supabase pasa por ciConTimeout() — así ninguna
-   pantalla se puede quedar colgada en "Cargando…" para siempre si la
-   conexión va mal o se corta en silencio (el fallo que tenía la
-   versión anterior).
-═══════════════════════════════════════════════════════════ */
-var _ciFilasPendientes = null;
-var _ciTextoOcrCrudo = null; // [{archivo, texto}] — texto crudo del OCR de cada foto, para diagnóstico
-var _ciReservasPendientes = null;
-var _ciFechaViendo = null; // objeto Date del día que se está mirando en el overlay
-
-function ciFechaHoyISO(){
-  var d = new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function ciFechaISO(d){
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function ciEsHoy(d){ return ciFechaISO(d) === ciFechaHoyISO(); }
-function ciFechaBonita(d){
-  var dias = ['dom','lun','mar','mié','jue','vie','sáb'];
-  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  return dias[d.getDay()]+', '+d.getDate()+' de '+meses[d.getMonth()];
-}
-function ciCambiarDia(delta){
-  _ciFechaViendo.setDate(_ciFechaViendo.getDate()+delta);
-  ciCargarYRenderizarFecha();
-}
-function ciSedeActual(){ return AJ.sedeBase || AJ.base || ''; }
-function ciTieneBaseConfigurada(){ return !!AJ.base; }
-function ciIdentidadActual(){ return {matricula: AJ.matricula||'', nombre: AJ.nombre||''}; }
-function ciEsAdminOInterventor(){
-  return !!(typeof perfilAdminActual!=='undefined' && perfilAdminActual && perfilAdminActual.rol==='admin')
-      || !!(typeof usuarioActual!=='undefined' && usuarioActual && usuarioActual.esInterventor);
-}
-
-// NUEVO — carrera contra un límite de tiempo: si la promesa no
-// resuelve a tiempo, se considera fallida en vez de esperar para
-// siempre. TODAS las llamadas a Supabase de este módulo pasan por
-// aquí — es la corrección directa del fallo de "Cargando…" eterno.
-function ciConTimeout(promesa, ms){
-  return new Promise(function(resolve){
-    var terminado = false;
-    var t = setTimeout(function(){
-      if(terminado) return;
-      terminado = true;
-      resolve({ok:false, timeout:true});
-    }, ms||12000);
-    promesa.then(function(data){
-      if(terminado) return;
-      terminado = true;
-      clearTimeout(t);
-      resolve({ok:true, data:data});
-    }).catch(function(err){
-      if(terminado) return;
-      terminado = true;
-      clearTimeout(t);
-      resolve({ok:false, error:err});
-    });
-  });
-}
-
-async function abrirCheckin(){
-  _ciFechaViendo = new Date();
-  openOv('ov-checkin');
-  await ciCargarYRenderizarFecha();
-}
-
-async function ciCargarYRenderizarFecha(){
-  document.getElementById('ci-sub').textContent = (AJ.base||'Base') + ' · ' + _ciFechaViendo.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
-  if(!ciTieneBaseConfigurada()){ renderCiSinBase(); return; }
-  renderCiCargando();
-  if(!sbAdmin){ renderCiErrorConexion(); return; }
-  var res = await ciConTimeout(
-    sbAdmin.from('checkin_diario').select('*').eq('fecha', ciFechaISO(_ciFechaViendo)).eq('sede', ciSedeActual()).maybeSingle(),
-    12000
-  );
-  if(!res.ok){ renderCiErrorConexion(); return; }
-  var fila = (res.data && res.data.data) ? res.data.data : null;
-  if(ciEsHoy(_ciFechaViendo)){
-    if(fila) renderCiBloqueado(fila); else renderCiVacio();
-  } else {
-    if(fila) renderCiHistorico(fila); else renderCiSinDatosHistoricos();
-  }
-}
-
-function ciBarraDiaHtml(){
-  var esHoy = ciEsHoy(_ciFechaViendo);
-  return '<div class="ci-day-nav">'+
-    '<button class="ci-day-btn" onclick="ciCambiarDia(-1)" title="Día anterior">‹</button>'+
-    '<div class="ci-day-lbl">'+ciFechaBonita(_ciFechaViendo)+'</div>'+
-    (esHoy ? '<span class="ci-day-hoy-badge">HOY</span>' : '')+
-    '<button class="ci-day-btn" onclick="ciCambiarDia(1)" title="Día siguiente"'+(esHoy?' disabled':'')+'>›</button>'+
-    '</div>';
-}
-function renderCiSinBase(){
-  document.getElementById('ci-body').innerHTML =
-    '<div class="ci-empty"><div class="ci-empty-ico">📍</div>'+
-    '<div class="ci-empty-tit">Configura tu Estación Base primero</div>'+
-    '<div class="ci-empty-sub">Ve a Ajustes → Estación Base para poder usar el check-in.</div></div>';
-}
-function renderCiCargando(){
-  document.getElementById('ci-body').innerHTML = ciBarraDiaHtml()+
-    '<div class="ci-progreso"><span class="ci-progreso-ico">🚆</span><div>Cargando…</div></div>';
-}
-function renderCiErrorConexion(){
-  document.getElementById('ci-body').innerHTML = ciBarraDiaHtml()+
-    '<div class="ci-empty"><div class="ci-empty-ico">📡</div>'+
-    '<div class="ci-empty-tit">No se pudo conectar</div>'+
-    '<div class="ci-empty-sub">Comprueba tu internet e inténtalo de nuevo.</div>'+
-    '<button class="ci-btn-subir" onclick="ciCargarYRenderizarFecha()">🔄 Reintentar</button></div>';
-}
-function renderCiVacio(){
-  document.getElementById('ci-body').innerHTML = ciBarraDiaHtml()+
-    '<div class="ci-empty">'+
-      '<div class="ci-empty-ico">📤</div>'+
-      '<div class="ci-empty-tit">Aún no se ha subido el check-in de hoy</div>'+
-      '<div class="ci-empty-sub">Sube el PDF del listado de asistencia de '+(AJ.base||'la base')+' — si son varias páginas o varios archivos, puedes elegirlos todos a la vez.</div>'+
-      '<button class="ci-btn-subir" onclick="document.getElementById(\'ci-file-input\').click()">📤 Subir PDF del check-in</button>'+
-      '<div class="ci-consejo">Al ser texto real dentro del PDF (no una foto escaneada), se lee prácticamente todo bien. Podrás corregir cualquier dato antes de confirmar.</div>'+
-    '</div>';
-}function renderCiProgreso(msg, pct){
-  document.getElementById('ci-body').innerHTML =
-    '<div class="ci-progreso"><span class="ci-progreso-ico">🚆</span><div>'+msg+'</div></div>'+
-    '<div class="ci-progreso-bar"><div class="ci-progreso-fill" style="width:'+(pct||0)+'%"></div></div>';
-}
-function renderCiSinDatosHistoricos(){
-  document.getElementById('ci-body').innerHTML = ciBarraDiaHtml()+
-    '<div class="ci-empty">'+
-      '<div class="ci-empty-ico">📤</div>'+
-      '<div class="ci-empty-tit">Nadie subió el check-in de este día</div>'+
-      '<div class="ci-empty-sub">Si tienes el PDF de ese día, puedes subirlo ahora — se guardará con la fecha de '+ciFechaBonita(_ciFechaViendo)+', no con la de hoy.</div>'+
-      '<button class="ci-btn-subir" onclick="document.getElementById(\'ci-file-input\').click()">📤 Subir PDF de este día</button>'+
-    '</div>';
-}
-function renderCiHistorico(fila){
-  var filas = fila.datos || [];
-  var grupos = ciAgruparPorHora(filas);
-  var esAdmin = ciEsAdminOInterventor();
-  var html = ciBarraDiaHtml();
-  html += ciRenderViaHtml(grupos, true);
-  html += ciRenderReservasHtml(fila.reservas||[], true);
-  html += '<div class="ci-hist-note">🗂️ Histórico de solo lectura — subido por '+(fila.subido_por_nombre||fila.subido_por_matricula||'—')+'</div>';
-  if(esAdmin){
-    html += '<div style="padding:0 16px 10px"><button class="ci-btn-eliminar" onclick="ciEliminarCheckin(\''+ciFechaISO(_ciFechaViendo)+'\', true)">🗑️ Eliminar este check-in (solo Admin)</button></div>';
-  }
-  document.getElementById('ci-body').innerHTML = html;
-}
-function renderCiBloqueado(fila){
-  var filas = fila.datos || [];
-  var grupos = ciAgruparPorHora(filas);
-  var esAdmin = ciEsAdminOInterventor();
-  var horaSubida = '';
-  try{ horaSubida = new Date(fila.subido_en).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }catch(e){}
-  var html = ciBarraDiaHtml();
-  html += ciRenderViaHtml(grupos, true);
-  html += ciRenderReservasHtml(fila.reservas||[], true);
-  html += '<div class="ci-locked-foot">🔒 Subido por <b>'+(fila.subido_por_nombre||fila.subido_por_matricula||'—')+'</b>'+(horaSubida?' a las '+horaSubida:'')+'</div>';
-  if(esAdmin){
-    html += '<div style="padding:4px 16px 10px"><button class="ci-btn-subir" style="width:100%" onclick="renderCiVacio()">✏️ Volver a subir PDF (solo Admin)</button></div>';
-    html += '<div style="padding:0 16px 10px"><button class="ci-btn-eliminar" onclick="ciEliminarCheckin(\''+ciFechaISO(_ciFechaViendo)+'\', false)">🗑️ Eliminar check-in de hoy (solo Admin)</button></div>';
-  }
-  document.getElementById('ci-body').innerHTML = html;
-}
-async function ciEliminarCheckin(fechaISO, esHistorico){
-  if(!ciEsAdminOInterventor()) return;
-  if(!confirm('¿Eliminar el check-in de '+fechaISO+' ('+ciSedeActual()+')?\n\nEsta acción no se puede deshacer.')) return;
-  if(!sbAdmin){ toast('⚠️ Sin conexión'); return; }
-  var res = await ciConTimeout(sbAdmin.from('checkin_diario').delete().eq('fecha', fechaISO).eq('sede', ciSedeActual()), 12000);
-  if(!res.ok){ toast('⚠️ No se pudo eliminar — comprueba tu conexión'); return; }
-  toast('🗑️ Check-in eliminado');
-  if(esHistorico) renderCiSinDatosHistoricos(); else renderCiVacio();
-}
-
-// ── Selección y lectura del PDF de check-in ──
-async function ciArchivosSeleccionados(fileList){
-  var archivos = Array.prototype.slice.call(fileList||[]);
-  if(!archivos.length) return;
-  var todasLasFilas = [], todasLasReservas = [], pdfsSinLeerNada = 0;
-  // NUEVO — Confirmado por Alex: se cambia de foto+OCR a PDF — el
-  // check-in se genera como PDF con texto real dentro (no una foto
-  // escaneada), así que se puede extraer directo, sin adivinar nada
-  // como hacía Tesseract. Reutiliza EXACTAMENTE el mismo lector que
-  // ya usa la carga del horario (pdfjsLib + asegurarPdfWorkerSeguro,
-  // ver el listener de #fileInput más arriba) — ni una línea nueva
-  // de lógica de lectura, solo se reaprovecha lo que ya funciona.
-  _ciTextoOcrCrudo = [];
-  for(var idx=0; idx<archivos.length; idx++){
-    var file = archivos[idx];
-    var etiqueta = archivos.length>1 ? ('PDF '+(idx+1)+' de '+archivos.length) : 'el PDF';
-    renderCiProgreso('Leyendo '+etiqueta+'…', Math.round((idx/archivos.length)*100));
-    try{
-      await asegurarPdfWorkerSeguro();
-      var buf = await file.arrayBuffer();
-      var pdf = await pdfjsLib.getDocument({data: buf}).promise;
-      var fullText = '';
-      for(var p=1; p<=pdf.numPages; p++){
-        renderCiProgreso('Leyendo '+etiqueta+'… página '+p+' de '+pdf.numPages, Math.round(((idx+(p/pdf.numPages))/archivos.length)*100));
-        var page = await pdf.getPage(p);
-        var content = await page.getTextContent();
-        var items = content.items.map(function(it){ return {str:it.str, x:it.transform[4], y:it.transform[5]}; });
-        items.sort(function(a,b){ return b.y-a.y || a.x-b.x; });
-        var lastY = null;
-        items.forEach(function(it){
-          if(lastY !== null && Math.abs(it.y - lastY) > 2){ fullText += '\n'; }
-          else if(lastY !== null){ fullText += ' '; }
-          fullText += it.str;
-          lastY = it.y;
-        });
-        fullText += '\n';
-      }
-      _ciTextoOcrCrudo.push({archivo: file.name||('PDF '+(idx+1)), texto: fullText});
-      var parseo = ciParsearTextoOcr(fullText);
-      if(!parseo.filas.length && !parseo.reservas.length) pdfsSinLeerNada++;
-      todasLasFilas = todasLasFilas.concat(parseo.filas);
-      todasLasReservas = todasLasReservas.concat(parseo.reservas);
-    }catch(err){
-      console.error(err);
-      _ciTextoOcrCrudo.push({archivo: file.name||('PDF '+(idx+1)), texto: '(ERROR: '+(err&&err.message||err)+')'});
-      pdfsSinLeerNada++;
-    }
-  }
-  if(!todasLasFilas.length && !todasLasReservas.length){
-    renderCiVacio();
-    toast('No se pudo leer ningún dato del PDF — comprueba que sea el archivo correcto');
-    return;
-  }
-  if(pdfsSinLeerNada>0) toast('⚠️ '+pdfsSinLeerNada+' PDF(s) no se pudieron leer — revisa el vistazo antes de confirmar');
-  renderCiVistazo(todasLasFilas, todasLasReservas);
-}
-
-// ── Parser del texto OCR (heurístico, "mejor esfuerzo") ──
-function ciParsearTextoOcr(texto){
-  var lineas = texto.split('\n').map(function(l){return l.trim();}).filter(Boolean);
-  var filas = [], reservas = [];
-  var seccion = 'checkin', nombrePendiente = '', lineasSinMatriculaSeguidas = 0;
-  // NUEVO — fila con matrícula ya vista pero SIN turno/posición/hora
-  // todavía (el nombre se cortó justo ahí y el resto de la fila viene
-  // en la línea de abajo, ej. "4179742 ALVARADO RODRIGUEZ, JOSE" en
-  // una línea y "ALEJANDRO 3930DH-... JT-JT-CP-JT 7:30" en la
-  // siguiente, SIN su propia matrícula). Confirmado con fotos reales
-  // — es el patrón de nombre partido MÁS FRECUENTE, así que sin esto
-  // se perdía toda la fila (turno/posición/hora vacíos) por cada
-  // nombre largo de dos líneas.
-  var filaPendienteCheckin = null;  // {matricula, nombre}
-  var filaPendienteReserva = null;  // {matricula, nombre}
-  var reMat = /^[^\dA-Za-zÁÉÍÓÚÑáéíóúñ]{0,4}(\d{6,7})/;
-  var reHora = /(\d{1,2}:\d{2})/;
-  var reHoraTodas = /(\d{1,2}:\d{2})/g;
-  var rePos = /\b((?:CP|TCF|JT|CC)(?:[-·](?:CP|TCF|JT|CC))*)\b/;
-  var reTurno = /\b(\d{3,6}(?:UM|DH|F)?(?:[-·]\d{3,6}(?:UM|DH|F)?){0,7})\b/;
-  var reCabeceraReservas = /RESERVAS?\b.{0,20}FECHA/i;
-  var reCabeceraCheckin = /CHECK.?IN\b.{0,20}FECHA/i;
-  var reTipoReserva = /RESERVA\s*(MA[ÑN]ANA|INTERMEDIA|TARDE)/i;
-  function limpiar(s){ return s.replace(/[|\[\]!¡_]/g,' ').replace(/\s{2,}/g,' ').trim(); }
-  function pareceContinuacionNombre(soloTexto){
-    return soloTexto.length>1 && soloTexto.length<30
-      && soloTexto === soloTexto.toUpperCase()
-      && !/\b\w\b.*\b\w\b/.test(soloTexto); // como mucho 1 "palabra" de una sola letra
-  }
-
-  lineas.forEach(function(linea){
-    if(reCabeceraReservas.test(linea)){ seccion='reservas'; nombrePendiente=''; filaPendienteCheckin=null; filaPendienteReserva=null; return; }
-    if(reCabeceraCheckin.test(linea)){ seccion='checkin'; nombrePendiente=''; filaPendienteCheckin=null; filaPendienteReserva=null; return; }
-    var mMat = linea.match(reMat);
-
-    // ── Línea SIN matrícula propia ──
-    if(!mMat){
-      var soloTexto = linea.replace(/[^A-ZÁÉÍÓÚÑa-záéíóúñ,\s]/g,'').trim();
-
-      // 1) ¿Completa una fila pendiente (matrícula ya vista, faltaba
-      //    turno/posición/hora)? Es el caso más común en tus fotos.
-      var filaPend = seccion==='reservas' ? filaPendienteReserva : filaPendienteCheckin;
-      if(filaPend){
-        if(seccion==='reservas'){
-          var mTipo2 = linea.match(reTipoReserva);
-          var horas2 = linea.match(reHoraTodas) || [];
-          if(mTipo2 || horas2.length){
-            var idx2 = [];
-            if(mTipo2) idx2.push(mTipo2.index);
-            if(horas2.length){ var ih2=linea.search(reHora); if(ih2>=0) idx2.push(ih2); }
-            var extra2 = idx2.length ? limpiar(linea.slice(0, Math.min.apply(null,idx2))) : '';
-            reservas.push({
-              matricula: filaPend.matricula,
-              nombre: limpiar((filaPend.nombre+' '+extra2).trim()) || '(nombre no leído)',
-              tipo: mTipo2 ? ('Reserva '+mTipo2[1].replace(/MANANA/i,'Mañana').toLowerCase().replace(/^\w/,function(c){return c.toUpperCase();})) : '',
-              inicio: horas2[0]||'', fin: horas2[1]||''
-            });
-            filaPendienteReserva = null; lineasSinMatriculaSeguidas=0; return;
-          }
-        } else {
-          var mT2=linea.match(reTurno), mP2=linea.match(rePos), mH2=linea.match(reHora);
-          if(mT2||mP2||mH2){
-            var idx3 = [];
-            if(mT2) idx3.push(mT2.index);
-            if(mP2) idx3.push(mP2.index);
-            if(mH2) idx3.push(mH2.index);
-            var extra3 = idx3.length ? limpiar(linea.slice(0, Math.min.apply(null,idx3))) : '';
-            filas.push({
-              matricula: filaPend.matricula,
-              nombre: limpiar((filaPend.nombre+' '+extra3).trim()) || '(nombre no leído)',
-              turno: mT2 ? mT2[1].replace(/·/g,'-') : '',
-              posicion: mP2 ? mP2[1].replace(/·/g,'-') : '',
-              hora: mH2 ? mH2[1] : '', obs: ''
-            });
-            filaPendienteCheckin = null; lineasSinMatriculaSeguidas=0; return;
-          }
-        }
-        // no traía datos de turno/posición/hora → puede ser una
-        // TERCERA línea del mismo nombre (nombres muy largos)
-        if(pareceContinuacionNombre(soloTexto)){
-          filaPend.nombre = (filaPend.nombre+' '+soloTexto).trim();
-          lineasSinMatriculaSeguidas=0; return;
-        }
-      }
-
-      // 2) Si no hay fila pendiente: puede ser el INICIO de un nombre
-      //    que se lee ANTES que su matrícula (caso menos común, pero
-      //    ya contemplado antes) — exige coma para no confundir ruido
-      //    del fondo con un nombre de verdad.
-      var pareceNombreNuevo = soloTexto.length>4 && soloTexto.length<40
-        && soloTexto === soloTexto.toUpperCase()
-        && soloTexto.indexOf(',')>=0
-        && !/\b\w\b.*\b\w\b.*\b\w\b/.test(soloTexto);
-      var pareceContinuacionSuelta = nombrePendiente && pareceContinuacionNombre(soloTexto);
-      if(pareceNombreNuevo || pareceContinuacionSuelta){
-        nombrePendiente = (nombrePendiente+' '+soloTexto).trim(); lineasSinMatriculaSeguidas=0;
-      } else {
-        lineasSinMatriculaSeguidas++;
-        if(lineasSinMatriculaSeguidas>=2){ nombrePendiente=''; filaPendienteCheckin=null; filaPendienteReserva=null; }
-      }
-      return;
-    }
-
-    // ── Línea CON matrícula: cierra cualquier fila pendiente sin
-    //    terminar (mejor guardar el dato parcial que perderlo) ──
-    if(filaPendienteCheckin){ filas.push({matricula:filaPendienteCheckin.matricula, nombre:filaPendienteCheckin.nombre||'(nombre no leído)', turno:'', posicion:'', hora:'', obs:''}); filaPendienteCheckin=null; }
-    if(filaPendienteReserva){ reservas.push({matricula:filaPendienteReserva.matricula, nombre:filaPendienteReserva.nombre||'(nombre no leído)', tipo:'', inicio:'', fin:''}); filaPendienteReserva=null; }
-    lineasSinMatriculaSeguidas = 0;
-    var resto = linea.slice(mMat[0].length);
-
-    if(seccion==='reservas'){
-      var mTipo = resto.match(reTipoReserva);
-      var horasEncontradas = resto.match(reHoraTodas) || [];
-      var indicesR = [];
-      if(mTipo) indicesR.push(mTipo.index);
-      if(horasEncontradas.length){ var iHoraR = resto.search(reHora); if(iHoraR>=0) indicesR.push(iHoraR); }
-      var nombreR = indicesR.length ? limpiar(resto.slice(0, Math.min.apply(null, indicesR))) : limpiar(resto);
-      nombreR = limpiar((nombrePendiente ? nombrePendiente+' ' : '') + nombreR);
-      nombrePendiente = '';
-      if(!mTipo && !horasEncontradas.length){
-        // nombre cortado justo aquí, sin datos todavía → esperar la siguiente línea
-        filaPendienteReserva = {matricula: mMat[1], nombre: nombreR};
-        return;
-      }
-      reservas.push({
-        matricula: mMat[1], nombre: nombreR || '(nombre no leído)',
-        tipo: mTipo ? ('Reserva '+mTipo[1].replace(/MANANA/i,'Mañana').toLowerCase().replace(/^\w/,function(c){return c.toUpperCase();})) : '',
-        inicio: horasEncontradas[0]||'', fin: horasEncontradas[1]||''
-      });
-      return;
-    }
-
-    var mTurno = resto.match(reTurno), mPos = resto.match(rePos), mHora = resto.match(reHora);
-    var indices = [];
-    if(mTurno) indices.push(mTurno.index);
-    if(mPos) indices.push(mPos.index);
-    if(mHora) indices.push(mHora.index);
-    var nombre = indices.length ? limpiar(resto.slice(0, Math.min.apply(null, indices))) : limpiar(resto);
-    nombre = limpiar((nombrePendiente ? nombrePendiente+' ' : '') + nombre);
-    nombrePendiente = '';
-    if(!mTurno && !mPos && !mHora){
-      // nombre cortado justo aquí, sin datos todavía → esperar la siguiente línea
-      filaPendienteCheckin = {matricula: mMat[1], nombre: nombre};
-      return;
-    }
-    filas.push({
-      matricula: mMat[1], nombre: nombre || '(nombre no leído)',
-      turno: mTurno ? mTurno[1].replace(/·/g,'-') : '',
-      posicion: mPos ? mPos[1].replace(/·/g,'-') : '',
-      hora: mHora ? mHora[1] : '', obs: ''
-    });
-  });
-
-  // Fin del texto con una fila a medias: mejor guardarla incompleta
-  // que perderla del todo.
-  if(filaPendienteCheckin) filas.push({matricula:filaPendienteCheckin.matricula, nombre:filaPendienteCheckin.nombre||'(nombre no leído)', turno:'', posicion:'', hora:'', obs:''});
-  if(filaPendienteReserva) reservas.push({matricula:filaPendienteReserva.matricula, nombre:filaPendienteReserva.nombre||'(nombre no leído)', tipo:'', inicio:'', fin:''});
-  return {filas:filas, reservas:reservas};
-}
-
-// NUEVO — agrupado en DOS niveles para la vista "Vía" (maqueta
-// aprobada por Alex): primero por HORA de toma, y dentro de cada
-// hora, por primer tramo de tren — así un mismo tren que entra dos
-// veces a horas distintas (típico de una salida en DH) aparece en
-// dos paradas separadas de la vía, cada una con su propia gente,
-// nunca mezcladas entre sí.
-function ciAgruparPorHora(filas){
-  var porHora = {}, ordenHoras = [];
-  filas.forEach(function(f){
-    var h = f.hora || '¿hora?';
-    if(!porHora[h]){ porHora[h] = {hora:f.hora, gruposTren:{}, ordenTrenes:[]}; ordenHoras.push(h); }
-    var primero = (f.turno||'').split('-')[0] || '';
-    var keyTren = primero || ('__sin_leer_'+f.matricula);
-    if(!porHora[h].gruposTren[keyTren]){ porHora[h].gruposTren[keyTren] = {primero:primero, personas:[]}; porHora[h].ordenTrenes.push(keyTren); }
-    porHora[h].gruposTren[keyTren].personas.push(f);
-  });
-  var lista = ordenHoras.map(function(h){
-    var entrada = porHora[h];
-    return {hora: entrada.hora, trenes: entrada.ordenTrenes.map(function(kt){ return entrada.gruposTren[kt]; })};
-  });
-  function min(h){ var m=h&&h.match(/^(\d{1,2}):(\d{2})/); return m?(parseInt(m[1],10)*60+parseInt(m[2],10)):null; }
-  lista.sort(function(a,b){
-    var ma=min(a.hora), mb=min(b.hora);
-    if(ma===null && mb===null) return 0;
-    if(ma===null) return 1;
-    if(mb===null) return -1;
-    return ma-mb;
-  });
-  return lista;
-}
-
-// Fila de una persona (matrícula/nombre/ruta/posición, todo
-// editable si no es solo lectura) — pieza reutilizable tanto para
-// la vía normal como para cualquier vista futura.
-function ciRenderPersonaHtml(p, idx, soloLectura){
-  var ed = soloLectura ? '' : ' ci-editable';
-  var segmentos = (p.turno||'').split('-').filter(Boolean);
-  var rutaHtml = '';
-  segmentos.forEach(function(seg,i){
-    var warn = /DH|UM/i.test(seg);
-    var cls = i===0 ? 'tc-first-mini' : 'tc-rest';
-    rutaHtml += '<span class="'+cls+(warn?' tc-warn':'')+'">'+(warn?'<span class="tc-warn-ico">⚠</span>':'')+seg+'</span>';
-    if(i<segmentos.length-1) rutaHtml += '<span class="tc-arrow">→</span>';
-  });
-  if(!segmentos.length) rutaHtml = '<span class="est-falta">sin tren leído</span>';
-  var posChips = (p.posicion||'').split('-').filter(Boolean).map(function(pc){ return '<span class="pos-chip pos-'+pc+'">'+pc+'</span>'; }).join('');
-  if(!posChips) posChips = '<span class="est-falta">?</span>';
-  return '<div class="ci-persona">'
-    +'<div class="ci-mat'+ed+'"'+(soloLectura?'':' onclick="ciEditarCampoCheckin('+idx+',\'matricula\',\'Matrícula\')"')+'>'+p.matricula+'</div>'
-    +'<div class="ci-nom">'
-      +'<div class="ci-nom-tx'+ed+'"'+(soloLectura?'':' onclick="ciEditarCampoCheckin('+idx+',\'nombre\',\'Nombre\')"')+'>'+p.nombre+'</div>'
-      +'<div class="ci-ruta'+ed+'"'+(soloLectura?'':' onclick="ciEditarCampoCheckin('+idx+',\'turno\',\'Turno (ej. 1101-1192)\')"')+'>'+rutaHtml+'</div>'
-    +'</div>'
-    +'<div class="ci-right"><span'+ed+(soloLectura?'':' onclick="ciEditarCampoCheckin('+idx+',\'posicion\',\'Posición (ej. CP-TCF)\')"')+'>'+posChips+'</span></div></div>';
-}
-
-// NUEVO — vista "Vía" (maqueta 3, aprobada por Alex): un carril
-// vertical con una parada por cada HORA de toma; dentro de cada
-// parada, un bloque por cada tren de esa hora, con su gente debajo.
-// No importa el orden en que se suban las fotos — siempre sale
-// ordenado por hora y agrupado por tren. Un mismo tren que entra dos
-// veces a horas distintas (típico de una salida en DH) aparece en
-// dos paradas separadas de la vía, con su gente sin mezclarse.
-function ciRenderViaHtml(gruposPorHora, soloLectura){
-  var html = '<div class="m3-track">';
-  gruposPorHora.forEach(function(entrada){
-    html += '<div class="m3-item"><div class="m3-rail"><div class="m3-dot"></div><div class="m3-line"></div></div>';
-    html += '<div class="m3-content"><div class="m3-hora'+(entrada.hora?'':' est-falta')+'">'+(entrada.hora||'¿hora?')+'</div>';
-    entrada.trenes.forEach(function(gt){
-      var warn = /DH|UM/i.test(gt.primero||'');
-      html += '<div class="m3-tren-block"><div class="m3-tren-hdr">'
-        +'<span class="m3-tren'+(warn?' m3-warn':'')+'">'+(warn?'⚠ ':'')+(gt.primero||'¿tren?')+'</span>'
-        +'<span class="m3-cnt">'+gt.personas.length+' pers.</span></div>';
-      gt.personas.forEach(function(p){
-        var idx = soloLectura ? -1 : _ciFilasPendientes.indexOf(p);
-        html += ciRenderPersonaHtml(p, idx, soloLectura);
-      });
-      html += '</div>';
-    });
-    html += '</div></div>';
-  });
-  return html+'</div>';
-}
-function ciRenderReservasHtml(reservas, soloLectura){
-  if(!reservas || !reservas.length) return '';
-  var ordenadas = reservas.slice().sort(function(a,b){
-    function min(h){ var m=h&&h.match(/^(\d{1,2}):(\d{2})/); return m?(parseInt(m[1],10)*60+parseInt(m[2],10)):null; }
-    var ma=min(a.inicio), mb=min(b.inicio);
-    if(ma===null && mb===null) return 0;
-    if(ma===null) return 1;
-    if(mb===null) return -1;
-    return ma-mb;
-  });
-  var html = '<div class="ci-seccion-hdr"><span style="font-size:13px">🪑</span><div class="ci-seccion-hdr-tit">Reservas de hoy</div></div><div class="ci-grupo">';
-  ordenadas.forEach(function(r){
-    var idx = soloLectura ? -1 : _ciReservasPendientes.indexOf(r);
-    var ed = soloLectura ? '' : ' ci-editable';
-    var horas = (r.inicio||'¿inicio?')+'–'+(r.fin||'¿fin?');
-    var horasCls = (!r.inicio||!r.fin) ? 'ci-res-horas est-falta' : 'ci-res-horas';
-    html += '<div class="ci-persona">'
-      +'<div class="ci-mat'+ed+'"'+(soloLectura?'':' onclick="ciEditarCampoReserva('+idx+',\'matricula\',\'Matrícula\')"')+'>'+r.matricula+'</div>'
-      +'<div class="ci-nom">'
-        +'<div class="ci-nom-tx'+ed+'"'+(soloLectura?'':' onclick="ciEditarCampoReserva('+idx+',\'nombre\',\'Nombre\')"')+'>'+r.nombre+'</div>'
-        +'<div class="ci-res-tramo'+ed+'"'+(soloLectura?'':' onclick="ciEditarCampoReserva('+idx+',\'tipo\',\'Tipo de reserva\')"')+'>'+(r.tipo||'¿tipo?')+'</div>'
-      +'</div>'
-      +'<div class="'+horasCls+ed+'"'+(soloLectura?'':' onclick="ciEditarHorasReserva('+idx+')"')+'>'+horas+'</div></div>';
-  });
-  return html+'</div>';
-}
-function ciEditarCampoCheckin(idx, campo, etiqueta){
-  if(idx<0 || !_ciFilasPendientes || !_ciFilasPendientes[idx]) return;
-  var nuevo = prompt('Corregir '+etiqueta+':', _ciFilasPendientes[idx][campo]||'');
-  if(nuevo===null) return;
-  _ciFilasPendientes[idx][campo] = nuevo.trim();
-  renderCiVistazo(_ciFilasPendientes, _ciReservasPendientes);
-}
-function ciEditarCampoReserva(idx, campo, etiqueta){
-  if(idx<0 || !_ciReservasPendientes || !_ciReservasPendientes[idx]) return;
-  var nuevo = prompt('Corregir '+etiqueta+':', _ciReservasPendientes[idx][campo]||'');
-  if(nuevo===null) return;
-  _ciReservasPendientes[idx][campo] = nuevo.trim();
-  renderCiVistazo(_ciFilasPendientes, _ciReservasPendientes);
-}
-function ciEditarHorasReserva(idx){
-  if(idx<0 || !_ciReservasPendientes || !_ciReservasPendientes[idx]) return;
-  var r = _ciReservasPendientes[idx];
-  var nuevoInicio = prompt('Corregir hora de inicio (HH:MM):', r.inicio||'');
-  if(nuevoInicio===null) return;
-  var nuevoFin = prompt('Corregir hora de fin (HH:MM):', r.fin||'');
-  if(nuevoFin===null) return;
-  r.inicio = nuevoInicio.trim(); r.fin = nuevoFin.trim();
-  renderCiVistazo(_ciFilasPendientes, _ciReservasPendientes);
-}
-function renderCiVistazo(filas, reservas){
-  _ciFilasPendientes = filas;
-  _ciReservasPendientes = reservas||[];
-  var grupos = ciAgruparPorHora(filas);
-  var sinHora = filas.filter(function(f){return !f.hora;}).length;
-  var html = '<div class="ci-vistazo-note">📋 Esto es lo que se ha leído del PDF ('+filas.length+' persona'+(filas.length===1?'':'s')+(_ciReservasPendientes.length?' + '+_ciReservasPendientes.length+' reserva'+(_ciReservasPendientes.length===1?'':'s'):'')+'). Toca cualquier dato para corregirlo si algo salió raro'+(sinHora?' — hay '+sinHora+' fila(s) sin hora detectada, en naranja':'')+'.'+
-    (_ciTextoOcrCrudo&&_ciTextoOcrCrudo.length ? '<br><a href="#" onclick="ciVerTextoCrudo();return false;" style="color:var(--acc2);font-weight:700">🔍 Ver texto leído (diagnóstico)</a>' : '')+
-    '</div>';
-  html += ciRenderViaHtml(grupos, false);
-  html += ciRenderReservasHtml(_ciReservasPendientes, false);
-  // FIX — "Repetir" volvía siempre a la pantalla de HOY, aunque se
-  // estuviera subiendo el check-in de un día anterior (ver
-  // renderCiSinDatosHistoricos). Ahora vuelve a la pantalla correcta
-  // según el día que se esté viendo de verdad.
-  var volverA = ciEsHoy(_ciFechaViendo) ? 'renderCiVacio()' : 'renderCiSinDatosHistoricos()';
-  document.getElementById('ci-body').innerHTML = html+
-    '<div class="ci-vistazo-btns">'+
-      '<button class="ci-btn-cancelar" onclick="'+volverA+'">✕ Repetir</button>'+
-      '<button class="ci-btn-confirmar" onclick="ciConfirmarSubida()">✓ Confirmar y subir</button>'+
-    '</div>';
-}
-// NUEVO — muestra el texto EXACTO que Tesseract sacó de cada foto,
-// en un cuadro seleccionable para copiar y compartir tal cual. Sirve
-// para diagnosticar por qué algo se lee mal sin tener que adivinar.
-function ciVerTextoCrudo(){
-  if(!_ciTextoOcrCrudo || !_ciTextoOcrCrudo.length) return;
-  var html = _ciTextoOcrCrudo.map(function(t,i){
-    return '<div style="margin:0 16px 14px">'
-      + '<div style="font-size:10px;font-weight:800;color:var(--tx2);margin-bottom:5px">📷 '+(t.archivo||('Foto '+(i+1)))+'</div>'
-      + '<textarea readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--s2);border:1px solid var(--div);border-radius:8px;color:var(--tx2);font-family:monospace;font-size:10px;padding:8px;white-space:pre;overflow:auto">'+t.texto.replace(/</g,'&lt;')+'</textarea>'
-      + '</div>';
-  }).join('');
-  document.getElementById('ci-body').innerHTML =
-    '<div style="padding:12px 16px 4px;font-size:11px;color:var(--tx2)">Toca un cuadro para seleccionar todo el texto y copiarlo. Este es el texto tal cual lo leyó el lector, antes de interpretarlo.</div>'
-    + html
-    + '<div style="padding:0 16px 14px"><button class="ci-btn-cancelar" style="width:100%" onclick="renderCiVistazo(_ciFilasPendientes,_ciReservasPendientes)">‹ Volver al vistazo</button></div>';
-}
-async function ciConfirmarSubida(){
-  if(!_ciFilasPendientes || (!_ciFilasPendientes.length && !(_ciReservasPendientes&&_ciReservasPendientes.length))) return;
-  renderCiProgreso('Subiendo…', 92);
-  if(!sbAdmin){ toast('⚠️ Sin conexión — no se pudo subir'); renderCiVistazo(_ciFilasPendientes, _ciReservasPendientes); return; }
-  var identidad = ciIdentidadActual();
-  // FIX — Confirmado por Alex: antes esto SIEMPRE guardaba con la
-  // fecha de HOY, sin importar qué día se estuviera viendo en el
-  // check-in (las flechitas ‹ ›). Ahora guarda con la fecha del día
-  // que se está viendo de verdad — necesario para poder subir el
-  // check-in de un día anterior que se quedó sin subir.
-  var fechaDestino = ciFechaISO(_ciFechaViendo);
-  var esHoyDestino = ciEsHoy(_ciFechaViendo);
-  var payload = {
-    fecha: fechaDestino, sede: ciSedeActual(),
-    subido_por_matricula: identidad.matricula, subido_por_nombre: identidad.nombre,
-    subido_en: new Date().toISOString(),
-    datos: _ciFilasPendientes, reservas: _ciReservasPendientes||[],
-    editado_por_admin: ciEsAdminOInterventor()
-  };
-  var res = await ciConTimeout(sbAdmin.from('checkin_diario').upsert(payload, {onConflict:'fecha,sede'}).select().single(), 12000);
-  if(!res.ok || (res.data && res.data.error)){
-    toast('Ya hay un check-in guardado ese día, o falló la conexión — solo Admin puede modificarlo');
-    var resVerif = await ciConTimeout(sbAdmin.from('checkin_diario').select('*').eq('fecha', fechaDestino).eq('sede', ciSedeActual()).maybeSingle(), 12000);
-    var filaVerif = (resVerif.ok && resVerif.data && resVerif.data.data) ? resVerif.data.data : null;
-    if(filaVerif){ esHoyDestino ? renderCiBloqueado(filaVerif) : renderCiHistorico(filaVerif); }
-    else { esHoyDestino ? renderCiVacio() : renderCiSinDatosHistoricos(); }
-    return;
-  }
-  toast('✅ Check-in subido'+(esHoyDestino?'':' para el '+ciFechaBonita(_ciFechaViendo)));
-  var filaGuardada = (res.data && res.data.data) ? res.data.data : payload;
-  _ciFilasPendientes = null; _ciReservasPendientes = null;
-  esHoyDestino ? renderCiBloqueado(filaGuardada) : renderCiHistorico(filaGuardada);
 }
 
 // perfilAdminActual ya se declara mucho más arriba, junto a curM/
@@ -36088,14 +35342,6 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
     // OJO: tiene que ser SIEMPRE mayor que la duración de la pantalla de
     // carga (3,5 s), o el portal saltaría por encima de ella.
     setTimeout(revisarPerfil, 4200);
-    // NUEVO — primera comprobación de la píldora ✅ Check-in (el
-    // Calendario ya está abierto por defecto al cargar, así que no
-    // pasa por goP('cal')). Con un pequeño margen para que la
-    // restauración de sesión/rol (cargarPerfilYVerificarAdmin) tenga
-    // tiempo de completarse antes de decidir si se muestra o no.
-    setTimeout(function(){
-      if(typeof mostrarPillCheckinSiCorresponde==='function') mostrarPillCheckinSiCorresponde();
-    }, 4500); // mismo margen de siempre (1 s) tras el aviso al portal
   }
 
   if(document.readyState === 'loading'){
@@ -38408,6 +37654,130 @@ function haResumen(){ if(!document.getElementById('ha-wrap')) return; var hoy=ne
   var _haRA=renderAll; renderAll=function(){ var r=_haRA.apply(this,arguments); haResumen(); return r; };
   var _haVP=vacPintar; vacPintar=function(){ _haVP.apply(this,arguments); haResumen(); };
   setTimeout(haMontar,1700); setTimeout(haMontar,3500);
+})();
+
+</script>
+<script>
+/* ═══ NUEVO — Avisos de retraso automáticos y retraso de llegada (maquetas aprobadas) ═══
+   - La app sube al servidor tus trenes (ayer → +31 días), con los cambios de turno ya aplicados
+     (si hay un cambio, se vigila el tren del cambio, no el grafiado). Ver supabase/avisos-retraso.sql.
+   - El servidor (vigila-retrasos) mira Renfe cada 5 min: avisa cada 20 min si va con retraso y,
+     al llegar, guarda el retraso de llegada. Sin datos de Renfe no avisa ni guarda nada.
+   - Al abrir la app sale el pop-up: retraso de llegada + deje (15 fuera de base, 20 en base).
+     Cuenta para horas y dinero, o solo se anota:
+       · jornada normal: ida y vuelta cuentan;
+       · HTDL / Art. 51-52 por dinero: cuenta solo el último tramo del día (de la toma al deje);
+         en pernocta la ida es el último tramo de ese día;
+       · HTDL / Art. 51-52 por días: solo se anota.
+     Lo que cuenta se guarda igual que «⏱ Retraso»; lo anotado va en retrasosAnotados (no calcula). */
+function rtG(){ var a=(typeof AJ!=='undefined'&&AJ.vig)||{}; return {activo:a.activo!==false,cada20:a.cada20!==false,llegada:a.llegada!==false}; }
+function rtNum(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
+function rtHtdl(t){ return t&&(t.tipo==='trabajado'||t.tipo==='art5152'); }
+function rtComp(t){ return t?(t.tipo==='art5152'?t.compensacion:t.comp):null; }
+// Trenes de un día, con la regla de si cuenta. Si hay un cambio de turno apuntado, manda el cambio.
+function rtViajesDia(k){ var t=TV[k], out=[];
+  var ref=((typeof TV2!=='undefined'&&TV2[k])||[]).filter(function(r){ return r&&r.turno_referencia_externa&&(r.numTren||r.numTrenVuelta); }).pop();
+  var base=(typeof AJ!=='undefined'&&AJ.base)||'';
+  if(ref){ var con=ref.companeroNombre||'compañero';
+    if(ref.numTren) out.push({tramo:1,tren:ref.numTren,sale:ref.hF,llega:ref.hL,destino:ref.lle||'',en_base:false,cuenta:true,tipo:'cambio',cambio_con:con});
+    if(ref.numTrenVuelta&&ref.tipoServicio!=='pernocta2'&&ref.tipoServicio!=='pernocta3') out.push({tramo:2,tren:ref.numTrenVuelta,sale:ref.hF2||null,llega:ref.hL2||null,destino:base,en_base:true,cuenta:true,tipo:'cambio',cambio_con:con});
+    return out; }
+  if(!t) return out;
+  if(t.tipo==='vuelta-pernocta'){ var o=TV[t.origenPernocta]||t, dias=rtHtdl(o)&&rtComp(o)==='dias';
+    if(t.numTren) out.push({tramo:2,tren:t.numTren,sale:t.hF,llega:t.hL,destino:t.lle||base,en_base:true,cuenta:!dias,tipo:rtHtdl(o)?'htdl':'ordinario'}); return out; }
+  if(t.tipo!=='ordinario'&&t.tipo!=='trabajado'&&t.tipo!=='art5152') return out;
+  var htdl=rtHtdl(t), dias=htdl&&rtComp(t)==='dias', pern=t.modo==='pernocta'||t.modo==='pernocta3', hayV=!pern&&t.numTrenVuelta;
+  if(t.numTren) out.push({tramo:1,tren:t.numTren,sale:t.hF,llega:t.hL,destino:t.lle||'',en_base:false,cuenta:!dias&&(!htdl||!hayV),tipo:htdl?'htdl':'ordinario'});
+  if(hayV) out.push({tramo:2,tren:t.numTrenVuelta,sale:t.hF2,llega:t.hL2,destino:t.lle2||base,en_base:true,cuenta:!dias,tipo:htdl?'htdl':'ordinario'});
+  return out; }
+function rtViajes(){ var out=[], d=new Date(); d.setDate(d.getDate()-1);
+  for(var i=0;i<33;i++){ var k=key(d.getFullYear(),d.getMonth()+1,d.getDate());
+    rtViajesDia(k).forEach(function(v){ v.tren=rtNum(v.tren); if(v.tren&&v.sale&&v.llega){ v.fecha=k; out.push(v); } }); d.setDate(d.getDate()+1); }
+  return out; }
+var _rtT=null, _rtUlt='';
+function rtSubir(ya){ clearTimeout(_rtT); _rtT=setTimeout(async function(){
+  try{ var mat=String(AJ.matricula||'').trim(); if(!mat||!sbAdmin) return; var V=rtViajes(), aj=rtG(), firma=JSON.stringify([V,aj]); if(firma===_rtUlt) return;
+    var r=await sbAdmin.rpc('vig_subir',{p_mat:mat,p_viajes:V,p_ajustes:aj}); if(!r.error) _rtUlt=firma; else console.warn('vig_subir',r.error.message); }catch(e){ console.warn('vig_subir',e); } }, ya?300:12000); }
+
+/* ── Pop-up al llegar ── */
+var rtCola=[], rtEnPop=false;
+async function rtPendientes(){ try{ var mat=String(AJ.matricula||'').trim(); if(!mat||!sbAdmin||rtEnPop) return;
+  var r=await sbAdmin.rpc('vig_pendientes',{p_mat:mat}); if(r.error||!r.data) return; rtCola=r.data||[]; rtSiguiente(); }catch(e){} }
+function rtSiguiente(){ var v=rtCola.shift(); if(!v){ rtEnPop=false; return; } rtEnPop=true; rtPop(v,null); }
+function rtHmas(h,m){ var x=/(\d{1,2}):(\d{2})/.exec(h||''); if(!x) return ''; var t=((+x[1])*60+(+x[2])+m+1440)%1440; return Math.floor(t/60)+':'+('0'+t%60).slice(-2); }
+function rtPop(v,min){ var deje=v.en_base?20:15, r=min!=null?min:v.ret_llegada, tot=r+deje, ida=v.tramo!==2, k=v.fecha, t=TV[k], fd=k.split('-');
+  var htdlDin=v.cuenta&&v.tipo==='htdl'&&t&&(t.tipo==='trabajado'||(t.tipo==='vuelta-pernocta'&&TV[t.origenPernocta]&&TV[t.origenPernocta].tipo==='trabajado'));
+  var eur=htdlDin&&AJ.vh?Math.round(tot/60*AJ.vh*100)/100:null;
+  var razon=v.cuenta?'':(v.tipo==='cambio'?'':(v.tipo==='htdl'&&ida?'En un HTDL de ida y vuelta, la ida no es el último tramo: <b>queda apuntada pero no suma</b> horas ni dinero. Lo que vale es la vuelta.':'HTDL por días: el retraso <b>solo queda apuntado</b>, no suma dinero.'));
+  var h='<div class="rt-pop"><div class="rt-h"><div class="rt-i">'+(ida?'🚆':'🏠')+'</div><div><b>'+(ida?'Ida':'Vuelta')+' · '+v.tren+' llegó'+(v.destino?' a '+limpioV(v.destino):'')+'</b><span>'+(+fd[2])+' '+MESES_C[+fd[1]-1]+' · '+(v.tipo==='cambio'?'🔁 cambio con '+limpioV(v.cambio_con||''):v.tipo==='htdl'?'HTDL':'Jornada grafiada')+' · 📡 Renfe en directo</span></div></div>'+
+    '<div class="rt-tab"><div><span>Llegada prevista → real</span><b>'+(v.llega||'')+' → '+rtHmas(v.llega,r)+'</b></div><div><span>Retraso de llegada</span><b>+'+r+' min</b></div><div class="f"><span>Deje '+(v.en_base?'en base':'fuera de base')+'</span><b>+'+deje+' min</b></div><div class="tot"><span>Retraso que se anota</span><b>+'+tot+' min</b></div></div>'+
+    '<span class="rt-regla '+(v.cuenta?'c':'a')+'">'+(v.cuenta?'✅ CUENTA PARA HORAS Y DINERO':'📝 SOLO SE ANOTA')+'</span>'+
+    '<div class="rt-big">Se anota <b>+'+tot+' min en la '+(ida?'Ida':'Vuelta')+' ('+v.tren+')</b>:<br>'+r+' min de retraso de llegada + '+deje+' min de deje '+(v.en_base?'en base':'fuera de base')+'.</div>'+
+    (eur!=null?'<div class="rt-din">💶 HTDL por dinero: es el último tramo (de la toma al deje), así que cuenta.<br><b>+'+tot+' min × '+String(AJ.vh).replace('.',',')+' €/h = +'+eur.toFixed(2).replace('.',',')+' €</b></div>':'')+
+    (razon?'<div class="rt-no">'+razon+'</div>':'')+(!t&&v.tipo!=='cambio'?'<div class="rt-no">⚠️ Ese día no tienes ningún turno en el calendario: no hay dónde anotarlo.</div>':'')+
+    '<button class="rt-b '+(v.cuenta?'si':'gr')+'" onclick="rtAplicar('+r+')">'+(v.cuenta?'✓ Añadir +'+tot+' min a la '+(ida?'Ida':'Vuelta'):'📝 Anotar +'+tot+' min en la '+(ida?'Ida':'Vuelta'))+'</button>'+
+    '<div class="rt-2"><button class="rt-b no" onclick="rtCambiar('+r+')">✏️ Cambiar minutos</button><button class="rt-b no" onclick="rtResolver(\'no\')">Ahora no</button></div></div>';
+  var o=document.getElementById('rt-ov'); if(!o){ o=document.createElement('div'); o.id='rt-ov'; document.body.appendChild(o); }
+  o.innerHTML=h; o.style.display='flex'; o._v=v; }
+function rtCambiar(r){ var x=prompt('Minutos de retraso de llegada (sin contar el deje):',r); if(x==null) return; var n=parseInt(x,10); if(isNaN(n)||n<0||n>600){ toast('Escribe un número de minutos'); return; } rtPop(document.getElementById('rt-ov')._v,n); }
+async function rtResolver(como){ var o=document.getElementById('rt-ov'), v=o&&o._v; if(o) o.style.display='none';
+  try{ if(v) await sbAdmin.rpc('vig_resolver',{p_id:v.id,p_mat:String(AJ.matricula||'').trim(),p_como:como}); }catch(e){}
+  rtSiguiente(); }
+function rtAplicar(r){ var v=document.getElementById('rt-ov')._v, deje=v.en_base?20:15, tot=r+deje, k=v.fecha, tramo=v.tramo===2?2:1;
+  var nota={tramo:tramo,minutos:tot,tren:v.tren,llegada:r,deje:deje,fuente:'renfe'};
+  if(v.tipo==='cambio'){ var ref=((TV2[k])||[]).filter(function(x){ return x&&x.turno_referencia_externa; }).pop();
+    if(ref){ ref.retrasosAnotados=(ref.retrasosAnotados||[]).filter(function(x){ return x.tramo!==tramo; }).concat([nota]); if(typeof saveTV2==='function') saveTV2(); } }
+  else if(TV[k]){ var t=TV[k];
+    if(v.cuenta){ t.retrasos=(t.retrasos||[]).filter(function(x){ return x.tramo!==tramo; }); t.retrasos.push(nota); t.retrasoMin=tot;
+      if(t.retrasosAnotados) t.retrasosAnotados=t.retrasosAnotados.filter(function(x){ return x.tramo!==tramo; }); }
+    else t.retrasosAnotados=(t.retrasosAnotados||[]).filter(function(x){ return x.tramo!==tramo; }).concat([nota]);
+    saveTV(); }
+  toast((v.cuenta&&v.tipo!=='cambio'?'✅ Añadido':'📝 Anotado')+' +'+tot+' min en la '+(tramo===2?'Vuelta':'Ida')+' ('+v.tren+')');
+  try{ if(typeof renderCal==='function') renderCal(); }catch(e){}
+  rtResolver(v.cuenta&&v.tipo!=='cambio'?'anadido':'anotado'); }
+
+/* ── En el día: desglose de los retrasos que vinieron de Renfe ── */
+function rtDiaHtml(k){ var t=TV[k]||{}, ref=((typeof TV2!=='undefined'&&TV2[k])||[]).filter(function(x){ return x&&x.retrasosAnotados; }).pop()||{};
+  var L=(t.retrasos||[]).filter(function(x){ return x.fuente==='renfe'; }).map(function(x){ return [x,1]; })
+    .concat((t.retrasosAnotados||[]).map(function(x){ return [x,0]; })).concat((ref.retrasosAnotados||[]).map(function(x){ return [x,0]; }));
+  if(!L.length) return '';
+  return '<div class="rt-dia"><div class="l">⏱ RETRASOS DE LLEGADA (📡 Renfe)</div>'+L.map(function(p){ var x=p[0];
+    return '<div class="r"><div>'+(x.tramo===2?'Vuelta':'Ida')+' · '+limpioV(x.tren||'')+'<small>llegada +'+x.llegada+' · deje '+(x.deje===20?'en base':'fuera de base')+' +'+x.deje+(p[1]?'':' · solo anotado')+'</small></div><b class="'+(p[1]?'':'a')+'">+'+x.minutos+' min '+(p[1]?'':'📝')+'</b></div>'; }).join('')+'</div>'; }
+var _rtDA=renderDiaArea; renderDiaArea=function(){ _rtDA.apply(this,arguments); try{ if(!selDay||!selDay.k) return; var html=rtDiaHtml(selDay.k); if(!html) return;
+  ['dia-card-body','dia-area'].forEach(function(id){ var a=document.getElementById(id); if(a&&a.innerHTML&&!a.querySelector('.rt-dia')) a.insertAdjacentHTML('beforeend',html); }); }catch(e){} };
+
+/* ── Ajustes → Notificaciones: interruptores ── */
+function rtAjPinta(){ var c=document.getElementById('rt-aj'); if(!c) return; var a=rtG();
+  var fila=function(k,t,s){ return '<div class="rt-sw" onclick="rtAjTog(\''+k+'\')"><div>'+t+'<small>'+s+'</small></div><div class="rt-tg'+(a[k]?'':' off')+'"></div></div>'; };
+  c.innerHTML='<div class="aj-card"><div style="font-weight:900;font-size:14px;margin-bottom:4px">🚆 Avisos de retraso de tus trenes</div>'+
+    fila('activo','Avisos de retraso automáticos','Vigila tus trenes de hoy aunque no abras la app')+
+    (a.activo?fila('cada20','Cada 20 min si va con retraso','Mientras el tren está en marcha')+fila('llegada','Aviso al llegar para añadir el retraso','Retraso de llegada + deje (15 fuera / 20 en base)'):'')+
+    '<div style="font-size:11.5px;color:var(--tx2);line-height:1.5;margin-top:8px">Para que funcione: tu horario del mes cargado, las notificaciones activadas (botón de arriba) y la app de Android. Si hay un cambio de turno apuntado, se vigila el tren del cambio. Sin datos de Renfe no se avisa ni se anota nada.</div></div>'; }
+function rtAjTog(k){ var a=rtG(); a[k]=!a[k]; AJ.vig=a; try{ localStorage.setItem('aj5',JSON.stringify(AJ)); }catch(e){} rtAjPinta(); rtSubir(true); }
+
+(function(){
+  var s=document.createElement('style'); s.textContent=
+  '#rt-ov{display:none;position:fixed;inset:0;z-index:9500;background:rgba(2,6,23,.62);align-items:flex-end;justify-content:center}'+
+  '.rt-pop{width:100%;max-width:480px;margin:0 10px calc(12px + env(safe-area-inset-bottom));background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:22px;padding:16px;color:var(--tx,#F8FAFC);max-height:92vh;overflow-y:auto}'+
+  '.rt-h{display:flex;gap:10px;align-items:center}.rt-i{flex:none;width:44px;height:44px;border-radius:12px;background:#7C2D12;display:flex;align-items:center;justify-content:center;font-size:22px}.rt-h b{display:block;font-size:17px}.rt-h span{display:block;font-size:12px;color:var(--tx2,#94A3B8)}'+
+  '.rt-tab{margin-top:12px;border:1px solid var(--div,#1E3350);border-radius:14px;overflow:hidden}.rt-tab div{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;border-top:1px solid var(--div,#1E3350);color:var(--tx2,#94A3B8)}.rt-tab div:first-child{border-top:0}.rt-tab b{color:var(--tx,#fff)}'+
+  '.rt-tab .f{background:var(--s2,#132236)}.rt-tab .f b{color:#FCD34D}.rt-tab .tot{background:#3B0D0D}.rt-tab .tot b{color:#FCA5A5;font-size:17px}'+
+  '.rt-regla{display:inline-block;margin-top:10px;font-size:11px;font-weight:900;letter-spacing:.6px;border-radius:7px;padding:3px 8px}.rt-regla.c{background:#14532D;color:#86EFAC}.rt-regla.a{background:#334155;color:#CBD5E1}'+
+  '.rt-big{margin-top:10px;background:#2A1C05;border:1.5px solid #F59E0B;border-radius:14px;padding:10px 12px;font-size:13px;color:#FDE68A;line-height:1.45}.rt-big b{color:#fff}'+
+  '.rt-din{margin-top:8px;background:#052e1a;border:1px solid #16A34A;border-radius:12px;padding:9px 12px;font-size:12.5px;color:#86EFAC;line-height:1.45}.rt-din b{color:#fff}'+
+  '.rt-no{margin-top:8px;background:#1E293B;border:1px solid #475569;border-radius:12px;padding:9px 12px;font-size:12.5px;color:#CBD5E1;line-height:1.45}.rt-no b{color:#fff}'+
+  '.rt-b{display:block;width:100%;border:0;border-radius:13px;padding:13px;font-weight:900;font-size:15px;margin-top:9px;cursor:pointer;font-family:inherit;color:#fff}.rt-b.si{background:#16A34A}.rt-b.gr{background:#334155}.rt-b.no{background:none;border:1.5px solid #334155;color:#CBD5E1;font-size:13.5px;font-weight:800}'+
+  '.rt-2{display:flex;gap:8px}.rt-2 .rt-b{flex:1}'+
+  '.rt-dia{margin:10px 0;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:14px;padding:10px 12px}.rt-dia .l{font-size:10.5px;color:var(--tx2,#94A3B8);font-weight:800;letter-spacing:1px}.rt-dia .r{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--div,#1E3350);padding:7px 0;font-size:13px}.rt-dia .r:first-of-type{border-top:0}.rt-dia small{display:block;color:var(--tx2,#94A3B8);font-size:11px}.rt-dia b{color:#FCA5A5}.rt-dia b.a{color:#94A3B8}'+
+  '.rt-sw{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--div,#1E3350);font-size:13.5px;cursor:pointer}.rt-sw small{display:block;color:var(--tx2,#94A3B8);font-size:11.5px;margin-top:2px}'+
+  '.rt-tg{flex:none;width:46px;height:27px;border-radius:14px;background:#16A34A;position:relative}.rt-tg:after{content:"";position:absolute;right:3px;top:3px;width:21px;height:21px;border-radius:50%;background:#fff}.rt-tg.off{background:#334155}.rt-tg.off:after{left:3px;right:auto}';
+  document.head.appendChild(s);
+  var _rtSave=saveTV; saveTV=function(){ var x=_rtSave.apply(this,arguments); rtSubir(false); return x; };
+  function montar(){ var n=document.querySelector('#aj-acc-notificaciones .aj-acc-body'); if(n&&!document.getElementById('rt-aj')){ n.insertAdjacentHTML('beforeend','<div id="rt-aj"></div>'); rtAjPinta(); } }
+  montar(); setTimeout(montar,1500);
+  setTimeout(function(){ rtSubir(true); rtPendientes(); },4500);
+  setInterval(rtPendientes,120000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden){ rtPendientes(); rtSubir(false); } });
 })();
 
 </script>
