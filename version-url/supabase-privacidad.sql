@@ -101,7 +101,7 @@ begin
    where matricula = s.matricula and tipo = s.tipo and estado = 'pendiente';
   if s.tipo = 'salida' and p_aceptar then
     insert into privacidad_excluidos (matricula, nombre, base) values (s.matricula, s.nombre||' '||s.apellidos, s.base)
-    on conflict (matricula) do update set nombre = excluded.nombre, base = excluded.base, desde = now(), reingreso_denegado = null;
+    on conflict (matricula) do update set nombre = excluded.nombre, base = excluded.base, desde = now(), reingreso_denegado = null, por_admin = false;
   elsif s.tipo = 'reingreso' and p_aceptar then
     delete from privacidad_excluidos where matricula = s.matricula;
   elsif s.tipo = 'reingreso' then
@@ -120,6 +120,35 @@ begin
    where matricula = upper(trim(p_matricula)) and tipo = 'reingreso' and estado = 'pendiente';
   return 'ok';
 end $$;
+
+-- ── NUEVO — Bloquear a una persona desde el Panel de Administrador ──
+-- Mismo efecto que aceptar un «No quiero aparecer»: no puede entrar, no ve horarios
+-- y deja de salir a los demás. por_admin = lo bloqueó el admin (no lo pidió).
+alter table public.privacidad_excluidos add column if not exists por_admin boolean not null default false;
+
+create or replace function public.priv_admin_bloquear(p_matricula text, p_nombre text default null, p_base text default null) returns text
+language plpgsql security definer set search_path = public as $$
+declare m text := upper(trim(coalesce(p_matricula,'')));
+begin
+  if not priv_es_admin() then raise exception 'solo admin'; end if;
+  if m !~ '^[0-9A-Z]{3,12}$' then raise exception 'matrícula no válida'; end if;
+  insert into privacidad_excluidos (matricula, nombre, base, por_admin)
+  values (m, nullif(left(trim(coalesce(p_nombre,'')),120),''), nullif(left(trim(coalesce(p_base,'')),60),''), true)
+  on conflict (matricula) do nothing;
+  -- si había pedido salir, la solicitud queda resuelta
+  update privacidad_solicitudes set estado = 'aceptada', resuelto = now()
+   where matricula = m and tipo = 'salida' and estado = 'pendiente';
+  return 'ok';
+end $$;
+
+-- ¿La bloqueó el admin? (solo para el texto de la pantalla «Acceso retirado»)
+create or replace function public.priv_por_admin(p_matricula text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select por_admin from public.privacidad_excluidos where matricula = upper(trim(coalesce(p_matricula,'')))), false);
+$$;
+
+grant execute on function public.priv_admin_bloquear(text,text,text) to authenticated;
+grant execute on function public.priv_por_admin(text) to anon, authenticated;
 
 revoke all on function public.priv_es_admin() from public;
 grant execute on function public.priv_solicitar(text,text,text,text,text,text) to anon, authenticated;

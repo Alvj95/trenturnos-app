@@ -63,7 +63,7 @@
     var el=document.createElement('div'); el.id='tt-dlg'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true');
     var peligro=d.tipo==='confirm'&&PELIGRO.test(d.texto);
     var verbo=d.tipo!=='confirm'?'Aceptar':((d.texto.match(/^¿?\s*(Eliminar|Borrar|Quitar|Retirar|Rechazar|Bloquear|Denegar|Desbloquear|Aceptar|Volver)/i)||[])[1]||'Aceptar');
-    var icono=d.tipo==='alert'?(/^(⚠️|❌|✅|🔒|ℹ️)/.test(d.texto)?'':'ℹ️'):d.tipo==='prompt'?'✏️':(peligro?'🗑️':'❓');
+    var icono=d.tipo==='alert'?(/^(⚠️|❌|✅|🔒|ℹ️)/.test(d.texto)?'':'ℹ️'):d.tipo==='prompt'?'✏️':(/^¿?\s*(Bloquear|Desbloquear)/i.test(d.texto)?'🔒':peligro?'🗑️':'❓');
     el.innerHTML='<div class="tt-c">'+(icono?'<div class="tt-i">'+icono+'</div>':'')+'<div class="tt-t">'+esc(d.texto)+'</div>'+
       (d.tipo==='prompt'?'<input class="tt-in" id="tt-dlg-in" value="'+esc(d.valor||'')+'" autocomplete="off">':'')+
       '<div class="tt-b">'+(d.tipo==='alert'?'':'<button type="button" class="tt-no">Cancelar</button>')+
@@ -35978,6 +35978,16 @@ window.__svSyncTema = function(){
 .pv-b-gris{background:var(--s3,#1A2D44);color:var(--tx2,#94A3B8);border:1px solid var(--div,#1E3350)}
 .pv-b-verde{background:rgba(22,163,74,.12);color:#4ADE80;border:1px solid rgba(22,163,74,.4)}
 .pv-adm-t{font-size:12px;font-weight:900;margin:12px 0 6px}
+/* Bloquear a una persona (admin) */
+.pv-bq-bus{display:flex;gap:8px;align-items:center;background:var(--s3,#1A2D44);border:1.5px solid var(--div,#1E3350);border-radius:12px;padding:0 12px}
+.pv-bq-bus:focus-within{border-color:var(--acc,#2563EB)}
+.pv-bq-bus input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--tx,#F8FAFC);font:700 15px Inter,system-ui,sans-serif;padding:11px 0}
+.pv-bq-chips{display:flex;gap:6px;margin:9px 0 2px;flex-wrap:wrap}
+.pv-bq-chips button{font:800 11px Inter,system-ui,sans-serif;padding:5px 10px;border-radius:999px;background:var(--s3,#1A2D44);color:var(--tx2,#94A3B8);border:1px solid var(--div,#1E3350);cursor:pointer}
+.pv-bq-chips button.on{background:rgba(37,99,235,.2);color:#93C5FD;border-color:#2563EB}
+.pv-bq-fila{display:flex;align-items:center;gap:8px}.pv-bq-fila>div{flex:1;min-width:0}
+.pv-bq-fila button{flex:none;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit}
+.pv-bq-tag{display:inline-block;font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px;background:rgba(239,68,68,.18);color:#FCA5A5;margin-left:4px;vertical-align:1px}
 </style>
 <div id="pv-capa"></div>
 <div id="pv-bloqueo"></div>
@@ -35995,7 +36005,7 @@ window.__svSyncTema = function(){
      el admin readmite o deniega.
 ═══════════════════════════════════════════════════════════ */
 (function(){
-  var K_EXC='privExcluidos', K_BLOQ='privBloqueo', K_SOL='privSolicitud';
+  var K_EXC='privExcluidos', K_BLOQ='privBloqueo', K_SOL='privSolicitud', K_ADM='privPorAdmin';
   var EXC = {};
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} return null; }
   function norm(m){ return String(m==null?'':m).trim().toUpperCase(); }
@@ -36046,7 +36056,7 @@ window.__svSyncTema = function(){
     var pend = est==='fuera_reingreso_pendiente', deneg = est==='fuera_reingreso_denegado';
     el.innerHTML = '<div class="pv-centro">'
       +'<div class="pv-ico">🔒</div><div class="pv-tit">Acceso retirado</div>'
-      +'<div class="pv-sub">La matrícula <b>'+esc(m)+'</b> pidió no aparecer en TrenTurnos por privacidad de datos.</div>'
+      +'<div class="pv-sub" id="pv-bloqueo-sub">'+textoBloqueo(m, ls(K_ADM)===m)+'</div>'
       +'<div class="pv-rojo">TrenTurnos es una herramienta <b>entre compañeros</b>: quien no quiere compartir sus datos tampoco puede usar sus funciones.</div>'
       +(pend ? '<div class="pv-caja" style="text-align:center"><div style="font-size:30px">⏳</div><b>En valoración</b><br>Tu solicitud para volver se está valorando. Mientras tanto no puedes usar la app.</div>'
         : (deneg ? '<div class="pv-caja" style="text-align:center;margin-bottom:12px"><div style="font-size:30px">⛔</div><b>Solicitud denegada</b><br>El administrador ha valorado tu solicitud y no se concede el acceso.</div>' : '')
@@ -36054,12 +36064,24 @@ window.__svSyncTema = function(){
           +'<button class="pv-btn pv-gris" onclick="privAbrirReingreso()">Solicitar volver a entrar</button>')
       +'<button class="pv-link" onclick="privRevisarDeNuevo()">🔄 Comprobar de nuevo</button>'
       +'</div>';
-    el.classList.add('on');
+    el.classList.add('on'); revisarPorAdmin(m);
     if(window.__svOcultar) try{ window.__svOcultar(); }catch(e){}
+  }
+  function textoBloqueo(m, porAdmin){
+    return porAdmin ? 'El administrador ha retirado el acceso a la matrícula <b>'+esc(m)+'</b>.'
+      : 'La matrícula <b>'+esc(m)+'</b> pidió no aparecer en TrenTurnos por privacidad de datos.';
+  }
+  // NUEVO — ¿lo bloqueó el admin (sin pedirlo)? Solo cambia el texto de la pantalla.
+  async function revisarPorAdmin(m){
+    var c=sb(); if(!c) return;
+    try{ var r = await c.rpc('priv_por_admin', {p_matricula:m}); if(r.error) return;
+      ls(K_ADM, r.data ? m : null);
+      var el=document.getElementById('pv-bloqueo-sub'); if(el && _bloqueada===m) el.innerHTML=textoBloqueo(m, !!r.data);
+    }catch(e){}
   }
   function quitarBloqueo(){
     var el = document.getElementById('pv-bloqueo'); el.classList.remove('on'); el.innerHTML='';
-    _bloqueada = null; ls(K_BLOQ, null); ls(K_SOL, null);
+    _bloqueada = null; ls(K_BLOQ, null); ls(K_SOL, null); ls(K_ADM, null);
   }
   window.privRevisarDeNuevo = async function(){
     if(!_bloqueada) return;
@@ -36231,7 +36253,7 @@ window.__svSyncTema = function(){
     h+='<div class="pv-adm-t">🔒 Fuera de la app ('+exc.length+')</div>';
     if(!exc.length) h+='<div class="pv-adm-it"><div class="m">Nadie.</div></div>';
     exc.forEach(function(e){
-      h+='<div class="pv-adm-it"><div class="n">'+esc(e.nombre||'—')+'</div><div class="m">Mat. '+esc(e.matricula)+' · '+esc(e.base||'')+' · desde '+esc(fecha(e.desde))+'</div>'
+      h+='<div class="pv-adm-it"><div class="n">'+esc(e.nombre||'—')+(e.por_admin?'<span class="pv-bq-tag">BLOQUEADO POR TI</span>':'')+'</div><div class="m">Mat. '+esc(e.matricula)+' · '+esc(e.base||'')+' · desde '+esc(fecha(e.desde))+'</div>'
         +(e.reingreso_denegado?'<div class="m" style="color:#FCA5A5">⛔ Reingreso denegado el '+esc(fecha(e.reingreso_denegado))+'</div>':'')
         +'<div class="pv-adm-bt"><button class="pv-b-verde" onclick="privAdminDesbloquear(\''+esc(e.matricula)+'\')">↩️ Desbloquear</button></div></div>'; });
     lista.innerHTML=h;
@@ -36248,7 +36270,68 @@ window.__svSyncTema = function(){
     if(!await ttConfirm('¿Desbloquear la matrícula '+m+'? Volverá a aparecer en la app y podrá entrar.')) return;
     var r; try{ r = await sb().rpc('priv_admin_desbloquear', {p_matricula:m}); }catch(e){ r={error:e}; }
     if(r.error){ aviso('Error: '+(r.error.message||r.error)); return; }
-    aviso('✅ Desbloqueada'); await cargarExcluidos(); privAdminCargar();
+    if(BQ.fuera) delete BQ.fuera[norm(m)];
+    aviso('✅ Desbloqueada'); await cargarExcluidos(); privAdminCargar(); privBqPinta();
+  };
+
+  /* ── NUEVO — Bloquear a una persona (admin) ──
+     Busca por matrícula o nombre en los Horarios Generales publicados de TODAS las bases
+     (sin el filtro de privacidad, para poder ver también a los que ya están fuera).
+     Bloquear = mismo efecto que aceptar un «No quiero aparecer»: no puede entrar, no ve
+     horarios y deja de salir a los demás. Se deshace con «Desbloquear». */
+  var BQ = { gente:null, cargando:false, base:'', q:'', fuera:{} };
+  function sinTildes(t){ return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+  window.privBqCargar = async function(){
+    if(BQ.cargando || !esAdmin() || !sb()) return; BQ.cargando=true; privBqPinta();
+    var gente={}, bases={};
+    try{
+      var resp = await sb().from('config_global').select('*').like('tipo','horario_general_%');
+      var filas = (resp.data||[]).filter(function(f){ return f.url_archivo; });
+      filas = typeof _hgSoloMasRecientePorSede==='function' ? _hgSoloMasRecientePorSede(filas) : filas;
+      var hechas=0;
+      await Promise.all(filas.map(function(fila){
+        var sede = (typeof _hgParsearTipo==='function' && _hgParsearTipo(fila).sede) || fila.sede || String(fila.tipo).replace('horario_general_','');
+        return Promise.resolve(typeof _descargarYParsearHorario==='function' ? _descargarYParsearHorario(fila) : null).then(function(d){
+          (d||[]).forEach(function(e){ var m=norm(e&&e[0]); if(!m||gente[m]) return; gente[m]={m:m, n:String(e[1]||'').trim(), b:sede}; bases[sede]=1; });
+        }).catch(function(){}).then(function(){ hechas++; var es=document.getElementById('pvBqEstado'); if(es) es.textContent='Cargando bases… '+hechas+'/'+filas.length; });
+      }));
+    }catch(e){}
+    try{ var r = await sb().rpc('priv_admin_listar'); BQ.fuera={};
+      ((r.data&&r.data.excluidos)||[]).forEach(function(x){ BQ.fuera[norm(x.matricula)]=x;
+        if(!gente[norm(x.matricula)]) gente[norm(x.matricula)]={m:norm(x.matricula), n:x.nombre||'', b:x.base||''}; }); }catch(e){}
+    BQ.gente=gente; BQ.bases=Object.keys(bases).sort(); BQ.cargando=false; privBqPinta();
+  };
+  window.privBqBuscar = function(v){ BQ.q=v; if(!BQ.gente&&!BQ.cargando) privBqCargar(); privBqPinta(true); };
+  window.privBqBase = function(b){ BQ.base=b; privBqPinta(); };
+  window.privBqPinta = function(soloLista){
+    var caja=document.getElementById('pvBqRes'); if(!caja) return;
+    var chips=document.getElementById('pvBqChips'), es=document.getElementById('pvBqEstado');
+    if(chips && !soloLista) chips.innerHTML = (BQ.bases||[]).length>1 ? ['',].concat(BQ.bases).map(function(b){
+      return '<button type="button" class="'+(BQ.base===b?'on':'')+'" onclick="privBqBase(\''+esc(b).replace(/'/g,"\\'")+'\')">'+(b?esc(b):'Todas las bases')+'</button>'; }).join('') : '';
+    if(BQ.cargando){ if(es&&!/Cargando/.test(es.textContent)) es.textContent='Cargando bases…'; caja.innerHTML=''; return; }
+    var q=sinTildes(BQ.q).trim();
+    if(!BQ.gente){ if(es) es.textContent='Escribe una matrícula o un nombre.'; caja.innerHTML=''; return; }
+    if(q.length<2){ if(es) es.textContent=Object.keys(BQ.gente).length+' personas en '+(BQ.bases||[]).length+' bases · escribe al menos 2 letras o números'; caja.innerHTML=''; return; }
+    var palabras=q.split(/\s+/);
+    var res=Object.keys(BQ.gente).map(function(k){ return BQ.gente[k]; }).filter(function(p){
+      if(BQ.base && p.b!==BQ.base) return false; var t=sinTildes(p.m+' '+p.n);
+      return palabras.every(function(w){ return t.indexOf(w)>=0; }); });
+    res.sort(function(a,b){ return a.n.localeCompare(b.n,'es'); });
+    if(es) es.textContent = res.length ? res.length+' resultado'+(res.length===1?'':'s')+(res.length>40?' · se ven los 40 primeros':'') : 'Nadie coincide con «'+BQ.q+'».';
+    caja.innerHTML = res.slice(0,40).map(function(p){ var f=BQ.fuera[p.m];
+      return '<div class="pv-adm-it pv-bq-fila"><div><div class="n">'+esc(p.n||'—')+(f?'<span class="pv-bq-tag">BLOQUEADO</span>':'')+'</div>'
+        +'<div class="m">Mat. '+esc(p.m)+(p.b?' · '+esc(p.b):'')+(f?' · desde '+esc(fecha(f.desde)):'')+'</div></div>'
+        +(f ? '<button type="button" class="pv-b-verde" onclick="privAdminDesbloquear(\''+esc(p.m)+'\')">↩️ Desbloquear</button>'
+            : '<button type="button" class="pv-b-rojo" onclick="privBqBloquear(\''+esc(p.m)+'\')">🔒 Bloquear</button>')+'</div>'; }).join('');
+  };
+  window.privBqBloquear = async function(m){
+    var p=BQ.gente&&BQ.gente[m]; if(!p) return;
+    if(typeof perfilAdminActual!=='undefined' && perfilAdminActual && norm(perfilAdminActual.matricula)===m){ aviso('No puedes bloquearte a ti mismo'); return; }
+    if(!await ttConfirm('¿Bloquear a '+(p.n||'la matrícula '+m)+' (mat. '+m+(p.b?' · '+p.b:'')+')?\n\n• No podrá entrar en TrenTurnos (web ni app).\n• No verá los horarios de nadie.\n• Deja de aparecer en compañeros, buscador y cambios.\n• Lo puedes deshacer cuando quieras con «Desbloquear».')) return;
+    var r; try{ r = await sb().rpc('priv_admin_bloquear', {p_matricula:m, p_nombre:p.n||null, p_base:p.b||null}); }catch(e){ r={error:e}; }
+    if(r.error){ aviso('Error: '+(r.error.message||r.error)); return; }
+    BQ.fuera[m]={matricula:m, nombre:p.n, base:p.b, desde:new Date().toISOString(), por_admin:true};
+    aviso('🔒 Bloqueada'); await cargarExcluidos(); privBqPinta(); privAdminCargar();
   };
 
   function montar(){
@@ -36269,6 +36352,19 @@ window.__svSyncTema = function(){
         +'<div class="estado-archivo sin-archivo" id="pvAdminEstado">Toca "Actualizar lista" para ver las solicitudes.</div>'
         +'<div id="pvAdminLista" style="margin-top:8px"></div>';
       card.parentNode.insertBefore(c, card.nextSibling);
+    }
+    // NUEVO — Tarjeta «Bloquear a una persona», justo antes de «No quieren aparecer»
+    var pvc=document.getElementById('pvAdminLista'), pvCard=pvc&&pvc.closest('.admin-card');
+    if(pvCard && !document.getElementById('pvBqRes')){
+      var bq=document.createElement('div'); bq.className='admin-card';
+      bq.innerHTML='<div class="admin-card-hdr"><div class="admin-card-ico" style="background:rgba(239,68,68,.15);color:#FCA5A5">🔒</div><div>'
+        +'<div class="admin-card-tit">Bloquear a una persona</div>'
+        +'<div class="admin-card-sub">No podrá entrar en la app ni ver horarios, y deja de salir a los demás.</div></div></div>'
+        +'<div class="pv-bq-bus"><span>🔎</span><input id="pvBqQ" type="search" autocomplete="off" placeholder="Matrícula o nombre" oninput="privBqBuscar(this.value)" onfocus="if(!window.__pvBqYa){window.__pvBqYa=1;privBqCargar();}"></div>'
+        +'<div class="pv-bq-chips" id="pvBqChips"></div>'
+        +'<div class="pv-adm-t" id="pvBqEstado">Escribe una matrícula o un nombre.</div>'
+        +'<div id="pvBqRes"></div>';
+      pvCard.parentNode.insertBefore(bq, pvCard);
     }
     // Se carga junto con las solicitudes de acceso (al abrir el panel)
     if(typeof window.cargarSolicitudesAccesoAdmin==='function' && !window.cargarSolicitudesAccesoAdmin.__pv){
