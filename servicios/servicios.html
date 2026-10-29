@@ -630,6 +630,72 @@ button{font-family:inherit}
 </div>
 
 <script>
+/* ═══ NUEVO — Ventanas de confirmar / aviso / escribir con el diseño de la app ═══
+   Sustituyen a las grises del móvil (confirm / alert / prompt).
+   · ttConfirm(texto) → promesa con true/false   · ttAlert(texto) → promesa
+   · ttPrompt(texto, valor) → promesa con el texto o null
+   El botón «atrás» cierra la ventana como «Cancelar» (ttDlgAtras()).
+   Si algo fallara al pintarla, se usa la ventana gris de siempre: nunca se queda bloqueado. */
+(function(){
+  if(window.ttConfirm) return;
+  var NAT={confirm:window.confirm.bind(window), alert:window.alert.bind(window), prompt:window.prompt.bind(window)};
+  window._dlgNativo=NAT;
+  var cola=[], abierta=null;
+  var PELIGRO=/(eliminar|borrar|quitar|retirar|rechazar|bloquear|denegar|dejar de|vaciar)/i;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function css(){
+    if(document.getElementById('tt-dlg-css')) return;
+    var st=document.createElement('style'); st.id='tt-dlg-css'; st.textContent=
+    '#tt-dlg{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.62);-webkit-tap-highlight-color:transparent;animation:ttDlgIn .15s ease-out}'+
+    '@keyframes ttDlgIn{from{opacity:0}to{opacity:1}}'+
+    '#tt-dlg .tt-c{width:100%;max-width:400px;background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:20px;padding:18px 16px 14px;color:var(--tx,#F8FAFC);box-shadow:0 18px 50px rgba(0,0,0,.55);font-family:inherit;animation:ttDlgUp .18s ease-out}'+
+    '@keyframes ttDlgUp{from{transform:translateY(14px) scale(.98)}to{transform:none}}'+
+    '#tt-dlg .tt-i{font-size:28px;line-height:1;margin-bottom:8px}'+
+    '#tt-dlg .tt-t{font-size:15px;line-height:1.5;white-space:pre-line;word-wrap:break-word;max-height:55vh;overflow-y:auto}'+
+    '#tt-dlg .tt-in{display:block;width:100%;margin-top:12px;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:12px;color:var(--tx,#fff);padding:12px;font-size:16px;font-family:inherit;outline:none}'+
+    '#tt-dlg .tt-in:focus{border-color:var(--acc2,#3B82F6)}'+
+    '#tt-dlg .tt-b{display:flex;gap:10px;margin-top:16px}'+
+    '#tt-dlg .tt-b button{flex:1;border:0;border-radius:13px;padding:13px 10px;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer}'+
+    '#tt-dlg .tt-no{background:none!important;border:1.5px solid var(--div,#334155)!important;color:var(--tx2,#CBD5E1)}'+
+    '#tt-dlg .tt-si{background:var(--acc,#2563EB);color:#fff}'+
+    '#tt-dlg .tt-si.peligro{background:#DC2626}';
+    (document.head||document.documentElement).appendChild(st);
+  }
+  function siguiente(){ if(abierta||!cola.length) return; var d=cola.shift();
+    try{ pintar(d); }catch(e){ // si no se puede pintar: la de siempre
+      try{ d.fin(d.tipo==='confirm'?NAT.confirm(d.texto):d.tipo==='prompt'?NAT.prompt(d.texto,d.valor||''):(NAT.alert(d.texto),undefined)); }catch(e2){ d.fin(d.tipo==='confirm'?false:d.tipo==='prompt'?null:undefined); }
+      abierta=null; siguiente(); } }
+  function pintar(d){
+    if(!document.body) throw new Error('sin body');
+    css(); abierta=d;
+    var el=document.createElement('div'); el.id='tt-dlg'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true');
+    var peligro=d.tipo==='confirm'&&PELIGRO.test(d.texto);
+    var verbo=d.tipo!=='confirm'?'Aceptar':((d.texto.match(/^¿?\s*(Eliminar|Borrar|Quitar|Retirar|Rechazar|Bloquear|Denegar|Desbloquear|Aceptar|Volver)/i)||[])[1]||'Aceptar');
+    var icono=d.tipo==='alert'?(/^(⚠️|❌|✅|🔒|ℹ️)/.test(d.texto)?'':'ℹ️'):d.tipo==='prompt'?'✏️':(peligro?'🗑️':'❓');
+    el.innerHTML='<div class="tt-c">'+(icono?'<div class="tt-i">'+icono+'</div>':'')+'<div class="tt-t">'+esc(d.texto)+'</div>'+
+      (d.tipo==='prompt'?'<input class="tt-in" id="tt-dlg-in" value="'+esc(d.valor||'')+'" autocomplete="off">':'')+
+      '<div class="tt-b">'+(d.tipo==='alert'?'':'<button type="button" class="tt-no">Cancelar</button>')+
+      '<button type="button" class="tt-si'+(peligro?' peligro':'')+'">'+esc(verbo.charAt(0).toUpperCase()+verbo.slice(1).toLowerCase())+'</button></div></div>';
+    document.body.appendChild(el);
+    var si=el.querySelector('.tt-si'), no=el.querySelector('.tt-no'), inp=el.querySelector('.tt-in');
+    function cerrar(v){ if(abierta!==d) return; abierta=null; try{ el.remove(); }catch(e){} d.fin(v); setTimeout(siguiente,0); }
+    d.cerrar=function(){ cerrar(d.tipo==='confirm'?false:d.tipo==='prompt'?null:undefined); };
+    si.onclick=function(){ cerrar(d.tipo==='confirm'?true:d.tipo==='prompt'?(inp?inp.value:''):undefined); };
+    if(no) no.onclick=function(){ d.cerrar(); };
+    el.addEventListener('click',function(ev){ if(ev.target===el&&d.tipo!=='alert') d.cerrar(); });
+    if(inp){ inp.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); si.click(); } }); setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} },60); }
+  }
+  function pedir(tipo,texto,valor){ return new Promise(function(res){ cola.push({tipo:tipo,texto:String(texto==null?'':texto),valor:valor,fin:res}); siguiente(); }); }
+  window.ttConfirm=function(t){ return pedir('confirm',t); };
+  window.ttAlert=function(t){ return pedir('alert',t); };
+  window.ttPrompt=function(t,v){ return pedir('prompt',t,v); };
+  window.ttDlgAbierto=function(){ return !!abierta; };
+  window.ttDlgAtras=function(){ if(!abierta) return false; try{ abierta.cerrar(); }catch(e){} return true; };
+  // Los avisos (alert) ya no paran nada: se muestran con el diseño de la app y el código sigue.
+  window.alert=function(t){ window.ttAlert(t); };
+})();
+</script>
+<script>
 var EJEMPLO_PDF_B64 = ''; // la maqueta puede traer un PDF de prueba; la app no
 var COMIDAS = {
   des:{n:'Desayuno',e:'☕',c:'var(--m-des)'},
@@ -1649,8 +1715,8 @@ function mostrarComprobacion(){
   document.getElementById('p-check').classList.add('on'); document.getElementById('body').scrollTop=0;
   pintarTipos();
 }
-function confirmarCarga(){
-  if(COMPARTIDO){ if(!confirm('Estás compartiendo otro MOL. Si cargas este, se deja de compartir. ¿Seguir?')) return; dejarCompartir(true); }
+async function confirmarCarga(){
+  if(COMPARTIDO){ if(!await ttConfirm('Estás compartiendo otro MOL. Si cargas este, se deja de compartir. ¿Seguir?')) return; dejarCompartir(true); }
   servidos={}; subio={}; MARCAS_T={}; CARGADO_EN=Date.now(); estFiltro={modo:'sube', est:null};
   montar(LEIDO.filas.filter(function(r){return !r.aviso}));
   var tren=(LISTA.filter(function(r){return r.tren})[0]||{}).tren; if(tren&&!valor('i-num')) document.getElementById('i-num').value=tren;
@@ -1903,7 +1969,7 @@ function rutaSetup(){ var S=SETUP, base=rutaBase(S.a,S.b); if(base.length<2) ret
 function hoyTxt(){ var d=new Date(); return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear(); }
 function memRutas(){ try{ return JSON.parse(localStorage.getItem('svManualRutas')||'{}')||{}; }catch(e){ return {}; } }
 async function abrirManual(){
-  if(cargado&&(LISTA.length||MANUAL)&&!confirm('Ya tienes un servicio cargado. ¿Lo borras y empiezas uno a mano?')) return;
+  if(cargado&&(LISTA.length||MANUAL)&&!await ttConfirm('Ya tienes un servicio cargado. ¿Lo borras y empiezas uno a mano?')) return;
   if(cargado&&COMPARTIDO) await dejarCompartir(true);
   SETUP={num:valor('i-num')||'', a:'', b:'', quitadas:{}, extras:[], n:1, s1:'ape', s2:'alm', mas:false, doble:false};
   document.getElementById('sh-asiento').dataset.hoja=''; hoja='manual'; fichaAbierta=null; pintarSetup();
@@ -2039,7 +2105,7 @@ function fichaManual(key, sid){
 }
 function leerEDM(){ var a=document.getElementById('em-nom'), b=document.getElementById('em-nota'); if(a) EDM.nombre=a.value.slice(0,60); if(b) EDM.nota=b.value.slice(0,80); }
 function edm(k,v){ leerEDM(); EDM[k]=v; if(k==='k') EDM.menu=(MENUS_MAN[v]||[''])[0]; if(k==='o'&&EDM.d<=v) EDM.d=Math.min(v+1,MANUAL.ruta.length-1); if(k==='d'&&EDM.o>=v) EDM.o=Math.max(v-1,0); pintarFichaManual(); }
-function edmDieta(v){ leerEDM(); if(v==='?'){ v=(prompt('¿Qué dieta o alergia?')||'').trim().slice(0,30); if(!v) return; } EDM.esp=EDM.esp===v?'':v; pintarFichaManual(); }
+async function edmDieta(v){ leerEDM(); if(v==='?'){ v=(await ttPrompt('¿Qué dieta o alergia?')||'').trim().slice(0,30); if(!v) return; } EDM.esp=EDM.esp===v?'':v; pintarFichaManual(); }
 function pintarFichaManual(){
   var E=EDM, p=partesKey(E.key), sv=ASIENTOS[E.key]||[], R=MANUAL.ruta, tipos=MANUAL.svs.slice();
   if(tipos.indexOf(E.k)<0) tipos.push(E.k);
@@ -2306,7 +2372,7 @@ function restaurar(){
   if(COMPARTIDO) iniciarSync();
 }
 async function borrarServicio(){
-  if(!confirm('¿Borrar el servicio cargado y lo que has marcado?'+(COMPARTIDO&&COMPARTIDO.rol==='emisor'?' También se deja de compartir.':''))) return;
+  if(!await ttConfirm('¿Borrar el servicio cargado y lo que has marcado?'+(COMPARTIDO&&COMPARTIDO.rol==='emisor'?' También se deja de compartir.':''))) return;
   if(COMPARTIDO) await dejarCompartir(true);
   try{ localStorage.removeItem(CLAVE); }catch(e){}
   location.reload();
@@ -2325,11 +2391,20 @@ window.svModo=function(desdeCal){
 window.svAlMostrar=function(desdeCal){ svModo(desdeCal); comprobarRecibidos(); };
 // Botón "atrás" del móvil: la app pregunta aquí primero. true = ya lo he gestionado.
 window.svAtras=function(){
+  if(window.ttDlgAtras && ttDlgAtras()) return true; // ventana de confirmar → «Cancelar»
+  var nro=document.getElementById('sqa-num-ov'); if(nro && nro.className==='on'){ sqaNumCerrar(); return true; } // nº de Renfe
+  if(document.getElementById('ov-asiento').classList.contains('on')&&hoja==='sq'&&SQ.deElegir){ sqElegir(); return true; } // secuencia → elegir tren
   if(document.getElementById('ov-asiento').classList.contains('on')){ cerrar(); return true; }
   if(MOVIENDO!==null){ cancelarMover(); return true; }
   if(document.getElementById('p-check').classList.contains('on')){ goP('tren'); return true; }
   var inicio=cargado?'mapa':'tren';
   if(!document.getElementById('p-'+inicio).classList.contains('on')){ goP(inicio); return true; }
+  // Poniendo el servicio a mano: se pregunta antes de salir (lo puesto se queda guardado).
+  if(MANUAL&&MANUAL.editando&&Date.now()-(svAtras._si||0)>4000&&window.ttConfirm){
+    ttConfirm('Estás poniendo el servicio a mano. Lo que llevas se queda guardado.\n\n¿Salir de todas formas?').then(function(si){ if(!si) return;
+      svAtras._si=Date.now(); if(DESDE_CAL) cambiarPerfil(); else { try{ parent.__svSalir&&parent.__svSalir(); }catch(e){} } });
+    return true;
+  }
   if(DESDE_CAL){ cambiarPerfil(); return true; }
   return false;
 };
@@ -2391,9 +2466,9 @@ function guardarExtra(){
 }
 function nuevoSid(){ var s; do{ s=1000000+Math.floor(Math.random()*900000000); }while(filaPorSid(s)); return s; }
 function quitarDeLista(sid){ LISTA=LISTA.filter(function(r){ return r.sid!==sid; }); delete servidos[sid]; delete subio[sid]; }
-function quitarExtra(sid){
+async function quitarExtra(sid){
   var r=filaPorSid(sid); if(!r||!r.extra) return;
-  if(!confirm('¿Quitar el pasajero añadido del '+r.coche+'-'+pad(r.fila)+r.letra+'?')) return;
+  if(!await ttConfirm('¿Quitar el pasajero añadido del '+r.coche+'-'+pad(r.fila)+r.letra+'?')) return;
   quitarDeLista(sid); BORRADOS[sid]=1; reindexar(); anotar(sid); guardar(); cerrar(); refrescar();
   toast('🗑 Quitado · ahora son '+LISTA.length+' servicios');
 }
@@ -2507,7 +2582,7 @@ function terminado(c){
 // Dejar de compartir: quien lo compartió lo borra del servidor; quien lo recibió solo deja de sincronizar.
 async function dejarCompartir(callado){
   var c=COMPARTIDO; if(!c) return;
-  if(!callado&&!confirm(c.rol==='emisor'?'¿Dejar de compartir? '+c.con+' ya no verá este MOL actualizado.':'¿Dejar de usar el MOL compartido? Lo que tienes se queda en tu móvil, pero ya no se sincroniza.')) return;
+  if(!callado&&!await ttConfirm(c.rol==='emisor'?'¿Dejar de compartir? '+c.con+' ya no verá este MOL actualizado.':'¿Dejar de usar el MOL compartido? Lo que tienes se queda en tu móvil, pero ya no se sincroniza.')) return;
   COMPARTIDO=null; PEND={}; clearInterval(svTimer); svTimer=null; guardar(); pintarBotonCompartir();
   if(c.rol==='emisor'){ try{ await rpc('sv_retirar',{p_id:c.id, p_token:c.token}); }catch(e){} }
   if(hoja==='compartir') pintarCompartir();
@@ -3226,7 +3301,7 @@ function sqListaHTML(Q,s,b,compacto){
 }
 
 /* ── La hoja «Secuencia» ── */
-function abrirSecuencia(tab){ var Q=sqActual(); if(!Q) return; if(tab) SQ.tab=tab; hoja='sq'; fichaAbierta=null; pintarSecuencia(); document.getElementById('ov-asiento').classList.add('on'); }
+function abrirSecuencia(tab){ var Q=sqActual(); if(!Q) return; if(tab) SQ.tab=tab; SQ.deElegir=false; hoja='sq'; fichaAbierta=null; pintarSecuencia(); document.getElementById('ov-asiento').classList.add('on'); }
 function sqBloqueAhora(Q){
   if(!cargado) return Math.min(sqSolo().k||0, Q.bloques.length-1); var P=sxParadas(), e=P[Math.min(sxParadaIdx(),P.length-1)], i=e?sqIdx(Q,e):-1;
   if(i<0) return 0; for(var k=0;k<Q.bloques.length;k++) if(Q.bloques[k].est===i) return k; return 0;
@@ -3302,7 +3377,7 @@ function sqNum2(v){ v=String(v||'').replace(/\D/g,'').slice(0,5); var Q=sqDe(v),
     :(v.length>=4?'<div class="sq-mas">Todavía no tengo la secuencia de este tren. Pásame la ficha y la añado.</div>':''); }
 // nuevo: elegido de la lista o por número = viaje nuevo (empieza en la toma de servicio, con todos los pases de bar móvil por hacer)
 function sqAbrirTren(n, nuevo){ var o=sqSolo(); if(o.tren!==n||nuevo){ o={tren:n, k:0}; try{ var t=JSON.parse(localStorage.getItem(CLAVE+'_bm')||'{}'); delete t['solo-'+n]; localStorage.setItem(CLAVE+'_bm', JSON.stringify(t)); }catch(e){} }
-  sqSoloPon(o); SQ.tab='ahora'; hoja='sq'; pintarSecuencia(); }
+  sqSoloPon(o); SQ.tab='ahora'; SQ.deElegir=(hoja==='sq-elegir'); hoja='sq'; pintarSecuencia(); }
 
 /* ── Botón arriba y en el inicio ── */
 // En Solo Servicios no hay botón arriba: la secuencia se abre desde el inicio.
