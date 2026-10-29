@@ -28289,6 +28289,8 @@ async function _descargarYParsearHorarioSinCache(fila){
   var texto = await archivoResp.text();
   return parseHorarioGeneralCSV(texto);
 }
+// NUEVO — visible para el buscador «Bloquear a una persona» del administrador (módulo de privacidad)
+window._descargarYParsearHorario = _descargarYParsearHorario;
 
 // Se expone a window porque el botón que abre el buscador vive
 // fuera de este módulo aislado (en el HTML principal de la app).
