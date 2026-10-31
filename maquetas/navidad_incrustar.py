@@ -10,6 +10,8 @@ body=body[:body.rindex('</div>')]                       # cierra #stage
 body=re.sub(r'\s*<div class="ho">.*?</div>','',body)
 body=re.sub(r'\s*<div class="tap".*?</div>','',body)
 body=re.sub(r'\s*<div class="cap">.*?</div>','',body)
+body=re.sub(r'\s*<div class="spk">.*?</svg></div>','',body)   # sin el altavoz de arriba
+assert 'class="spk"' not in body
 assert 'Jo, jo' not in body and 'Toca la pantalla' not in body
 # ids propios (spTb ya lo usa el tren de la pantalla normal, que está oculta → el tren saldría sin color)
 for viejo in re.findall(r'id="([^"]+)"',body):
@@ -53,7 +55,7 @@ while i<len(css):
         else: partes.append(S+' '+s)
     out.append(','.join(partes)+cuerpo)
 cssS='\n'.join(out)
-cssS+="\n#nv-splash *{box-sizing:border-box;margin:0}\n#splash-screen.sp-nav>*:not(#nv-capa){display:none!important}\n#splash-screen.sp-nav{background:#050c18!important}\n#splash-screen.sp-nav::before{display:none}\n#nv-capa{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}\n#nv-splash{flex:none}"
+cssS+="\n#nv-splash *{box-sizing:border-box;margin:0}\n#splash-screen.sp-nav>*:not(#nv-capa){display:none!important}\n#splash-screen.sp-nav{background:#050c18!important}\n#splash-screen.sp-nav::before{display:none}\n#nv-capa{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}\n#nv-splash{flex:none}\n#nv-splash .title{left:40px;right:40px}\n#nv-splash .t1,#nv-splash .t2{white-space:nowrap}\n#nv-splash .legend{left:34px;right:34px;white-space:nowrap;font-size:11px;letter-spacing:1.5px}"
 js=r"""
 // NUEVO — Navidad: del 2 de noviembre al 6 de enero la pantalla de inicio es la de Navidad (tren congelado,
 // Papá Noel y la azafata cantando «It's tiiime!»), para todos. El sonido sale solo al abrir, como el ding-dong
@@ -71,22 +73,30 @@ window.NAV_HASTA = '01-06';
     sp.insertAdjacentHTML('beforeend','<div id="nv-capa" aria-hidden="true"><div id="nv-splash">'+NV_HTML+'</div></div>');
     var st=document.getElementById('nv-splash');
     var esc=Math.min(innerWidth/360, innerHeight/640); st.style.transform='scale('+esc+')';
+    // si con la letra del móvil un texto no cabe en el marco, se encoge lo justo
+    ['.t1','.t2','.legend'].forEach(function(q){ var e=st.querySelector(q); if(!e) return; var c=e.clientWidth, w=e.scrollWidth;
+      if(c&&w>c){ var fs=parseFloat(getComputedStyle(e).fontSize)||12, ls=parseFloat(getComputedStyle(e).letterSpacing)||0, k=c/w*0.97;
+        e.style.fontSize=(fs*k).toFixed(2)+'px'; if(ls) e.style.letterSpacing=(ls*k).toFixed(2)+'px'; } });
     var reducir=!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     if(!reducir) st.classList.add('run');
     // ── Sonido (Web Audio, sin archivos): hielo que cruje y se rompe, campanillas y el «It's tiiime!» cantado ──
     if(reducir || sessionStorage.getItem('dingDongSonado')) return;
     var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-    var ctx=new AC(), hecho=false, t0=performance.now();
+    var ctx=new AC(), hecho=false, t0=performance.now(), M=ctx.createGain(); M.connect(ctx.destination);
+    // al irse la pantalla de inicio (empieza a desvanecerse o desaparece) el sonido se apaga: en el calendario, silencio
+    var vigila=setInterval(function(){ var spl=document.getElementById('splash-screen');
+      if(spl && spl.style.opacity!=='0') return; clearInterval(vigila); quitar();
+      try{ M.gain.setTargetAtTime(0,ctx.currentTime,.08); setTimeout(function(){ try{ ctx.close(); }catch(e){} },500); }catch(e){} },100);
     function ruido(t,dur,vol,fc){ var n=Math.floor(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate), dd=b.getChannelData(0);
       for(var i=0;i<n;i++) dd[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
       var s=ctx.createBufferSource(); s.buffer=b; var f=ctx.createBiquadFilter(); f.type='highpass'; f.frequency.value=fc;
-      var g=ctx.createGain(); g.gain.value=vol; s.connect(f); f.connect(g); g.connect(ctx.destination); s.start(t); }
+      var g=ctx.createGain(); g.gain.value=vol; s.connect(f); f.connect(g); g.connect(M); s.start(t); }
     function campana(t,fr,vol){ var o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.value=fr;
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+1.2);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+1.3); }
+      o.connect(g); g.connect(M); o.start(t); o.stop(t+1.3); }
     function cantar(t){ var src=ctx.createOscillator(); src.type='sawtooth';
       var lfo=ctx.createOscillator(), ld=ctx.createGain(); lfo.frequency.value=5.6; ld.gain.value=0; lfo.connect(ld); ld.connect(src.frequency);
-      var out=ctx.createGain(); out.gain.value=0; out.connect(ctx.destination);
+      var out=ctx.createGain(); out.gain.value=0; out.connect(M);
       [[850,1.0,9],[1220,.6,10],[2810,.35,12]].forEach(function(f){ var bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f[0]; bp.Q.value=f[2];
         var g=ctx.createGain(); g.gain.value=f[1]*3; src.connect(bp); bp.connect(g); g.connect(out); });
       [[0,659],[.18,784],[.42,880],[.62,988],[.80,880],[.95,988],[1.12,1175]].forEach(function(n){ src.frequency.setTargetAtTime(n[1],t+n[0],.025); });
@@ -101,6 +111,7 @@ window.NAV_HASTA = '01-06';
       hecho=true; quitar(); try{ sessionStorage.setItem('dingDongSonado','1'); }catch(e){}
       // se cuadra con la animación aunque empiece un poco tarde
       var ya=(performance.now()-t0)/1000, t=ctx.currentTime+.02-Math.min(ya,0);
+      if(ya>4.3) return; // ya se va la pantalla: mejor no sonar
       var at=function(s){ return t+Math.max(0,s-ya); };
       if(ya<.8) ruido(at(.8),.12,.5,1800); if(ya<1.4) ruido(at(1.4),.16,.7,1400); if(ya<2.0) ruido(at(2.0),.22,.9,1000);
       if(ya<2.4){ ruido(at(2.4),.7,1.0,600); [2093,2637,3136,2349,2794].forEach(function(f,i){ campana(at(2.42+i*.05),f,.08); }); }
