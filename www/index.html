@@ -3721,10 +3721,18 @@ window.NAV_HASTA = '01-06';
       if(ya<3.0){ ruido(at(3.0),.9,.25,300); for(var k=0;k<14;k++){ campana(at(2.7+k*.12),2600+(k%3)*350,.05); ruido(at(2.7+k*.12),.05,.12,4000); } }
       cantar(at(3.0));
     }
-    function alTocar(){ if(hecho || !document.getElementById('nv-splash')){ quitar(); return; } ctx.resume().then(sonar).catch(function(){}); }
+    // En la web el navegador no deja sonar hasta el primer toque: al tocar, la animación vuelve a empezar
+    // desde el tren congelado A LA VEZ que el sonido (y la pantalla de inicio espera a que acabe), así lo que
+    // se oye coincide siempre con lo que se ve. En la app de Android suena solo desde el principio.
+    function reiniciar(){ var spl=document.getElementById('splash-screen'); if(!spl || spl.style.opacity==='0') return false;
+      st.classList.remove('run'); void st.offsetWidth; st.classList.add('run'); t0=performance.now(); window.__splashHasta=Date.now()+5300; return true; }
+    // Venga de donde venga el permiso para sonar (al abrir o al tocar), si llega tarde se empieza de nuevo a la vez
+    function arrancar(){ if(hecho || ctx.state!=='running' || !document.getElementById('nv-splash')) return;
+      if((performance.now()-t0)/1000>.3 && !reiniciar()) return; sonar(); }
+    function alTocar(){ if(hecho || !document.getElementById('nv-splash')){ quitar(); return; } ctx.resume().then(arrancar).catch(function(){}); }
     function quitar(){ ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.removeEventListener(ev, alTocar, true); }); }
     ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.addEventListener(ev, alTocar, true); });
-    if(ctx.state==='running') sonar(); else ctx.resume().then(sonar).catch(function(){});
+    if(ctx.state==='running') sonar(); else ctx.resume().then(arrancar).catch(function(){});
   }catch(e){}
 })();
 </script>
@@ -3847,7 +3855,9 @@ function megafoniaDingDong(ctx, t){
   // Duración total del efecto: 2.5s máximo, luego fundido de salida
   // y eliminación completa del DOM, para que el usuario pueda
   // interactuar con la interfaz sin ningún bloqueo posterior.
-  setTimeout(function(){
+  setTimeout(function finSplash(){
+    // NUEVO — Navidad: si al tocar volvió a empezar la animación (con su sonido), se espera a que acabe
+    if(window.__splashHasta && Date.now() < window.__splashHasta){ setTimeout(finSplash, window.__splashHasta - Date.now()); return; }
     // FIX — antes el Portal de Perfil decidía si aparecer usando SU
     // PROPIO cronómetro independiente (un setTimeout calculado a
     // ojo). Al ser dos temporizadores distintos, cualquier pequeño

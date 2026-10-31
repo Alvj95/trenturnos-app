@@ -119,10 +119,18 @@ window.NAV_HASTA = '01-06';
       if(ya<3.0){ ruido(at(3.0),.9,.25,300); for(var k=0;k<14;k++){ campana(at(2.7+k*.12),2600+(k%3)*350,.05); ruido(at(2.7+k*.12),.05,.12,4000); } }
       cantar(at(3.0));
     }
-    function alTocar(){ if(hecho || !document.getElementById('nv-splash')){ quitar(); return; } ctx.resume().then(sonar).catch(function(){}); }
+    // En la web el navegador no deja sonar hasta el primer toque: al tocar, la animación vuelve a empezar
+    // desde el tren congelado A LA VEZ que el sonido (y la pantalla de inicio espera a que acabe), así lo que
+    // se oye coincide siempre con lo que se ve. En la app de Android suena solo desde el principio.
+    function reiniciar(){ var spl=document.getElementById('splash-screen'); if(!spl || spl.style.opacity==='0') return false;
+      st.classList.remove('run'); void st.offsetWidth; st.classList.add('run'); t0=performance.now(); window.__splashHasta=Date.now()+5300; return true; }
+    // Venga de donde venga el permiso para sonar (al abrir o al tocar), si llega tarde se empieza de nuevo a la vez
+    function arrancar(){ if(hecho || ctx.state!=='running' || !document.getElementById('nv-splash')) return;
+      if((performance.now()-t0)/1000>.3 && !reiniciar()) return; sonar(); }
+    function alTocar(){ if(hecho || !document.getElementById('nv-splash')){ quitar(); return; } ctx.resume().then(arrancar).catch(function(){}); }
     function quitar(){ ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.removeEventListener(ev, alTocar, true); }); }
     ['pointerdown','touchstart','keydown'].forEach(function(ev){ document.addEventListener(ev, alTocar, true); });
-    if(ctx.state==='running') sonar(); else ctx.resume().then(sonar).catch(function(){});
+    if(ctx.state==='running') sonar(); else ctx.resume().then(arrancar).catch(function(){});
   }catch(e){}
 })();
 """
@@ -142,6 +150,8 @@ for p in sys.argv[1:]:
     # el ding-dong no suena en Navidad (ya suena la música de Navidad)
     o="if(window.LUTO_ACTIVO || sessionStorage.getItem('dingDongSonado')) return; // en luto, sin sonido"
     if o in s: s=s.replace(o,"if(window.LUTO_ACTIVO || window.NAVIDAD_ACTIVO || sessionStorage.getItem('dingDongSonado')) return; // en luto, sin sonido; en Navidad, su música")
+    o3="  setTimeout(function(){\n    // FIX — antes el Portal de Perfil decidía"
+    if o3 in s: s=s.replace(o3,"  setTimeout(function finSplash(){\n    // NUEVO — Navidad: si al tocar volvió a empezar la animación (con su sonido), se espera a que acabe\n    if(window.__splashHasta && Date.now() < window.__splashHasta){ setTimeout(finSplash, window.__splashHasta - Date.now()); return; }\n    // FIX — antes el Portal de Perfil decidía")
     o2="var duracionSplash = reducirMov ? 1000 : 3500;"
     if o2 in s: s=s.replace(o2,"var duracionSplash = reducirMov ? 1000 : (window.NAVIDAD_ACTIVO ? 5300 : 3500); // Navidad: deja acabar la animación")
     open(p,'w',encoding='utf-8').write(s); print('Navidad incrustada en',p)
