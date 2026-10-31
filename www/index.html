@@ -37004,8 +37004,12 @@ async function vacLeerArchivo(file){ if(!file) return; var el=document.getElemen
 var vacAnioVer=null;
 function vacPintar(){ var box=document.getElementById('vac-card'); if(!box) return;
   var v=vacG(), anios=Object.keys(v.pubs).map(Number).sort(), hoy=new Date(), Y=hoy.getFullYear();
-  if(!anios.length){ box.innerHTML='<div class="vac-h">🏖️ Vacaciones y rotaciones</div><div class="vac-sub">El admin publica el PDF de vacaciones de tu base: la app busca tu matrícula y te enseña tu rotación y tus quincenas.</div>'+
-    '<button class="vac-b vac-bv" onclick="vacBuscarBase()">🔎 Buscar la publicación de mi base</button><button class="vac-b vac-bg" onclick="document.getElementById(\'vac-file\').click()">📄 Tengo el PDF en el móvil</button><div class="upload-status" id="vac-est"></div>'; return; }
+  if(!anios.length){ var baseV=_sedeUsuarioActual();
+    // NUEVO — las vacaciones las publica el admin y llegan solas (vacAuto): aquí ya no se busca ni se abre ningún PDF
+    box.innerHTML='<div class="vac-h">🏖️ Vacaciones y rotaciones</div><div class="vac-espera"><div style="font-size:30px">⏳</div>'+
+      (!baseV ? '<b>Pon tu Estación Base en Ajustes para ver tus vacaciones</b><span>Con la base puesta, te saldrán aquí solas cuando el administrador las publique.</span>'
+        : '<b>Todavía no están publicadas las vacaciones de '+limpioV(vacCap(baseV))+'</b><span>Cuando el administrador las publique te saldrán aquí solas, con tu rotación y tus quincenas. No tienes que hacer nada.</span>')+
+      '</div><div class="upload-status" id="vac-est"></div>'; return; }
   var A=vacAnioVer&&v.pubs[vacAnioVer]?vacAnioVer:(v.pubs[Y]?Y:anios[anios.length-1]), pub=v.pubs[A], f=vacMia(pub), h='';
   h+='<div class="vac-h">🏖️ Mis vacaciones '+A+(pub.sede?' · '+limpioV(vacCap(pub.sede)):'')+'</div>';
   // NUEVO — pestañas de año grandes (antes eran unas chapitas pequeñas que no se veían)
@@ -37037,7 +37041,25 @@ function vacPintar(){ var box=document.getElementById('vac-card'); if(!box) retu
   h+='<div class="vac-2"><button class="vac-b vac-bo" onclick="vacCuadro('+A+')">🔁 Cuadro de rotaciones</button><button class="vac-b vac-bo" onclick="vacQuien('+A+')">👥 ¿Quién está de vacaciones?</button></div>';
   if(!v.pubs[A+1]) h+='<button class="vac-b vac-bp" onclick="vacPrevision('+A+')">⏳ Previsión '+(A+1)+' (estimada)'+(v.prev&&v.prev.en&&v.prev.anio===A+1?' · en tu calendario':'')+'</button>';
   box.innerHTML=h+vacPie(); }
-function vacPie(){ return '<div class="vac-pie"><a onclick="vacBuscarBase()">🔄 Buscar otra publicación</a> · <a onclick="document.getElementById(\'vac-file\').click()">📄 Abrir un PDF</a></div><div class="upload-status" id="vac-est"></div>'; }
+function vacPie(){ return '<div class="vac-pie">Se actualiza sola cuando el administrador publica una nueva</div><div class="upload-status" id="vac-est"></div>'; }
+/* NUEVO — Las vacaciones llegan solas: al entrar en Horario se mira lo que el admin ha publicado para tu base
+   (config_global «vacaciones_<base>_<año>»). Si hay una nueva o la ha cambiado (otra url_archivo), se descarga
+   y se lee. Si ese año ya estaba en tu calendario, se pone al día; si no, solo sale el botón para ponerlo. */
+var _vacAutoT=0, _vacAutoYa=false;
+async function vacAuto(forzar){ if(_vacAutoYa||(!forzar&&Date.now()-_vacAutoT<5*60000)) return; if(typeof sbAdmin==='undefined'||!sbAdmin) return;
+  var sede=_baseSlug(_sedeUsuarioActual()); if(!sede) return; _vacAutoYa=true; _vacAutoT=Date.now();
+  try{ var r=await sbAdmin.from('config_global').select('tipo,sede,url_archivo').like('tipo','vacaciones_'+sede+'_%'); if(r.error) return;
+    var v=vacG(); v.sync=v.sync||{}; var cambio=false, avisos=[];
+    var fs=(r.data||[]).filter(function(f){ return /_(\d{4})$/.test(f.tipo)&&f.url_archivo&&v.sync[f.tipo]!==f.url_archivo; });
+    for(var i=0;i<fs.length;i++){ var A=parseInt(fs[i].tipo.match(/_(\d{4})$/)[1],10);
+      try{ var buf=await (await fetch(fs[i].url_archivo)).arrayBuffer(), R=await vacParsear(buf); }catch(e){ continue; }
+      if(!R||!R.filas||!R.filas.length) continue; R.anio=A; R.sede=R.sede||fs[i].sede; // manda el año con el que lo publicó el admin
+      var a=vacGuardarPub(R); if(a) avisos.push(a); v=vacG(); v.sync=v.sync||{}; v.sync[fs[i].tipo]=fs[i].url_archivo; vacS(v); cambio=true;
+      if(v.cal[R.anio]) vacCargarCal(R.anio,true); }
+    if(cambio){ vacPintar(); if(avisos.length) toast(avisos.join(' · ')); }
+  }catch(e){ console.warn('vacAuto:',e); }
+  finally{ _vacAutoYa=false; } }
+(function(){ var _vacGo=goP; goP=function(n){ _vacGo.apply(this,arguments); if(n==='horario') vacAuto(); }; })();
 function vacCap(s){ return String(s||'').toLowerCase().replace(/(^|\s)([a-záéíóúñ])/g,function(a,b,c){ return b+c.toUpperCase(); }); }
 function limpioV(s){ return String(s||'').replace(/[<>&"]/g,''); }
 function vacElegirRot(A,r){ var v=vacG(); if(r) v.man[A]=r; else delete v.man[A]; vacS(v); vacPintar(); }
@@ -37366,6 +37388,7 @@ async function vacBorrarAdmin(tipo){ if(!perfilAdminActual||perfilAdminActual.ro
   '.vac-mes{display:grid;grid-template-columns:repeat(12,1fr);font-size:8.5px;color:var(--tx3,#64748B);text-align:center;margin-top:2px}'+
   '.vac-ok{font-size:12px;color:#86EFAC;margin-top:8px}.vac-pie{font-size:11.5px;color:var(--tx2,#94A3B8);margin-top:10px;text-align:center}.vac-pie a{text-decoration:underline;cursor:pointer}'+
   '.vac-seg{display:flex;background:#0B1626;border:1px solid #334155;border-radius:12px;padding:3px;margin-top:10px}.vac-seg div{flex:1;text-align:center;padding:8px 4px;border-radius:9px;font-weight:900;font-size:14px;color:var(--tx2,#94A3B8);cursor:pointer}.vac-seg .on{background:#F59E0B;color:#111}'+
+  '.vac-espera{margin-top:10px;text-align:center;background:rgba(0,0,0,.2);border:1px dashed #334155;border-radius:14px;padding:16px}.vac-espera b{display:block;font-size:14.5px;margin:4px 0;color:var(--tx,#E2E8F0)}.vac-espera span{display:block;font-size:12.5px;color:var(--tx2,#94A3B8);line-height:1.5}'+
   '.vac-nuevo{margin-top:10px;background:rgba(22,163,74,.12);border:1.5px solid #16A34A;border-radius:14px;padding:11px}.vac-nuevo b{display:block;font-size:14px;color:#BBF7D0}.vac-nuevo span{display:block;font-size:12px;color:#86EFAC;margin-top:2px;line-height:1.4}.vac-nuevo .vac-b{margin-top:9px}'+
   '.vac-chips,.vac-qs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.vac-chips span,.vac-qs span{border:1px solid #334155;border-radius:20px;padding:5px 11px;font-size:12px;font-weight:800;color:var(--tx2,#94A3B8);cursor:pointer}.vac-chips .on,.vac-qs .on{background:#F59E0B;color:#111;border-color:#F59E0B}'+
   '.vac-qs span{padding:4px 8px;font-size:11px}'+
