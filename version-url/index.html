@@ -37006,7 +37006,12 @@ function vacPintar(){ var box=document.getElementById('vac-card'); if(!box) retu
     '<button class="vac-b vac-bv" onclick="vacBuscarBase()">🔎 Buscar la publicación de mi base</button><button class="vac-b vac-bg" onclick="document.getElementById(\'vac-file\').click()">📄 Tengo el PDF en el móvil</button><div class="upload-status" id="vac-est"></div>'; return; }
   var A=vacAnioVer&&v.pubs[vacAnioVer]?vacAnioVer:(v.pubs[Y]?Y:anios[anios.length-1]), pub=v.pubs[A], f=vacMia(pub), h='';
   h+='<div class="vac-h">🏖️ Mis vacaciones '+A+(pub.sede?' · '+limpioV(vacCap(pub.sede)):'')+'</div>';
-  if(anios.length>1) h+='<div class="vac-chips">'+anios.map(function(a){ return '<span class="'+(a===A?'on':'')+'" onclick="vacAnioVer='+a+';vacPintar()">'+a+'</span>'; }).join('')+'</div>';
+  // NUEVO — pestañas de año grandes (antes eran unas chapitas pequeñas que no se veían)
+  if(anios.length>1) h+='<div class="vac-seg">'+anios.map(function(a){ return '<div class="'+(a===A?'on':'')+'" onclick="vacAnioVer='+a+';vacPintar()">'+a+'</div>'; }).join('')+'</div>';
+  // NUEVO — ya está la publicación del año siguiente y aún no está en el calendario: aviso con botón directo
+  var pubSig=v.pubs[A+1], fSig=pubSig&&vacMia(pubSig);
+  if(fSig&&!v.cal[A+1]) h+='<div class="vac-nuevo"><b>🆕 Ya están tus vacaciones de '+(A+1)+'</b><span>Rotación '+limpioV(fSig.rot)+' · '+fSig.q.map(function(q,qi){ return vacQtxt(q)+(qi===fSig.fes?' (festivos)':''); }).join(' · ')+'</span>'+
+    '<button class="vac-b vac-bv" onclick="vacAnioVer='+(A+1)+';vacCargarCal('+(A+1)+')">📅 Poner '+(A+1)+' en mi calendario</button></div>';
   if(!f){ h+='<div class="vac-sub">Tu matrícula'+(AJ.matricula?' ('+AJ.matricula+')':'')+' no aparece en esta publicación. Si eres nuevo o no sales, elige tu rotación:</div><div class="vac-chips">'+
       (pub.tabla||[]).map(function(t){ return '<span onclick="vacElegirRot('+A+',\''+vacRk(t.rot)+'\')">'+t.rot+'</span>'; }).join('')+'</div>';
     h+='<button class="vac-b vac-bg" onclick="vacCuadro('+A+')">🔁 Cuadro de rotaciones de la base</button>'; box.innerHTML=h+vacPie(); return; }
@@ -37025,7 +37030,7 @@ function vacPintar(){ var box=document.getElementById('vac-card'); if(!box) retu
   h+='<div class="vac-bar">'+bar+'</div><div class="vac-mes">'+MESES_C.map(function(x){ return '<span>'+x[0].toUpperCase()+'</span>'; }).join('')+'</div>';
   var todas=Object.keys(d).every(function(k){ return k<hoyK; });
   if(todas) h+='<div class="vac-ok">✅ Las 3 quincenas de '+A+' ya disfrutadas'+(v.pubs[A+1]?'':' · las de '+(A+1)+' saldrán con la nueva publicación')+'</div>';
-  h+=v.cal[A]?'<button class="vac-b vac-bok" onclick="vacQuitarCal('+A+')">✓ En tu calendario · quitar</button>':'<button class="vac-b vac-bv" onclick="vacCargarCal('+A+')">📅 Cargar en calendario</button>';
+  h+=v.cal[A]?'<button class="vac-b vac-bok" onclick="vacQuitarCal('+A+')">✓ '+A+' en tu calendario · quitar</button>':'<button class="vac-b vac-bv" onclick="vacCargarCal('+A+')">📅 Poner '+A+' en mi calendario</button>';
   h+='<button class="vac-b vac-bm" onclick="vacApuntar('+A+')">🔁 Apuntar un cambio que ya hice</button><button class="vac-b vac-bg" onclick="vacTablon('+A+')">📣 Buscar cambio con compañeros</button>';
   h+='<div class="vac-2"><button class="vac-b vac-bo" onclick="vacCuadro('+A+')">🔁 Cuadro de rotaciones</button><button class="vac-b vac-bo" onclick="vacQuien('+A+')">👥 ¿Quién está de vacaciones?</button></div>';
   if(!v.pubs[A+1]) h+='<button class="vac-b vac-bp" onclick="vacPrevision('+A+')">⏳ Previsión '+(A+1)+' (estimada)'+(v.prev&&v.prev.en&&v.prev.anio===A+1?' · en tu calendario':'')+'</button>';
@@ -37358,6 +37363,8 @@ async function vacBorrarAdmin(tipo){ if(!perfilAdminActual||perfilAdminActual.ro
   '.vac-bar{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;margin-top:10px}.vac-bar i{height:15px;border-radius:3px;background:rgba(148,163,184,.18)}.vac-bar i.v{background:#0EA5E9}.vac-bar i.f{background:#EA580C}.vac-bar i.hoy{outline:2px solid #F59E0B}'+
   '.vac-mes{display:grid;grid-template-columns:repeat(12,1fr);font-size:8.5px;color:var(--tx3,#64748B);text-align:center;margin-top:2px}'+
   '.vac-ok{font-size:12px;color:#86EFAC;margin-top:8px}.vac-pie{font-size:11.5px;color:var(--tx2,#94A3B8);margin-top:10px;text-align:center}.vac-pie a{text-decoration:underline;cursor:pointer}'+
+  '.vac-seg{display:flex;background:#0B1626;border:1px solid #334155;border-radius:12px;padding:3px;margin-top:10px}.vac-seg div{flex:1;text-align:center;padding:8px 4px;border-radius:9px;font-weight:900;font-size:14px;color:var(--tx2,#94A3B8);cursor:pointer}.vac-seg .on{background:#F59E0B;color:#111}'+
+  '.vac-nuevo{margin-top:10px;background:rgba(22,163,74,.12);border:1.5px solid #16A34A;border-radius:14px;padding:11px}.vac-nuevo b{display:block;font-size:14px;color:#BBF7D0}.vac-nuevo span{display:block;font-size:12px;color:#86EFAC;margin-top:2px;line-height:1.4}.vac-nuevo .vac-b{margin-top:9px}'+
   '.vac-chips,.vac-qs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.vac-chips span,.vac-qs span{border:1px solid #334155;border-radius:20px;padding:5px 11px;font-size:12px;font-weight:800;color:var(--tx2,#94A3B8);cursor:pointer}.vac-chips .on,.vac-qs .on{background:#F59E0B;color:#111;border-color:#F59E0B}'+
   '.vac-qs span{padding:4px 8px;font-size:11px}'+
   '#vac-ov{display:none;position:fixed;inset:0;z-index:9000;overflow-y:auto;background:var(--bg,#0B1628);color:var(--tx,#F8FAFC);padding-bottom:40px}'+
