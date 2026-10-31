@@ -37515,7 +37515,7 @@ function haResumen(){ if(!document.getElementById('ha-wrap')) return; var hoy=ne
     haTxt('lib',ks.length?ml.slice(-2).map(function(m){ return MESES[+m.slice(5,7)-1]+' '+m.slice(0,4); }).join(' y ')+' cargado'+(ml.length>1?'s':'')+' · '+ks.length+' días':'El admin los publica para tu base');
   }catch(e){}
   try{ // Vacaciones: rotación y próxima quincena
-    var v=vacG(), an=Object.keys(v.pubs).map(Number).sort(), hk=vacK(new Date()), r='Sin cargar · busca la publicación de tu base', prox=null, rot='';
+    var v=vacG(), an=Object.keys(v.pubs).map(Number).sort(), hk=vacK(new Date()), r='Sin cargar · el admin las publica para tu base', prox=null, rot='';
     an.forEach(function(A){ var p=v.pubs[A], f=vacMia(p); if(!f) return; if(A<=hoy.getFullYear()||!rot) rot=f.rot; var RR=vacReal(p,f);
       vacTramos(Object.keys(RR.d)).forEach(function(t){ if(t[1]>=hk&&(!prox||t[0]<prox[0])) prox=[t[0],t[1],RR.d[t[0]]==='f',false,!!RR.cam[t[0]]]; }); });
     if(!prox&&v.prev&&v.prev.en){ var pk=Object.keys(v.prev.dias).sort(); if(pk.length) prox=[pk[0],null,false,true]; }
