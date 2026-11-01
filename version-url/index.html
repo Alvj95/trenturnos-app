@@ -37299,7 +37299,7 @@ function vacPintar(){ var box=document.getElementById('vac-card'); if(!box) retu
   var todas=Object.keys(d).every(function(k){ return k<hoyK; });
   if(todas) h+='<div class="vac-ok">✅ Las 3 quincenas de '+A+' ya disfrutadas'+(v.pubs[A+1]?'':' · las de '+(A+1)+' saldrán con la nueva publicación')+'</div>';
   h+=v.cal[A]?'<button class="vac-b vac-bok" onclick="vacQuitarCal('+A+')">✓ '+A+' en tu calendario · quitar</button>':'<button class="vac-b vac-bv" onclick="vacCargarCal('+A+')">📅 Poner '+A+' en mi calendario</button>';
-  h+='<button class="vac-b vac-bm" onclick="vacApuntar('+A+')">🔁 Apuntar un cambio que ya hice</button><button class="vac-b vac-bg" onclick="vacTablon('+A+')">📣 Buscar cambio con compañeros</button>';
+  h+='<button class="vac-b vac-bm" onclick="vacApuntar('+A+')">🔁 Apuntar un cambio que ya hice</button><div class="vac-2"><button class="vac-b vac-bg" onclick="vacCCAbrir('+A+')">✉️ Cambiar con un compañero</button><button class="vac-b vac-bg" onclick="vacTablon('+A+')">📣 Tablón de cambios</button></div>';
   h+='<div class="vac-2"><button class="vac-b vac-bo" onclick="vacCuadro('+A+')">🔁 Cuadro de rotaciones</button><button class="vac-b vac-bo" onclick="vacQuien('+A+')">👥 ¿Quién está de vacaciones?</button></div>';
   if(!v.pubs[A+1]) h+='<button class="vac-b vac-bp" onclick="vacPrevision('+A+')">⏳ Previsión '+(A+1)+' (estimada)'+(v.prev&&v.prev.en&&v.prev.anio===A+1?' · en tu calendario':'')+'</button>';
   box.innerHTML=h+vacPie(); }
@@ -37555,6 +37555,95 @@ function vacAcuerdo(A,id){ var c=vacTabDat.cambios.filter(function(x){ return x.
   vacOv(ok?'CAMBIO APROBADO':'CAMBIO ACORDADO','Con '+limpioV(otro)+' · '+das.length+' por '+rec.length+' días',h); }
 async function vacAprobar(A,id){ if(!await ttConfirm('¿La empresa ya ha aprobado el cambio? Se apuntará en las vacaciones de los dos.')) return;
   try{ await vacRpc('vc_aprobar',{p_cambio:id,p_mat:vacYo(vacG().pubs[A]).mat}); await vacTabCargar(A); vacAcuerdo(A,id); }catch(e){ toast('⚠️ '+(e.message||e)); } }
+/* ═══ NUEVO — «Cambiar con un compañero» (maqueta aprobada: opción A + calendario de la B) ═══
+   Lista de tu base (de la publicación de vacaciones) → lo que das (quincena entera o solo unos días)
+   → lo que recibes → correo a programación ya escrito, con el mismo formato limpio que el resto de
+   correos de la app (sanitizarTexto). Opcional: apuntar el cambio en tus vacaciones al enviarlo. */
+var vacCC=null;
+function vacCCcols(A){ var pub=vacG().pubs[A], me=vacMat(AJ.matricula); return ((pub&&pub.filas)||[]).filter(function(x){ return x&&x.mat&&vacMat(x.mat)!==me&&(x.q||[]).length; }); }
+function vacCCqs(f,fes){ return (f.q||[]).map(function(q,qi){ return '<i class="vac-ccq'+(qi===f.fes?' f':'')+'">'+vacQtxt(q)+'</i>'; }).join(''); }
+function vacCCAbrir(A){ var pub=vacG().pubs[A]; if(!pub||!vacMia(pub)) return; vacCC={A:A,q:''};
+  var L=vacCCcols(A);
+  vacOv('CAMBIAR CON UN COMPAÑERO',(pub.sede?limpioV(vacCap(pub.sede))+' · ':'')+'vacaciones '+A+' · '+L.length+' personas',
+    '<div class="vac-ccbus">🔎<input id="vac-cc-q" type="search" autocomplete="off" placeholder="Buscar por nombre o matrícula" oninput="vacCC.q=this.value;vacCCLista()"></div><div id="vac-cc-lista"></div>');
+  vacCCLista(); }
+function vacCCLista(){ var el=document.getElementById('vac-cc-lista'); if(!el||!vacCC) return; var A=vacCC.A, L=vacCCcols(A);
+  var q=String(vacCC.q||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim().split(/\s+/).filter(Boolean);
+  var res=L.map(function(x,i){ return {x:x,i:i}; }).filter(function(o){ var t=(o.x.mat+' '+o.x.nom).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase(); return q.every(function(w){ return t.indexOf(w)>=0; }); });
+  res.sort(function(a,b){ return String(a.x.nom).localeCompare(String(b.x.nom),'es'); });
+  el.innerHTML=res.length?res.slice(0,80).map(function(o){ return '<div class="vac-ccit" onclick="vacCCElegir('+o.i+')"><div class="vac-ccav">'+limpioV(o.x.rot||'?')+'</div><div class="vac-ccx"><b>'+limpioV(o.x.nom)+'</b><span>Mat. '+limpioV(o.x.mat)+'</span>'+vacCCqs(o.x)+'</div><div class="vac-ccfl">›</div></div>'; }).join('')+(res.length>80?'<div class="vac-nota">Se ven los 80 primeros: escribe para buscar.</div>':'')
+    :'<div class="vac-nota">Nadie coincide con «'+limpioV(vacCC.q)+'».</div>'; }
+function vacCCElegir(i){ var A=vacCC.A, x=vacCCcols(A)[i]; if(!x) return; var f=vacMia(vacG().pubs[A]);
+  vacCC={A:A,q:vacCC.q,i:i,dq:0,dModo:'q',dSel:[],rq:0,rModo:'q',rSel:[]};
+  vacCCDas(); }
+// días de una quincena (de una fila) y días elegidos según el modo
+function vacCCdiasQ(f,qi){ var A=vacCC.A; return vacDiasQ(vacG().pubs[A],A,f.rot,f.q[qi]); }
+function vacCCsel(f,qi,modo,sel){ var t=vacCCdiasQ(f,qi); if(modo==='q') return t; if(sel.length<1) return []; var a=sel[0], b=sel[1]||sel[0]; if(a>b){ var c=a; a=b; b=c; } return t.filter(function(k){ return k>=a&&k<=b; }); }
+function vacCCcal(f,qi,sel,lado){ var t=vacCCdiasQ(f,qi); if(!t.length) return ''; var d0=new Date(t[0]+'T12:00:00'), dow=(d0.getDay()+6)%7, a=sel[0], b=sel[1]||sel[0]; if(a&&b&&a>b){ var c=a; a=b; b=c; }
+  var h='<div class="vac-cccal">'+'LMXJVSD'.split('').map(function(x){ return '<i>'+x+'</i>'; }).join('');
+  for(var j=0;j<dow;j++) h+='<span></span>';
+  t.forEach(function(k){ var on=a&&k>=a&&k<=b; h+='<b class="'+(on?'on':'')+'" onclick="vacCCtoca(\''+lado+'\',\''+k+'\')">'+(+k.slice(8))+'</b>'; });
+  return h+'</div>'; }
+function vacCCtoca(lado,k){ var s=vacCC[lado+'Sel']; vacCC[lado+'Sel']=(s.length===1)?[s[0],k]:[k]; lado==='d'?vacCCDas():vacCCRecibe(); }
+function vacCCmodo(lado,m){ vacCC[lado+'Modo']=m; vacCC[lado+'Sel']=[]; lado==='d'?vacCCDas():vacCCRecibe(); }
+function vacCCq(lado,qi){ vacCC[lado+'q']=qi; vacCC[lado+'Sel']=[]; lado==='d'?vacCCDas():vacCCRecibe(); }
+function vacCCbloque(f,lado,tit){ var S=vacCC, qi=S[lado+'q'], modo=S[lado+'Modo'], sel=S[lado+'Sel'], d=vacCCsel(f,qi,modo,sel);
+  var h='<div class="vac-cclbl">'+tit+'</div><div class="vac-ccchips">'+f.q.map(function(q,j){ var r=vacCCdiasQ(f,j); return '<span class="'+(j===qi?(lado==='d'?'on':'on2'):'')+'" onclick="vacCCq(\''+lado+'\','+j+')">'+vacQtxt(q)+'<small>'+vacFmt(new Date(r[0]+'T12:00:00'))+' – '+vacFmt(new Date(r[r.length-1]+'T12:00:00'))+'</small></span>'; }).join('')+'</div>'+
+    '<div class="vac-ccseg"><div class="'+(modo==='q'?'on':'')+'" onclick="vacCCmodo(\''+lado+'\',\'q\')">Quincena entera</div><div class="'+(modo==='d'?'on':'')+'" onclick="vacCCmodo(\''+lado+'\',\'d\')">Solo unos días</div></div>';
+  if(modo==='d') h+='<div class="vac-cclbl">TOCA EL PRIMER Y EL ÚLTIMO DÍA</div>'+vacCCcal(f,qi,sel,lado);
+  return {h:h,d:d}; }
+function vacCCcol(){ return vacCCcols(vacCC.A)[vacCC.i]; }
+function vacCCDas(){ var A=vacCC.A, f=vacMia(vacG().pubs[A]), x=vacCCcol(); if(!f||!x) return;
+  var B=vacCCbloque(f,'d','1 · TÚ DAS (tus quincenas)');
+  var h=B.h+'<div class="vac-ccres">'+(B.d.length?'Das <b>'+vacListaTxt(B.d)+'</b> · '+B.d.length+' día'+(B.d.length===1?'':'s'):'Toca el primer y el último día que das')+'</div>'+
+    '<button class="vac-b vac-bv" '+(B.d.length?'':'disabled style="opacity:.5"')+' onclick="vacCCRecibe()">Siguiente: lo que recibes ›</button>';
+  vacOv('TÚ DAS','Con '+limpioV(vacNombre(x.nom))+' · mat. '+limpioV(x.mat)+' · rotación '+limpioV(x.rot||'-'),h); }
+function vacCCRecibe(){ var A=vacCC.A, f=vacMia(vacG().pubs[A]), x=vacCCcol(); if(!f||!x) return;
+  var dio=vacCCsel(f,vacCC.dq,vacCC.dModo,vacCC.dSel); if(!dio.length){ vacCCDas(); return; }
+  var B=vacCCbloque(x,'r','2 · TÚ RECIBES (quincenas de '+limpioV(vacNombre(x.nom).split(' ')[0])+')'), rec=B.d, nx=limpioV(vacNombre(x.nom).split(' ')[0]);
+  var h='<div class="vac-sub" style="margin-top:0">Das '+vacListaTxt(dio)+' · '+dio.length+' días <a onclick="vacCCDas()">cambiar</a></div>'+B.h+
+    '<div class="vac-ccres">'+(rec.length?'Das <b>'+vacListaTxt(dio)+'</b> y recibes <b>'+vacListaTxt(rec)+'</b>.<br>'+nx+' da '+vacListaTxt(rec)+' y recibe '+vacListaTxt(dio)+'.<br>'+
+      (rec.length===dio.length?'<span style="color:#86EFAC">✓ Mismo número de días ('+dio.length+' y '+rec.length+')</span>':'<span style="color:#FDBA74">⚠️ No es el mismo número de días ('+dio.length+' y '+rec.length+')</span>'):'Toca el primer y el último día que recibes')+'</div>'+
+    '<button class="vac-b vac-bv" '+(rec.length?'':'disabled style="opacity:.5"')+' onclick="vacCCCorreo()">✉️ Preparar el correo a programación</button>';
+  vacOv('TÚ RECIBES','Con '+limpioV(vacNombre(x.nom))+' · mat. '+limpioV(x.mat),h); }
+// «del 1 al 7 de febrero de 2027» / «del 25 de enero al 7 de febrero de 2027»
+function vacCCfechas(ks){ ks=ks.slice().sort(); var a=new Date(ks[0]+'T12:00:00'), b=new Date(ks[ks.length-1]+'T12:00:00'), M=MESES.map(function(m){ return m.toLowerCase(); });
+  if(ks.length===1) return 'del dia '+a.getDate()+' de '+M[a.getMonth()]+' de '+a.getFullYear();
+  var tramos=vacTramos(ks); if(tramos.length>1) return 'de los dias '+ks.map(function(k){ return +k.slice(8)+' de '+M[+k.slice(5,7)-1]; }).join(' y ')+' de '+a.getFullYear();
+  return a.getMonth()===b.getMonth()?'del '+a.getDate()+' al '+b.getDate()+' de '+M[a.getMonth()]+' de '+a.getFullYear()
+    :'del '+a.getDate()+' de '+M[a.getMonth()]+(a.getFullYear()!==b.getFullYear()?' de '+a.getFullYear():'')+' al '+b.getDate()+' de '+M[b.getMonth()]+' de '+b.getFullYear(); }
+function vacCCmensaje(){ var A=vacCC.A, f=vacMia(vacG().pubs[A]), x=vacCCcol();
+  var dio=vacCCsel(f,vacCC.dq,vacCC.dModo,vacCC.dSel), rec=vacCCsel(x,vacCC.rq,vacCC.rModo,vacCC.rSel), nx=vacNombre(x.nom);
+  var saludo=(typeof _saludoPorHora==='function'?_saludoPorHora():'Buenos días').toLowerCase();
+  return 'Hola, '+saludo+'.\n\n'+
+    'Solicito el cambio de vacaciones de '+A+' con '+nx+', matrícula '+x.mat+', con quien ya lo he acordado.\n\n'+
+    'Yo cedo mis vacaciones '+vacCCfechas(dio)+' y paso a disfrutar las '+vacCCfechas(rec)+'.\n\n'+
+    nx+' cede sus vacaciones '+vacCCfechas(rec)+' y pasa a disfrutar las '+vacCCfechas(dio)+'.\n\n'+
+    'Quedo a la espera de vuestra pronta respuesta.\n\n'+
+    'Un saludo,\n'+(AJ.nombre||'Nombre no configurado en Ajustes')+'\nMatrícula: '+(AJ.matricula||'Matrícula no configurada en Ajustes')+'\n\n'+
+    'Solicitud generada automáticamente por TrenTurno V5'; }
+function vacCCCorreo(){ var A=vacCC.A, x=vacCCcol(); if(!x) return; var limpia=function(t){ return typeof sanitizarTexto==='function'?sanitizarTexto(t):t; };
+  var dest=''; try{ dest=localStorage.getItem('vacCCdest')||''; }catch(e){}
+  var h='<div class="vac-cclbl">PARA</div><input id="vac-cc-dest" class="vac-ccinp" value="'+limpioV(dest||'programacion.sab@serveo.com')+'">'+
+    '<div class="vac-cclbl">ASUNTO</div><input id="vac-cc-asunto" class="vac-ccinp" value="'+limpioV(limpia('Solicitud de cambio de vacaciones '+A))+'">'+
+    '<div class="vac-cclbl">MENSAJE (editable)</div><textarea id="vac-cc-msg" class="vac-ccta"></textarea>'+
+    '<label class="vac-ccchk"><input type="checkbox" id="vac-cc-apuntar"> Apuntar también este cambio en mis vacaciones<small>Si no, lo apuntas cuando la empresa lo apruebe con «Apuntar un cambio que ya hice».</small></label>'+
+    '<button class="vac-b vac-bv" onclick="vacCCEnviar()">✉️ Abrir en Correo</button>';
+  vacOv('CORREO A PROGRAMACIÓN','Cambio con '+limpioV(vacNombre(x.nom)),h);
+  var ta=document.getElementById('vac-cc-msg'); if(ta) ta.value=limpia(vacCCmensaje()); }
+function vacCCEnviar(){ var A=vacCC.A, f=vacMia(vacG().pubs[A]), x=vacCCcol(); if(!f||!x) return; var limpia=function(t){ return typeof sanitizarTexto==='function'?sanitizarTexto(t):t; };
+  var dest=((document.getElementById('vac-cc-dest')||{}).value||'').trim()||'programacion.sab@serveo.com';
+  var asunto=limpia(((document.getElementById('vac-cc-asunto')||{}).value||'').trim()||('Solicitud de cambio de vacaciones '+A));
+  var cuerpo=limpia((document.getElementById('vac-cc-msg')||{}).value||'');
+  try{ localStorage.setItem('vacCCdest',dest); }catch(e){}
+  if((document.getElementById('vac-cc-apuntar')||{}).checked){
+    var dio=vacCCsel(f,vacCC.dq,vacCC.dModo,vacCC.dSel), rec=vacCCsel(x,vacCC.rq,vacCC.rModo,vacCC.rSel), v=vacG();
+    v.camb=v.camb||{}; var L=v.camb[A]=v.camb[A]||[];
+    L.push({id:Date.now(),qi:vacCC.dq,dioK:dio,recK:rec,emp:false,con:vacNombre(x.nom)+(x.rot?' · Rotación '+x.rot:'')}); L.sort(function(a,b){ return vacDioK(a)[0]<vacDioK(b)[0]?-1:1; }); vacS(v);
+    if(v.cal[A]) vacCargarCal(A,true); if(typeof renderCal==='function') renderCal(); toast('✅ Cambio apuntado en tus vacaciones'); }
+  // como el resto de correos de la app: destinatario sin codificar; asunto y cuerpo, sí
+  var url='mailto:'+dest+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+  vacCerrar(); vacPintar(); window.location.href=url; }
 function vacResumenEmpresa(A,id){ var c=vacTabDat.cambios.filter(function(x){ return x.id===id; })[0]; if(!c||!c.acuerdo) return; var i=c.acuerdo;
   var t='Solicitud de cambio de vacaciones '+A+'\n\n'+c.nombre+' (matrícula '+c.mat+', rotación '+(c.rot||'-')+') cede: '+vacListaTxt(c.da)+' ('+c.da.length+' días).\n'+
     i.nombre+' (matrícula '+i.mat+', rotación '+(i.rot||'-')+') cede: '+vacListaTxt(i.ofrece)+' ('+i.ofrece.length+' días).\n\nAmbos estamos de acuerdo con el cambio.';
@@ -37650,6 +37739,15 @@ async function vacBorrarAdmin(tipo){ if(!perfilAdminActual||perfilAdminActual.ro
   '.vac-mes{display:grid;grid-template-columns:repeat(12,1fr);font-size:8.5px;color:var(--tx3,#64748B);text-align:center;margin-top:2px}'+
   '.vac-ok{font-size:12px;color:#86EFAC;margin-top:8px}.vac-pie{font-size:11.5px;color:var(--tx2,#94A3B8);margin-top:10px;text-align:center}.vac-pie a{text-decoration:underline;cursor:pointer}'+
   '.vac-seg{display:flex;background:#0B1626;border:1px solid #334155;border-radius:12px;padding:3px;margin-top:10px}.vac-seg div{flex:1;text-align:center;padding:8px 4px;border-radius:9px;font-weight:900;font-size:14px;color:var(--tx2,#94A3B8);cursor:pointer}.vac-seg .on{background:#F59E0B;color:#111}'+
+  '.vac-ccbus{display:flex;gap:8px;align-items:center;background:var(--s3,#1A2D44);border:1px solid var(--div,#1E3350);border-radius:12px;padding:0 12px;margin-bottom:8px}.vac-ccbus input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--tx,#F8FAFC);font-size:15px;font-weight:600;font-family:inherit;padding:11px 0}'+
+  '.vac-ccit{display:flex;align-items:center;gap:10px;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:12px;padding:9px 10px;margin-bottom:7px;cursor:pointer}.vac-ccav{flex:none;width:34px;height:34px;border-radius:10px;background:#0EA5E9;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px}.vac-ccx{flex:1;min-width:0}.vac-ccx b{display:block;font-size:13px}.vac-ccx span{display:block;font-size:11px;color:var(--tx2,#94A3B8)}.vac-ccfl{color:#64748B;font-size:18px}'+
+  '.vac-ccq{display:inline-block;font-style:normal;font-size:10px;font-weight:800;border:1px solid #0EA5E9;color:#7DD3FC;border-radius:6px;padding:1px 5px;margin:3px 3px 0 0}.vac-ccq.f{border-color:#EA580C;color:#FDBA74}'+
+  '.vac-cclbl{font-size:10px;font-weight:900;letter-spacing:1px;color:var(--tx3,#64748B);margin:12px 2px 6px}.vac-ccchips{display:flex;flex-wrap:wrap;gap:6px}.vac-ccchips span{border:1.5px solid #334155;border-radius:10px;padding:6px 10px;font-size:12.5px;font-weight:800;color:var(--tx2,#CBD5E1);cursor:pointer;text-align:center}.vac-ccchips small{display:block;font-size:10px;font-weight:600;opacity:.8}.vac-ccchips .on{border-color:#16A34A;background:rgba(22,163,74,.15);color:#86EFAC}.vac-ccchips .on2{border-color:#0EA5E9;background:rgba(14,165,233,.15);color:#7DD3FC}'+
+  '.vac-ccseg{display:flex;background:#0B1626;border:1px solid #334155;border-radius:10px;padding:3px;margin-top:10px}.vac-ccseg div{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:12.5px;font-weight:800;color:var(--tx2,#94A3B8);cursor:pointer}.vac-ccseg .on{background:#F59E0B;color:#111}'+
+  '.vac-cccal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}.vac-cccal i{font-style:normal;font-size:9.5px;font-weight:800;color:#475569}.vac-cccal b{padding:8px 0;border-radius:8px;background:rgba(14,165,233,.15);border:1px solid #0E7490;color:#7DD3FC;font-size:12.5px;cursor:pointer}.vac-cccal b.on{background:#16A34A;border-color:#16A34A;color:#fff}'+
+  '.vac-ccres{background:rgba(0,0,0,.2);border:1px solid var(--div,#1E3350);border-radius:12px;padding:10px;font-size:12.5px;line-height:1.5;margin-top:12px}.vac-ccres b{color:#fff}'+
+  '.vac-ccinp{display:block;width:100%;box-sizing:border-box;background:var(--s3,#1A2D44);border:1px solid var(--div,#1E3350);border-radius:12px;padding:11px;color:var(--tx,#F8FAFC);font-size:14px;font-weight:600;font-family:inherit}.vac-ccta{display:block;width:100%;box-sizing:border-box;min-height:260px;background:var(--s3,#1A2D44);border:1px solid var(--div,#1E3350);border-radius:12px;padding:11px;color:var(--tx,#F8FAFC);font-size:13px;line-height:1.5;font-family:inherit;resize:vertical}'+
+  '.vac-ccchk{display:block;margin-top:12px;font-size:13px;font-weight:700;line-height:1.4;cursor:pointer}.vac-ccchk input{width:18px;height:18px;vertical-align:-3px;margin-right:6px;accent-color:#16A34A}.vac-ccchk small{display:block;font-weight:500;font-size:11.5px;color:var(--tx2,#94A3B8);margin:3px 0 0 26px}'+
   '.vac-espera{margin-top:10px;text-align:center;background:rgba(0,0,0,.2);border:1px dashed #334155;border-radius:14px;padding:16px}.vac-espera b{display:block;font-size:14.5px;margin:4px 0;color:var(--tx,#E2E8F0)}.vac-espera span{display:block;font-size:12.5px;color:var(--tx2,#94A3B8);line-height:1.5}'+
   '.vac-nuevo{margin-top:10px;background:rgba(22,163,74,.12);border:1.5px solid #16A34A;border-radius:14px;padding:11px}.vac-nuevo b{display:block;font-size:14px;color:#BBF7D0}.vac-nuevo span{display:block;font-size:12px;color:#86EFAC;margin-top:2px;line-height:1.4}.vac-nuevo .vac-b{margin-top:9px}'+
   '.vac-chips,.vac-qs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.vac-chips span,.vac-qs span{border:1px solid #334155;border-radius:20px;padding:5px 11px;font-size:12px;font-weight:800;color:var(--tx2,#94A3B8);cursor:pointer}.vac-chips .on,.vac-qs .on{background:#F59E0B;color:#111;border-color:#F59E0B}'+
