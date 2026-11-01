@@ -4299,7 +4299,8 @@ function megafoniaDingDong(ctx, t){
            inicia sesión y su perfil tiene rol='admin' en Supabase). -->
       <!-- NUEVO — Acceso directo a Servicios a bordo (sin cambiar de perfil). -->
       <button class="hbtn" id="hbtn-servicios" onclick="if(window.__svMostrar) window.__svMostrar(true)" title="Servicios a bordo">🍽️<span id="hbtn-servicios-badge"></span></button>
-      <button class="hbtn" id="hbtn-tutorial" onclick="abrirTutorial()" title="Tutorial">📖</button>
+      <!-- NUEVO — «Con quién viaja»: solo admin y subadministradores (el Tutorial pasa a Ajustes → Ayuda y Conceptos) -->
+      <button class="hbtn" id="hbtn-cqv" onclick="cqvAbrir()" title="Con quién viaja">🧑‍🤝‍🧑</button>
       <button class="hbtn" id="hbtn-chatbot" onclick="abrirChatbot()" title="Ayuda">💬</button>
       <button class="hbtn" id="hbtn-admin" onclick="abrirAccesoAdmin()" title="Mi cuenta">🧑‍💼</button>
     </div>
@@ -5017,6 +5018,7 @@ function megafoniaDingDong(ctx, t){
         </div>
         <div class="aj-card-body" style="padding:10px 14px 12px">
           <button class="upload-btn" style="background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.4);color:#FCD34D" onclick="abrirAyuda()">📖 Ver ayuda y conceptos</button>
+          <button class="upload-btn" style="background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.4);color:#FCD34D;margin-top:8px" onclick="abrirTutorial()">🎓 Ver el tutorial de la app</button>
         </div>
       </div>
         </div>
@@ -7400,14 +7402,14 @@ function megafoniaDingDong(ctx, t){
 
     <div class="padm-group">
       <div class="padm-group-hdr" onclick="padmToggle('padm-accesos')">
-        <div class="padm-group-tit">🔑 Accesos <span class="padm-group-badge">6</span></div>
+        <div class="padm-group-tit">🔑 Accesos <span class="padm-group-badge">4</span></div>
         <div class="padm-group-chev" id="padm-accesos-chev">⌄</div>
       </div>
       <div class="padm-group-body padm-cerrado" id="padm-accesos">
     <!-- NUEVO — Accesos del Buscador de Compañeros (tripulación):
          quién ha entrado, con qué matrícula/nombre y cuándo. Antes
          solo se podía ver entrando a Supabase directamente. -->
-    <div class="admin-card">
+    <div class="admin-card" style="display:none"><!-- oculta: Alex no la usa -->
       <div class="admin-card-hdr">
         <div class="admin-card-ico">🔍</div>
         <div>
@@ -7457,7 +7459,7 @@ function megafoniaDingDong(ctx, t){
          sin estar en ningún Horario General todavía. Al aceptar, esa
          matrícula queda válida para crear cuenta aunque no aparezca
          en ningún PDF subido (ver _matriculaTieneSolicitudAceptada). -->
-    <div class="admin-card">
+    <div class="admin-card" style="display:none"><!-- oculta: no se suben Intervenciones -->
       <div class="admin-card-hdr">
         <div class="admin-card-ico" style="background:rgba(245,158,11,.15);color:#FCD34D">📨</div>
         <div>
@@ -35350,6 +35352,8 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
   var _ultimoAtrasInicio = 0;
   function visible(id){ var e=document.getElementById(id); return !!(e && getComputedStyle(e).display!=='none'); }
   function pantallaNuevaAtras(){
+    // «Con quién viaja»: del mes al buscador, y luego se cierra
+    if(window.cqvAtras && window.cqvAtras()) return true;
     // Aviso de retraso al llegar: se cierra como «Ahora no», pero sin apuntarlo — vuelve a salir la próxima vez.
     var rt=document.getElementById('rt-ov');
     if(rt && visible('rt-ov')){ rt.style.display='none'; if(typeof rtSiguiente==='function') rtSiguiente(); return true; }
@@ -36196,6 +36200,209 @@ window.__svSyncTema = function(){
 })();
 </script>
 <!-- SERVICIOS:FIN -->
+<!-- CONQUIENVIAJA:INICIO — «Con quién viaja» (admin y subadministradores) y gestión de subadministradores.
+     Necesita en Supabase supabase/subadministradores.sql. -->
+<style>
+#hbtn-cqv{display:none!important}
+body.modo-admin #hbtn-cqv,body.modo-subadmin #hbtn-cqv{display:flex!important}
+#cqv-ov{display:none;position:fixed;inset:0;z-index:9000;overflow-y:auto;background:var(--bg,#0B1628);color:var(--tx,#F8FAFC);padding-bottom:40px;font-family:inherit}
+#cqv-ov .cqv-h{position:sticky;top:0;z-index:2;display:flex;gap:10px;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 14px 10px;background:var(--bg,#0B1628);border-bottom:1px solid var(--div,#1E3350)}
+#cqv-ov .cqv-h button{flex:none;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);color:var(--tx,#fff);width:40px;height:40px;border-radius:12px;font-size:24px;cursor:pointer}
+#cqv-ov .cqv-h b{display:block;font-size:16px}#cqv-ov .cqv-h small{display:block;font-size:11.5px;color:var(--tx2,#94A3B8)}
+#cqv-ov .cqv-b{padding:12px 14px;max-width:560px;margin:0 auto}
+.cqv-bus{display:flex;gap:8px;align-items:center;background:var(--s3,#1A2D44);border:1.5px solid var(--div,#1E3350);border-radius:12px;padding:0 12px;margin-bottom:8px}.cqv-bus:focus-within{border-color:var(--acc,#2563EB)}
+.cqv-bus input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--tx,#F8FAFC);font-size:15px;font-weight:600;font-family:inherit;padding:11px 0}
+.cqv-it{display:flex;gap:10px;align-items:center;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:12px;padding:10px 11px;margin-bottom:7px;cursor:pointer}
+.cqv-it b{display:block;font-size:13.5px}.cqv-it span{display:block;font-size:11.5px;color:var(--tx2,#94A3B8)}.cqv-it .fl{margin-left:auto;color:#64748B;font-size:18px}
+.cqv-nota{font-size:12px;color:var(--tx2,#94A3B8);line-height:1.5;margin:6px 2px}
+.cqv-mes{display:flex;justify-content:space-between;align-items:center;margin:2px 0 10px;font-weight:900;font-size:16px}
+.cqv-mes button{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);color:var(--tx,#fff);width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer}.cqv-mes button:disabled{opacity:.3}
+.cqv-res{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.cqv-res div{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:10px;padding:6px 9px;font-size:11px;color:var(--tx2,#94A3B8)}.cqv-res b{display:block;font-size:16px;color:var(--tx,#fff)}
+.cqv-dia{background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:12px;padding:9px 11px;margin-bottom:8px}
+.cqv-dt{font-size:12.5px;font-weight:900;color:#FCD34D;margin-bottom:4px}.cqv-dt span{color:var(--tx2,#94A3B8);font-weight:600}
+.cqv-tr{border-left:3px solid #0EA5E9;padding:3px 0 3px 9px;margin:6px 0}.cqv-tr.v{border-color:#A855F7}.cqv-tr.o{border-color:#64748B}
+.cqv-tn{font-size:13px;font-weight:800}.cqv-tn small{color:var(--tx2,#94A3B8);font-weight:600}
+.cqv-mit{display:flex;gap:3px;margin:5px 0}.cqv-mit div{flex:1;text-align:center;font-size:10px;border-radius:6px;padding:3px;color:#CBD5E1;line-height:1.3}.cqv-mit b{font-size:11.5px}
+.cqv-mit .t{background:rgba(14,165,233,.2);border:1px solid #0EA5E9}.cqv-mit .d{background:#78350F;border:1px solid #F59E0B;color:#FDE68A}
+.cqv-con{font-size:12px;color:#CBD5E1;line-height:1.6;margin-top:2px}.cqv-con b{color:var(--tx,#fff);font-weight:700}.cqv-con i{font-style:normal;color:#64748B}
+.cqv-fila{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--div,#1E3350)}.cqv-fila:first-child{border-top:0}
+.cqv-av{flex:none;width:32px;height:32px;border-radius:50%;background:#1E3A5F;color:#BFDBFE;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center}
+.cqv-fx{flex:1;min-width:0}.cqv-fx b{display:block;font-size:13.5px;color:var(--tx,#fff);font-weight:700}.cqv-fx span{display:block;font-size:11px;color:var(--tx2,#94A3B8)}
+.cqv-tb{flex:none;font-size:10.5px;font-weight:900;background:rgba(14,165,233,.15);color:#7DD3FC;border:1px solid #0E7490;border-radius:6px;padding:2px 7px}
+.cqv-um{display:inline-block;flex:none;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(124,58,237,.15);color:var(--violet2,#C4B5FD);border:1px solid rgba(124,58,237,.45);margin-right:4px;vertical-align:1px}
+.cqv-fila .cqv-dh{flex:none;font-size:10.5px;padding:2px 7px;margin:0}
+.cqv-dh{display:inline-block;font-size:9.5px;font-weight:900;background:#78350F;color:#FDE68A;border-radius:5px;padding:1px 5px;margin-left:3px;vertical-align:1px}
+.cqv-lib{font-size:12px;color:#64748B;padding:7px 11px;border:1px dashed var(--div,#1E3350);border-radius:10px;margin-bottom:8px}
+.cqv-sub{display:flex;align-items:center;gap:10px;background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12px}
+.cqv-sub b{display:block;font-size:13px}.cqv-sub span{display:block;font-size:11px;color:var(--tx2,#94A3B8)}
+.cqv-sub button{margin-left:auto;flex:none;border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:900;cursor:pointer;font-family:inherit}
+.cqv-ok{background:rgba(22,163,74,.15);color:#86EFAC;border:1px solid rgba(22,163,74,.5)}.cqv-no{background:rgba(239,68,68,.12);color:#FCA5A5;border:1px solid rgba(239,68,68,.4)}
+</style>
+<script>
+/* ═══ NUEVO — «Con quién viaja» (maqueta aprobada) ═══
+   · Botón 🧑‍🤝‍🧑 arriba, solo para el administrador (body.modo-admin) y los subadministradores
+     (body.modo-subadmin: su matrícula está en sub_admins, se comprueba al abrir la app).
+   · Busca a cualquiera en los Horarios Generales de TODAS las bases y enseña su mes: cada tren,
+     con quién va y quién va de DH. El DH va por mitades del mismo tren: «3113-3113DH» = 1ª mitad
+     trabajando y 2ª de DH; «3113DH-3113» = al revés; «3113DH» solo = DH todo el viaje.
+     El primer número de tren distinto del día es la ida y el segundo la vuelta. */
+(function(){
+  var K_SUB='cqvSubadmin';
+  function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} return null; }
+  function sb(){ return (typeof sbAdmin!=='undefined' && sbAdmin) ? sbAdmin : null; }
+  function esAdmin(){ return typeof perfilAdminActual!=='undefined' && perfilAdminActual && perfilAdminActual.rol==='admin'; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function norm(m){ return String(m==null?'':m).trim().toUpperCase(); }
+  function sinT(t){ return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+  // Nombre primero: «RUIZ PONS, PABLO» o «RUIZ PONS PABLO» → «Pablo Ruiz Pons». Sin coma se toman las dos
+  // primeras palabras como apellidos (con sus partículas: DE LA FUENTE, DEL RIO…).
+  var PART={DE:1,DEL:1,LA:1,LAS:1,LOS:1,Y:1,SAN:1,SANTA:1,VAN:1,VON:1,DA:1,DOS:1};
+  function mayus(t){ return t.toLowerCase().replace(/(^|[\s-])([a-záéíóúñüç])/g,function(a,b,c){ return b+c.toUpperCase(); }).replace(/\s(De|Del|La|Las|Los|Y|Da|Dos)(?=\s)/g,function(x){ return x.toLowerCase(); }); }
+  function bonito(n){ n=String(n||'').replace(/\s+/g,' ').trim(); if(!n) return '';
+    if(n.indexOf(',')>0){ var p=n.split(','); return mayus((p.slice(1).join(' ')+' '+p[0]).trim()); }
+    var w=n.split(' '), g=[], pre='';
+    w.forEach(function(x){ if(PART[x.toUpperCase()]) pre+=x+' '; else { g.push(pre+x); pre=''; } }); if(pre) g.push(pre.trim());
+    if(g.length<2) return mayus(n);
+    var ap=g.length>=3?2:1; return mayus(g.slice(ap).join(' ')+' '+g.slice(0,ap).join(' ')); }
+  function iniciales(n){ var w=bonito(n).split(' ').filter(function(x){ return !PART[x.toUpperCase()]; }); return ((w[0]||'')[0]||'')+((w[1]||'')[0]||''); }
+  var MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'], DS=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+
+  // ── Subadministrador: se comprueba al abrir la app (lo guardado sirve sin red) ──
+  function marcarSub(si){ document.body && document.body.classList.toggle('modo-subadmin', !!si); }
+  async function revisarSub(){
+    var m=norm((typeof AJ!=='undefined'&&AJ&&AJ.matricula)||''); if(ls(K_SUB) && ls(K_SUB)===m) marcarSub(true);
+    for(var i=0;i<20&&!sb();i++) await new Promise(function(r){ setTimeout(r,500); });
+    if(!m||!sb()) return;
+    try{ var r=await sb().rpc('sub_es', {p_matricula:m}); if(r.error) return; marcarSub(!!r.data); ls(K_SUB, r.data?m:null); }catch(e){}
+  }
+
+  // ── Horarios Generales de todas las bases, por mes ──
+  var HG={filas:null, meses:[], datos:{}};
+  async function filasHG(){
+    if(HG.filas) return HG.filas;
+    var r=await sb().from('config_global').select('*').like('tipo','horario_general_%'); if(r.error) throw r.error;
+    HG.filas=(r.data||[]).filter(function(f){ return f.url_archivo; }).map(function(f){ var p=_hgParsearTipo(f); return {fila:f, sede:p.sede||f.sede||'', anio:p.anio, mes:p.mes, sub:f.fecha_subida||''}; });
+    var vistos={}; HG.meses=[];
+    HG.filas.forEach(function(x){ if(!x.anio||!x.mes) return; var k=x.anio*100+x.mes; if(!vistos[k]){ vistos[k]=1; HG.meses.push(k); } });
+    HG.meses.sort(); return HG.filas; }
+  // gente de un mes: {sede: [[mat, nombre, dias], ...]}
+  async function datosMes(k, avance){
+    if(HG.datos[k]) return HG.datos[k];
+    await filasHG(); var porSede={};
+    HG.filas.forEach(function(x){ if(x.anio*100+x.mes!==k) return; var a=porSede[x.sede]; if(!a||x.sub>a.sub) porSede[x.sede]=x; });
+    var sedes=Object.keys(porSede), out={}, hechas=0;
+    await Promise.all(sedes.map(function(s){ return Promise.resolve(window._descargarYParsearHorario(porSede[s].fila)).then(function(d){ out[s]=d||[]; })
+      .catch(function(){ out[s]=[]; }).then(function(){ hechas++; if(avance) avance(hechas, sedes.length); }); }));
+    HG.datos[k]=out; return out; }
+  function mesActual(){ var d=new Date(), k=d.getFullYear()*100+d.getMonth()+1; if(HG.meses.indexOf(k)>=0) return k; return HG.meses.length?HG.meses[HG.meses.length-1]:k; }
+
+  // ── Leer la celda de un día: trenes en orden (ida, vuelta…) con sus mitades de DH, y códigos (DO, FE…) ──
+  function leerCelda(cell){
+    var toks=String(cell||'').split(/[^0-9A-Za-z]+/).filter(Boolean), trenes=[], idx={}, cods=[];
+    toks.forEach(function(t){ var m=t.match(/(\d{2,6})/);
+      if(!m){ cods.push(t.toUpperCase()); return; }
+      var n=m[1].replace(/^0+(?=\d)/,''), dh=/DH/i.test(t);
+      if(idx[n]===undefined){ idx[n]=trenes.length; trenes.push({num:n, partes:[], um:false}); }
+      trenes[idx[n]].partes.push(dh); if(/UM/i.test(t)) trenes[idx[n]].um=true; });
+    return {trenes:trenes, cods:cods}; }
+  // estado en un tren: 'todo' | 'dh' | 'tdh' (trabaja 1ª, DH 2ª) | 'dht' (DH 1ª, trabaja 2ª)
+  function estado(t){ var p=t.partes; if(p.length<2) return p[0]?'dh':'todo'; var a=p[0], b=p[p.length-1]; return a&&b?'dh':(!a&&!b?'todo':(a?'dht':'tdh')); }
+  function etqComp(e){ return e==='todo'?'':e==='dh'?'<span class="cqv-dh">DH todo</span>':e==='tdh'?'<span class="cqv-dh">DH 2ª mitad</span>':'<span class="cqv-dh">DH 1ª mitad</span>'; }
+
+  // ── Pantalla ──
+  var S={paso:'buscar', q:'', persona:null, mes:null};
+  function ov(){ var o=document.getElementById('cqv-ov'); if(!o){ o=document.createElement('div'); o.id='cqv-ov'; document.body.appendChild(o); } return o; }
+  function pinta(tit, sub, cuerpo){ var o=ov(); o.innerHTML='<div class="cqv-h"><button onclick="cqvAtras()">‹</button><div><b>'+tit+'</b><small>'+sub+'</small></div></div><div class="cqv-b">'+cuerpo+'</div>'; o.style.display='block'; }
+  window.cqvAbrir=async function(){
+    if(!document.body.classList.contains('modo-admin') && !document.body.classList.contains('modo-subadmin')) return;
+    S={paso:'buscar', q:'', persona:null, mes:null};
+    pinta('Con quién viaja','Horario General · todas las bases','<div class="cqv-bus">🔎<input id="cqv-q" type="search" autocomplete="off" placeholder="Nombre o matrícula (también la tuya)" oninput="cqvBuscar(this.value)"></div><div id="cqv-lista"><div class="cqv-nota">Cargando los Horarios Generales…</div></div>');
+    try{ if(!sb()) throw new Error('sin conexión'); await filasHG(); S.mes=mesActual();
+      await datosMes(S.mes, function(a,b){ var l=document.getElementById('cqv-lista'); if(l&&S.paso==='buscar'&&!S.q) l.innerHTML='<div class="cqv-nota">Cargando bases… '+a+'/'+b+'</div>'; });
+      cqvBuscar(S.q); }
+    catch(e){ var l=document.getElementById('cqv-lista'); if(l) l.innerHTML='<div class="cqv-nota">No se pudieron cargar los Horarios Generales ('+esc(e.message||e)+').</div>'; } };
+  window.cqvBuscar=function(v){ S.q=v||''; var l=document.getElementById('cqv-lista'); if(!l) return; var D=HG.datos[S.mes]; if(!D) return;
+    var q=sinT(S.q).trim(), pal=q.split(/\s+/).filter(Boolean);
+    if(q.length<2){ var n=0; Object.keys(D).forEach(function(s){ n+=D[s].length; }); l.innerHTML='<div class="cqv-nota">'+n+' personas en '+Object.keys(D).length+' bases ('+MES[S.mes%100-1]+' '+Math.floor(S.mes/100)+'). Escribe al menos 2 letras o números.</div>'; return; }
+    var res=[]; Object.keys(D).forEach(function(s){ D[s].forEach(function(e){ var t=sinT(e[0]+' '+e[1]); if(pal.every(function(w){ return t.indexOf(w)>=0; })) res.push({m:norm(e[0]), n:String(e[1]||''), s:s}); }); });
+    res.sort(function(a,b){ return a.n.localeCompare(b.n,'es'); });
+    l.innerHTML=res.length?res.slice(0,60).map(function(p){ return '<div class="cqv-it" onclick="cqvVer(\''+esc(p.m)+'\')"><div><b>'+esc(bonito(p.n))+'</b><span>Mat. '+esc(p.m)+' · '+esc(p.s)+'</span></div><div class="fl">›</div></div>'; }).join('')
+      :'<div class="cqv-nota">Nadie coincide con «'+esc(S.q)+'».</div>'; };
+  function buscarPersona(D, m){ var r=null; Object.keys(D).forEach(function(s){ D[s].forEach(function(e){ if(!r&&norm(e[0])===m) r={m:m, n:String(e[1]||''), s:s, dias:e[2]||{}}; }); }); return r; }
+  window.cqvVer=async function(m){ S.paso='mes'; S.persona=m; var D=HG.datos[S.mes]||await datosMes(S.mes); var P=buscarPersona(D,m);
+    if(!P){ pinta('Con quién viaja','', '<div class="cqv-nota">Esta persona no sale en el Horario General de '+MES[S.mes%100-1]+'.</div>'+navMes()); return; }
+    var yo=norm((typeof AJ!=='undefined'&&AJ&&AJ.matricula)||'')===m, conUM=0;
+    var A=Math.floor(S.mes/100), Mm=S.mes%100, nd=new Date(A,Mm,0).getDate(), h='', cuenta={}, diasTren=0, conDH=0, libres=[];
+    function cierraLibres(){ if(!libres.length) return; h+='<div class="cqv-lib">'+libres.map(function(x){ return x; }).join(' · ')+'</div>'; libres=[]; }
+    for(var d=1; d<=nd; d++){
+      var C=leerCelda(P.dias[String(d)]), dow=DS[new Date(A,Mm-1,d).getDay()];
+      if(!C.trenes.length){ libres.push(dow+' '+d+(C.cods.length?' · '+esc(C.cods.join(' ')):'')); continue; }
+      cierraLibres(); diasTren++; var vistoHoy={}; // «con quien más» cuenta días, no trenes
+      h+='<div class="cqv-dia"><div class="cqv-dt">'+dow+' '+d+' <span>· '+esc(String(P.dias[String(d)]||'').trim())+'</span></div>';
+      C.trenes.forEach(function(t,i){ var e=estado(t); if(e!=='todo') conDH++; if(t.um) conUM++;
+        var rot=C.trenes.length===1?'Tren '+t.num:(C.trenes.length===2?(i===0?'Ida':'Vuelta')+' · tren '+t.num:'Tramo '+(i+1)+' · tren '+t.num);
+        var TR=yo?'Trabajas':'Trabaja';
+        var mit=e==='tdh'?'<div class="cqv-mit"><div class="t">1ª mitad<br><b>'+TR+'</b></div><div class="d">2ª mitad<br><b>DH</b></div></div>'
+          :e==='dht'?'<div class="cqv-mit"><div class="d">1ª mitad<br><b>DH</b></div><div class="t">2ª mitad<br><b>'+TR+'</b></div></div>':'';
+        var comps=[]; Object.keys(D).forEach(function(s){ D[s].forEach(function(o){ if(norm(o[0])===m) return; var Co=leerCelda((o[2]||{})[String(d)]);
+          Co.trenes.forEach(function(to){ if(to.num===t.num){ var eo=estado(to);
+            comps.push('<div class="cqv-fila"><div class="cqv-av">'+esc(iniciales(o[1]).toUpperCase())+'</div><div class="cqv-fx"><b>'+esc(bonito(o[1]))+'</b><span>'+esc(s)+'</span></div>'+
+              (to.um?'<span class="cqv-um">🔀 UM</span>':'')+(eo==='todo'?'<span class="cqv-tb">Trabaja</span>':etqComp(eo))+'</div>');
+            if(!vistoHoy[o[1]]){ vistoHoy[o[1]]=1; cuenta[o[1]]=(cuenta[o[1]]||0)+1; } } }); }); });
+        h+='<div class="cqv-tr'+(i===1?' v':(i>1?' o':''))+'"><div class="cqv-tn">'+rot+(t.um?' <span class="cqv-um">🔀 UM · doble composición</span>':'')+(e==='todo'?' <small>'+(yo?'trabajas':'trabaja')+' todo el viaje</small>':e==='dh'?' <span class="cqv-dh">DH TODO EL VIAJE</span>':'')+'</div>'+mit+
+          '<div class="cqv-con">'+(comps.length?comps.join(''):'<i>Nadie más de los Horarios Generales en este tren</i>')+'</div></div>'; });
+      h+='</div>'; }
+    cierraLibres();
+    var top=Object.keys(cuenta).sort(function(a,b){ return cuenta[b]-cuenta[a]; }).slice(0,3);
+    var res='<div class="cqv-res"><div><b>'+diasTren+'</b>días con tren</div><div><b>'+Object.keys(cuenta).length+'</b>compañeros</div><div><b>'+conDH+'</b>trenes con DH</div>'+(conUM?'<div><b>'+conUM+'</b>trenes en UM</div>':'')+
+      (top.length?'<div style="flex:1 0 100%">Con quien más: '+top.map(function(n,i){ return (i?'':'<b style="display:inline;font-size:12.5px">')+esc(bonito(n))+' ('+cuenta[n]+' día'+(cuenta[n]===1?'':'s')+')'+(i?'':'</b>'); }).join(' · ')+'</div>':'')+'</div>';
+    pinta(esc(bonito(P.n)),'Mat. '+esc(P.m)+' · '+esc(P.s), navMes()+res+h); };
+  function navMes(){ var i=HG.meses.indexOf(S.mes);
+    return '<div class="cqv-mes"><button '+(i>0?'':'disabled')+' onclick="cqvMes(-1)">‹</button>'+MES[S.mes%100-1].replace(/^./,function(c){ return c.toUpperCase(); })+' '+Math.floor(S.mes/100)+'<button '+(i>=0&&i<HG.meses.length-1?'':'disabled')+' onclick="cqvMes(1)">›</button></div>'; }
+  window.cqvMes=async function(dir){ var i=HG.meses.indexOf(S.mes)+dir; if(i<0||i>=HG.meses.length) return; S.mes=HG.meses[i];
+    pinta('Con quién viaja','Cargando '+MES[S.mes%100-1]+'…','<div class="cqv-nota">Cargando los Horarios Generales…</div>'); await datosMes(S.mes); cqvVer(S.persona); };
+  // botón ‹ y botón «atrás» del móvil: mes → buscador → cerrar
+  window.cqvAtras=function(){ var o=document.getElementById('cqv-ov'); if(!o||o.style.display!=='block') return false;
+    if(S.paso==='mes'){ S.paso='buscar'; var q=S.q; pinta('Con quién viaja','Horario General · todas las bases','<div class="cqv-bus">🔎<input id="cqv-q" type="search" autocomplete="off" placeholder="Nombre o matrícula (también la tuya)" oninput="cqvBuscar(this.value)"></div><div id="cqv-lista"></div>');
+      var inp=document.getElementById('cqv-q'); if(inp) inp.value=q; cqvBuscar(q); return true; }
+    o.style.display='none'; return true; };
+
+  // ── Panel de administrador: Subadministradores ──
+  var SA={q:'', lista:[]};
+  window.cqvSubCargar=async function(){ var el=document.getElementById('cqvSubLista'); if(!el||!sb()) return;
+    try{ var r=await sb().rpc('sub_listar'); if(r.error) throw r.error; SA.lista=r.data||[]; }catch(e){ el.innerHTML='<div class="estado-archivo sin-archivo">No se pudo cargar: '+esc(e.message||e)+'</div>'; return; }
+    var b=document.getElementById('cqvSubBadge'); if(b) b.textContent=SA.lista.length; cqvSubPinta(); };
+  window.cqvSubBuscar=async function(v){ SA.q=v||''; if(!HG.datos[S.mes||0]){ try{ await filasHG(); S.mes=S.mes||mesActual(); await datosMes(S.mes); }catch(e){} } cqvSubPinta(); };
+  window.cqvSubPinta=function(){ var el=document.getElementById('cqvSubLista'); if(!el) return; var h='', ya={};
+    SA.lista.forEach(function(x){ ya[norm(x.matricula)]=1; });
+    var q=sinT(SA.q).trim(), pal=q.split(/\s+/).filter(Boolean), D=HG.datos[S.mes||0];
+    if(q.length>=2){ var res=[]; if(D) Object.keys(D).forEach(function(s){ D[s].forEach(function(e){ var t=sinT(e[0]+' '+e[1]); if(pal.every(function(w){ return t.indexOf(w)>=0; })) res.push({m:norm(e[0]), n:String(e[1]||''), s:s}); }); });
+      h+=!D?'<div class="cqv-nota">Cargando las bases…</div>':res.length?res.slice(0,20).map(function(p){ return '<div class="cqv-sub"><div><b>'+esc(p.n)+'</b><span>Mat. '+esc(p.m)+' · '+esc(p.s)+'</span></div>'+
+        (ya[p.m]?'<button class="cqv-no" onclick="cqvSubQuitar(\''+esc(p.m)+'\')">Quitar</button>':'<button class="cqv-ok" onclick="cqvSubAgregar(\''+esc(p.m)+'\',\''+esc(p.n).replace(/'/g,"\\'")+'\',\''+esc(p.s).replace(/'/g,"\\'")+'\')">＋ Hacer subadmin</button>')+'</div>'; }).join(''):'<div class="cqv-nota">Nadie coincide.</div>'; }
+    h+='<div class="pv-adm-t">Subadministradores ahora ('+SA.lista.length+')</div>'+(SA.lista.length?SA.lista.map(function(x){ return '<div class="cqv-sub"><div><b>'+esc(x.nombre||'—')+'</b><span>Mat. '+esc(x.matricula)+(x.base?' · '+esc(x.base):'')+'</span></div><button class="cqv-no" onclick="cqvSubQuitar(\''+esc(x.matricula)+'\')">Quitar</button></div>'; }).join(''):'<div class="cqv-nota">Ninguno todavía.</div>');
+    el.innerHTML=h; };
+  window.cqvSubAgregar=async function(m,n,s){ if(!await ttConfirm('¿Hacer subadministrador a '+n+' (mat. '+m+' · '+s+')?\n\nSolo podrá usar «Con quién viaja» de todas las bases. Ninguna otra función de administrador.')) return;
+    var r; try{ r=await sb().rpc('sub_agregar',{p_matricula:m, p_nombre:n, p_base:s}); }catch(e){ r={error:e}; }
+    if(r.error){ toast('Error: '+(r.error.message||r.error)); return; } toast('✅ Subadministrador añadido'); cqvSubCargar(); };
+  window.cqvSubQuitar=async function(m){ if(!await ttConfirm('¿Quitar como subadministrador la matrícula '+m+'? Dejará de ver «Con quién viaja».')) return;
+    var r; try{ r=await sb().rpc('sub_quitar',{p_matricula:m}); }catch(e){ r={error:e}; }
+    if(r.error){ toast('Error: '+(r.error.message||r.error)); return; } toast('Quitado'); cqvSubCargar(); };
+  function montar(){
+    var grp=document.querySelector('#ov-panel-admin .padm-group');
+    if(grp && !document.getElementById('cqvSubLista')){
+      var g=document.createElement('div'); g.className='padm-group';
+      g.innerHTML='<div class="padm-group-hdr" onclick="padmToggle(\'padm-subadmin\');cqvSubCargar()"><div class="padm-group-tit">🧑‍🤝‍🧑 Subadministradores <span class="padm-group-badge" id="cqvSubBadge">·</span></div><div class="padm-group-chev" id="padm-subadmin-chev">⌄</div></div>'+
+        '<div class="padm-group-body padm-cerrado" id="padm-subadmin"><div class="admin-card"><div class="admin-card-sub" style="margin-bottom:8px">Solo pueden usar «Con quién viaja» de todas las bases (el botón 🧑‍🤝‍🧑 de arriba). Ninguna otra función de administrador.</div>'+
+        '<div class="cqv-bus">🔎<input type="search" autocomplete="off" placeholder="Buscar en todas las bases" oninput="cqvSubBuscar(this.value)"></div><div id="cqvSubLista"></div></div></div>';
+      grp.parentNode.insertBefore(g, grp);
+    }
+    revisarSub();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', montar); else montar();
+})();
+</script>
+<!-- CONQUIENVIAJA:FIN -->
+
 <!-- PRIVACIDAD:INICIO — «No quiero aparecer en TrenTurnos». FUENTE: privacidad/privacidad.html,
      se incrusta igual en version-url/index.html y www/index.html con privacidad/incrustar.py.
      Necesita en Supabase version-url/supabase-privacidad.sql. -->
