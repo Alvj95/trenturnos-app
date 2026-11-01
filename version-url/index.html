@@ -36227,6 +36227,7 @@ body.modo-admin #hbtn-cqv,body.modo-subadmin #hbtn-cqv{display:flex!important}
 .cqv-av{flex:none;width:32px;height:32px;border-radius:50%;background:#1E3A5F;color:#BFDBFE;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center}
 .cqv-fx{flex:1;min-width:0}.cqv-fx b{display:block;font-size:13.5px;color:var(--tx,#fff);font-weight:700}.cqv-fx span{display:block;font-size:11px;color:var(--tx2,#94A3B8)}
 .cqv-tb{flex:none;font-size:10.5px;font-weight:900;background:rgba(14,165,233,.15);color:#7DD3FC;border:1px solid #0E7490;border-radius:6px;padding:2px 7px}
+.cqv-um{display:inline-block;flex:none;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(124,58,237,.15);color:var(--violet2,#C4B5FD);border:1px solid rgba(124,58,237,.45);margin-right:4px;vertical-align:1px}
 .cqv-fila .cqv-dh{flex:none;font-size:10.5px;padding:2px 7px;margin:0}
 .cqv-dh{display:inline-block;font-size:9.5px;font-weight:900;background:#78350F;color:#FDE68A;border-radius:5px;padding:1px 5px;margin-left:3px;vertical-align:1px}
 .cqv-lib{font-size:12px;color:#64748B;padding:7px 11px;border:1px dashed var(--div,#1E3350);border-radius:10px;margin-bottom:8px}
@@ -36299,8 +36300,8 @@ body.modo-admin #hbtn-cqv,body.modo-subadmin #hbtn-cqv{display:flex!important}
     toks.forEach(function(t){ var m=t.match(/(\d{2,6})/);
       if(!m){ cods.push(t.toUpperCase()); return; }
       var n=m[1].replace(/^0+(?=\d)/,''), dh=/DH/i.test(t);
-      if(idx[n]===undefined){ idx[n]=trenes.length; trenes.push({num:n, partes:[]}); }
-      trenes[idx[n]].partes.push(dh); });
+      if(idx[n]===undefined){ idx[n]=trenes.length; trenes.push({num:n, partes:[], um:false}); }
+      trenes[idx[n]].partes.push(dh); if(/UM/i.test(t)) trenes[idx[n]].um=true; });
     return {trenes:trenes, cods:cods}; }
   // estado en un tren: 'todo' | 'dh' | 'tdh' (trabaja 1ª, DH 2ª) | 'dht' (DH 1ª, trabaja 2ª)
   function estado(t){ var p=t.partes; if(p.length<2) return p[0]?'dh':'todo'; var a=p[0], b=p[p.length-1]; return a&&b?'dh':(!a&&!b?'todo':(a?'dht':'tdh')); }
@@ -36328,7 +36329,7 @@ body.modo-admin #hbtn-cqv,body.modo-subadmin #hbtn-cqv{display:flex!important}
   function buscarPersona(D, m){ var r=null; Object.keys(D).forEach(function(s){ D[s].forEach(function(e){ if(!r&&norm(e[0])===m) r={m:m, n:String(e[1]||''), s:s, dias:e[2]||{}}; }); }); return r; }
   window.cqvVer=async function(m){ S.paso='mes'; S.persona=m; var D=HG.datos[S.mes]||await datosMes(S.mes); var P=buscarPersona(D,m);
     if(!P){ pinta('Con quién viaja','', '<div class="cqv-nota">Esta persona no sale en el Horario General de '+MES[S.mes%100-1]+'.</div>'+navMes()); return; }
-    var yo=norm((typeof AJ!=='undefined'&&AJ&&AJ.matricula)||'')===m;
+    var yo=norm((typeof AJ!=='undefined'&&AJ&&AJ.matricula)||'')===m, conUM=0;
     var A=Math.floor(S.mes/100), Mm=S.mes%100, nd=new Date(A,Mm,0).getDate(), h='', cuenta={}, diasTren=0, conDH=0, libres=[];
     function cierraLibres(){ if(!libres.length) return; h+='<div class="cqv-lib">'+libres.map(function(x){ return x; }).join(' · ')+'</div>'; libres=[]; }
     for(var d=1; d<=nd; d++){
@@ -36336,7 +36337,7 @@ body.modo-admin #hbtn-cqv,body.modo-subadmin #hbtn-cqv{display:flex!important}
       if(!C.trenes.length){ libres.push(dow+' '+d+(C.cods.length?' · '+esc(C.cods.join(' ')):'')); continue; }
       cierraLibres(); diasTren++; var vistoHoy={}; // «con quien más» cuenta días, no trenes
       h+='<div class="cqv-dia"><div class="cqv-dt">'+dow+' '+d+' <span>· '+esc(String(P.dias[String(d)]||'').trim())+'</span></div>';
-      C.trenes.forEach(function(t,i){ var e=estado(t); if(e!=='todo') conDH++;
+      C.trenes.forEach(function(t,i){ var e=estado(t); if(e!=='todo') conDH++; if(t.um) conUM++;
         var rot=C.trenes.length===1?'Tren '+t.num:(C.trenes.length===2?(i===0?'Ida':'Vuelta')+' · tren '+t.num:'Tramo '+(i+1)+' · tren '+t.num);
         var TR=yo?'Trabajas':'Trabaja';
         var mit=e==='tdh'?'<div class="cqv-mit"><div class="t">1ª mitad<br><b>'+TR+'</b></div><div class="d">2ª mitad<br><b>DH</b></div></div>'
@@ -36344,14 +36345,14 @@ body.modo-admin #hbtn-cqv,body.modo-subadmin #hbtn-cqv{display:flex!important}
         var comps=[]; Object.keys(D).forEach(function(s){ D[s].forEach(function(o){ if(norm(o[0])===m) return; var Co=leerCelda((o[2]||{})[String(d)]);
           Co.trenes.forEach(function(to){ if(to.num===t.num){ var eo=estado(to);
             comps.push('<div class="cqv-fila"><div class="cqv-av">'+esc(iniciales(o[1]).toUpperCase())+'</div><div class="cqv-fx"><b>'+esc(bonito(o[1]))+'</b><span>'+esc(s)+'</span></div>'+
-              (eo==='todo'?'<span class="cqv-tb">Trabaja</span>':etqComp(eo))+'</div>');
+              (to.um?'<span class="cqv-um">🔀 UM</span>':'')+(eo==='todo'?'<span class="cqv-tb">Trabaja</span>':etqComp(eo))+'</div>');
             if(!vistoHoy[o[1]]){ vistoHoy[o[1]]=1; cuenta[o[1]]=(cuenta[o[1]]||0)+1; } } }); }); });
-        h+='<div class="cqv-tr'+(i===1?' v':(i>1?' o':''))+'"><div class="cqv-tn">'+rot+(e==='todo'?' <small>'+(yo?'trabajas':'trabaja')+' todo el viaje</small>':e==='dh'?' <span class="cqv-dh">DH TODO EL VIAJE</span>':'')+'</div>'+mit+
+        h+='<div class="cqv-tr'+(i===1?' v':(i>1?' o':''))+'"><div class="cqv-tn">'+rot+(t.um?' <span class="cqv-um">🔀 UM · doble composición</span>':'')+(e==='todo'?' <small>'+(yo?'trabajas':'trabaja')+' todo el viaje</small>':e==='dh'?' <span class="cqv-dh">DH TODO EL VIAJE</span>':'')+'</div>'+mit+
           '<div class="cqv-con">'+(comps.length?comps.join(''):'<i>Nadie más de los Horarios Generales en este tren</i>')+'</div></div>'; });
       h+='</div>'; }
     cierraLibres();
     var top=Object.keys(cuenta).sort(function(a,b){ return cuenta[b]-cuenta[a]; }).slice(0,3);
-    var res='<div class="cqv-res"><div><b>'+diasTren+'</b>días con tren</div><div><b>'+Object.keys(cuenta).length+'</b>compañeros</div><div><b>'+conDH+'</b>trenes con DH</div>'+
+    var res='<div class="cqv-res"><div><b>'+diasTren+'</b>días con tren</div><div><b>'+Object.keys(cuenta).length+'</b>compañeros</div><div><b>'+conDH+'</b>trenes con DH</div>'+(conUM?'<div><b>'+conUM+'</b>trenes en UM</div>':'')+
       (top.length?'<div style="flex:1 0 100%">Con quien más: '+top.map(function(n,i){ return (i?'':'<b style="display:inline;font-size:12.5px">')+esc(bonito(n))+' ('+cuenta[n]+' día'+(cuenta[n]===1?'':'s')+')'+(i?'':'</b>'); }).join(' · ')+'</div>':'')+'</div>';
     pinta(esc(bonito(P.n)),'Mat. '+esc(P.m)+' · '+esc(P.s), navMes()+res+h); };
   function navMes(){ var i=HG.meses.indexOf(S.mes);
