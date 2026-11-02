@@ -30,36 +30,36 @@ public final class WidgetsMas {
 
     // ── Un proveedor por widget (el manifiesto los registra) ──
     public static class Hoy extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) hoy(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { hoy(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Semana extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) semana(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { semana(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Mes extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) mes(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { mes(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Agenda extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) agenda(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { agenda(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Descanso extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) descanso(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { descanso(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Vacaciones extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) vacaciones(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { vacaciones(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Presentacion extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) presentacion(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { presentacion(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Reloj extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) reloj(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { reloj(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
     public static class Libres extends AppWidgetProvider {
-        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) libres(c, m, id); } }
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) try { libres(c, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget", e); } } }
 
     /** Repinta todos los widgets nuevos que estén puestos (lo llama WidgetDatos al llegar datos). */
     static void actualizarTodos(Context ctx) {
         AppWidgetManager m = AppWidgetManager.getInstance(ctx);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Hoy.class))) hoy(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Semana.class))) semana(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Mes.class))) mes(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Agenda.class))) agenda(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Descanso.class))) descanso(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Vacaciones.class))) vacaciones(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Presentacion.class))) presentacion(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Reloj.class))) reloj(ctx, m, id);
-        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Libres.class))) libres(ctx, m, id);
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Hoy.class))) try { hoy(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Hoy", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Semana.class))) try { semana(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Semana", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Mes.class))) try { mes(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Mes", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Agenda.class))) try { agenda(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Agenda", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Descanso.class))) try { descanso(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Descanso", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Vacaciones.class))) try { vacaciones(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Vacaciones", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Presentacion.class))) try { presentacion(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Presentacion", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Reloj.class))) try { reloj(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Reloj", e); }
+        for (int id : m.getAppWidgetIds(new ComponentName(ctx, Libres.class))) try { libres(ctx, m, id); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widget Libres", e); }
     }
 
     // ── Ayudas ──
