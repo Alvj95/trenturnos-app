@@ -296,7 +296,90 @@
         s: tren ? 'Tren ' + tren + (vuelta ? ' / ' + vuelta : '') + (t.linea ? ' · ' + t.linea : '') : titulo,
         r: trayecto || titulo, h: t.hF || '', f: f, n: t.notas ? String(t.notas) : '',
         // para los widgets nuevos (hoy, agenda, presentación…): tren de vuelta, fin del turno y estación de salida
-        v: vuelta, hl: t.hL2 || t.hL || '', sl: t.sal || '' };
+        v: vuelta, hl: t.hL2 || t.hL || '', sl: t.sal || '', tr: wgTrenes(t) };
+    }
+    // Trenes del día con su trayecto y horas (para «Mi tren en directo»): ida y, si hay, vuelta.
+    function wgTrenes(t) {
+      var n = function (x) { return String(x || '').replace(/\D/g, '').replace(/^0+/, ''); }, base = (window.AJ && AJ.base) || '', l = [];
+      if (n(t.numTren)) l.push({ n: n(t.numTren), o: t.sal || base, d: t.lle || '', hs: t.hF || '', hl: t.hL || '' });
+      if (n(t.numTrenVuelta) && n(t.numTrenVuelta) !== n(t.numTren)) l.push({ n: n(t.numTrenVuelta), o: t.sal2 || t.lle || '', d: t.lle2 || base, hs: t.hF2 || '', hl: t.hL2 || '' });
+      return l.length ? l : undefined;
+    }
+    // ── Widgets de la tanda 2 y 3 ──
+    // Solo se calculan si ese widget está puesto (Android lo dice al guardar). Todo en try/catch:
+    // si algo falla, el widget enseña lo último que tenía y la app sigue igual.
+    var wgPuestos = {}, wgCq = null, wgCqT = 0, wgCqEnCurso = false;
+    function wgR2(x) { return Math.round(x * 100) / 100; }
+    // Nómina neta estimada del mes (la misma cuenta que la pantalla «Nómina»).
+    function wgNeto(y, m) {
+      var TV = window.TV || {}, rol = AJ.rol || 'tripulante', t = TARIFAS_ROL[rol] || TARIFAS_ROL.tripulante;
+      var fijos = _nominaConceptosFijos(rol, y, m);
+      if (AJ.tieneCAPH && parseFloat(AJ.caphImporte) > 0) fijos.push({ val: wgR2(parseFloat(AJ.caphImporte)) });
+      var totalFijos = fijos.reduce(function (s, f) { return s + f.val; }, 0);
+      var mt = _nominaMesAnterior(y, m);
+      var ks = Object.keys(TV).filter(function (k) { var d = new Date(k + 'T00:00:00'); return d.getFullYear() === mt.anio && d.getMonth() === mt.mes - 1; });
+      var e = calculateEarnings(ks), htdl = _nominaHTDLPuro(ks, t.vh), art = _nominaArt5152Importe(ks), pmd = _nominaPMD(_ksMesNomina(y, m));
+      var resto = e.totalNoc + e.totalAct + e.totalJT + e.totalIntl + e.totalRebase + e.totalPlusTrasl;
+      var bruto = wgR2(totalFijos + htdl.importe + art + pmd.importe + resto), mv = _nominaValoresManuales;
+      return wgR2(bruto - wgR2(bruto * mv.ssPct / 100) - mv.cuotaSindical - wgR2(bruto * mv.irpfPct / 100));
+    }
+    // Horas del mes hasta hoy, horas HTDL y nómina de este mes.
+    function wgNomina() {
+      var TV = window.TV || {}, hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth() + 1, hk = wgClave(hoy), pref = hk.slice(0, 7);
+      var ks = Object.keys(TV).filter(function (k) { return k.slice(0, 7) === pref && k <= hk; });
+      var e = calculateEarnings(ks), ref = 163, eur = null;
+      try { ref = _nominaJornadaRefAjustada(y, m).ref; } catch (x) {}
+      try { eur = wgNeto(y, m); } catch (x) {}
+      return { f: hk, mes: MESES[m - 1], h: wgR2(e.totalHoras || 0), ref: ref, x: wgR2(e.horasHTDL || 0), eur: eur };
+    }
+    // «Rodríguez Pons, Pablo» / «RUIZ PONS PABLO» → «Pablo Ruiz Pons»
+    function wgNombre(s) {
+      s = String(s || '').trim().replace(/\s+/g, ' ');
+      var nom = s, ap = '';
+      if (s.indexOf(',') > 0) { ap = s.split(',')[0].trim(); nom = s.split(',').slice(1).join(' ').trim(); }
+      else { var p = s.split(' '), PART = { DE: 1, DEL: 1, LA: 1, LAS: 1, LOS: 1, Y: 1, SAN: 1, SANTA: 1 }, i = 0, n = 0;
+        while (i < p.length - 1 && n < 2) { if (!PART[p[i].toUpperCase()]) n++; i++; }
+        if (p.length > 2) { ap = p.slice(0, i).join(' '); nom = p.slice(i).join(' '); } }
+      var t = (nom + (ap ? ' ' + ap : '')).toLowerCase().replace(/(^|[\s-])(\S)/g, function (a, b, c) { return b + c.toUpperCase(); });
+      return t.replace(/ (De|Del|La|Las|Los|Y)(?= )/g, function (x) { return x.toLowerCase(); });
+    }
+    // Con quién viajo hoy: lo mismo que «Viajas con» en el detalle del día (Horario General de tu base).
+    function wgConQuien() {
+      var hk = wgClave(new Date());
+      if (wgCqEnCurso || (wgCq && wgCq.f === hk && Date.now() - wgCqT < 3 * 3600000)) return;
+      var t = (window.TV || {})[hk], tr = t ? (wgTrenes(t) || []).map(function (x) { return x.n; }) : [];
+      if (!tr.length) { wgCq = { f: hk, tr: '', g: [] }; wgCqT = Date.now(); wgPronto(); return; }
+      if (typeof window.asegurarHorarioGeneralCargado !== 'function') return;
+      wgCqEnCurso = true;
+      var p = hk.split('-').map(Number);
+      Promise.resolve(window.asegurarHorarioGeneralCargado({ anio: p[0], mes: p[1] })).catch(function () { return false; }).then(function (ok) {
+        wgCqEnCurso = false;
+        if (!ok || typeof activeBase === 'undefined' || !activeBase || !activeBase.data) { if (!wgCq || wgCq.f !== hk) { wgCq = { f: hk, tr: tr.join(' / '), no: 1, g: [] }; wgPronto(); } return; }
+        var mat = String((window.AJ && AJ.matricula) || '').trim(), g = [];
+        activeBase.data.forEach(function (e) {
+          if (!e || String(e[0]).trim() === mat) return;
+          var cel = e[2] ? e[2][String(p[2])] : null; if (!cel) return;
+          var tok = String(cel).split(/[^0-9A-Za-z]+/).filter(Boolean), suyos = [];
+          tr.forEach(function (n) {
+            var mios = tok.filter(function (x) { var d = (x.match(/\d{2,6}/) || [''])[0].replace(/^0+/, ''); return d === n; });
+            if (!mios.length) return;
+            var dh = mios.filter(function (x) { return /DH/i.test(x); }).length;
+            suyos.push(dh === mios.length ? 'DH ' + n : dh ? n + ' (½ DH)' : n);
+          });
+          if (suyos.length) g.push({ n: wgNombre(e[1]), t: suyos.join(' · '), dh: suyos.every(function (x) { return /^DH/.test(x); }) ? 1 : 0 });
+        });
+        g.sort(function (a, b) { return a.dh - b.dh || a.n.localeCompare(b.n, 'es'); });
+        wgCq = { f: hk, tr: tr.join(' / '), g: g }; wgCqT = Date.now(); wgPronto();
+      });
+    }
+    function wgExtra() {
+      var x = {}, A = window.AJ || {};
+      x.mat = String(A.matricula || '').trim();
+      try { x.sb = { u: SUPABASE_URL_ADMIN, k: SUPABASE_KEY_ADMIN }; } catch (e) {}
+      try { x.rt = typeof rtG === 'function' ? (rtG().activo ? 1 : 0) : 1; } catch (e) {}
+      if (wgPuestos.nomina) try { x.nom = wgNomina(); } catch (e) {}
+      if (wgCq) x.cq = wgCq;
+      return x;
     }
     function wgDatos() {
       var TV = window.TV || {}, dias = {};
@@ -307,13 +390,20 @@
         if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || k < a || k > b || !TV[k] || !TV[k].tipo) return;
         try { dias[k] = wgDia(TV[k]); } catch (e) {}
       });
-      return JSON.stringify({ v: 1, dias: dias });
+      var x = null; try { x = wgExtra(); } catch (e) {}
+      return JSON.stringify(x ? { v: 1, dias: dias, x: x } : { v: 1, dias: dias });
     }
     function wgEnviar() {
       clearTimeout(wgTimer);
       var datos; try { datos = wgDatos(); } catch (e) { return; }
       if (datos === wgUltimo) return;
-      TTWidget.guardar({ datos: datos }).then(function () { wgUltimo = datos; }).catch(function () {});
+      TTWidget.guardar({ datos: datos }).then(function (r) {
+        wgUltimo = datos;
+        // Qué widgets nuevos hay puestos: si acaba de aparecer el de nómina, se manda otra vez con sus datos.
+        var antes = wgPuestos.nomina; wgPuestos = (r && r.puestos) || {};
+        if (wgPuestos.nomina && !antes) wgPronto();
+        if (wgPuestos.conQuien) setTimeout(function () { try { wgConQuien(); } catch (e) { wgCqEnCurso = false; } }, 20000);
+      }).catch(function () {});
     }
     function wgPronto() { clearTimeout(wgTimer); wgTimer = setTimeout(wgEnviar, 1500); }
     window.__widgetActualizar = wgPronto;

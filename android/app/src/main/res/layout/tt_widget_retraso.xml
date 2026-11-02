@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Aviso de retraso» (4×1): retraso de llegada pendiente de añadir. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
+<TextView android:id="@+id/tw_ico" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="24sp" android:text="⏱️" android:layout_marginRight="10dp"/>
+<LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+<TextView android:id="@+id/tw_tit" android:text="Avisos de retraso" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="13.5sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
+<TextView android:id="@+id/tw_sub" android:text="Retrasos de llegada pendientes de añadir" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="11sp" android:maxLines="1" android:ellipsize="end"/>
+</LinearLayout>
+<TextView android:id="@+id/tw_btn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="8dp" android:background="@drawable/tt_widget_aviso_btn" android:paddingLeft="12dp" android:paddingRight="12dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:text="Añadir" android:textColor="#FFFFFF" android:textSize="12.5sp" android:textStyle="bold" android:visibility="gone"/>
+<TextView android:id="@+id/tw_ref" android:layout_width="36dp" android:layout_height="36dp" android:gravity="center" android:background="@drawable/tt_widget_boton" android:text="⟳" android:textColor="#CBD5E1" android:textSize="17sp" android:layout_marginLeft="8dp"/>
+</LinearLayout>

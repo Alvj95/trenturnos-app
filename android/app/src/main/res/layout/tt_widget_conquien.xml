@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Con quién viajo hoy» (4×2): tus compañeros de hoy en tus trenes. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="vertical" android:padding="10dp" >
+<TextView android:id="@+id/tw_cab" android:text="CON QUIÉN VIAJO HOY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" android:textStyle="bold" android:maxLines="1" android:layout_marginBottom="2dp"/>
+<TextView android:id="@+id/tw_msg" android:text="Abre TrenTurnos para ver con quién viajas hoy" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="12.5sp" android:maxLines="2" android:layout_marginTop="6dp"/>
+<LinearLayout android:id="@+id/tw_q0" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+ <TextView android:id="@+id/tw_qa0" android:layout_width="26dp" android:layout_height="26dp" android:gravity="center" android:background="@drawable/tt_widget_avatar" android:textColor="#DBEAFE" android:textSize="10sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_qn0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="8dp" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12.5sp"/>
+ <TextView android:id="@+id/tw_qt0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6dp" android:maxLines="1" android:textColor="#94A3B8" android:textSize="11sp" android:textStyle="bold"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_q1" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+ <TextView android:id="@+id/tw_qa1" android:layout_width="26dp" android:layout_height="26dp" android:gravity="center" android:background="@drawable/tt_widget_avatar" android:textColor="#DBEAFE" android:textSize="10sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_qn1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="8dp" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12.5sp"/>
+ <TextView android:id="@+id/tw_qt1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6dp" android:maxLines="1" android:textColor="#94A3B8" android:textSize="11sp" android:textStyle="bold"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_q2" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+ <TextView android:id="@+id/tw_qa2" android:layout_width="26dp" android:layout_height="26dp" android:gravity="center" android:background="@drawable/tt_widget_avatar" android:textColor="#DBEAFE" android:textSize="10sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_qn2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="8dp" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12.5sp"/>
+ <TextView android:id="@+id/tw_qt2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6dp" android:maxLines="1" android:textColor="#94A3B8" android:textSize="11sp" android:textStyle="bold"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_q3" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+ <TextView android:id="@+id/tw_qa3" android:layout_width="26dp" android:layout_height="26dp" android:gravity="center" android:background="@drawable/tt_widget_avatar" android:textColor="#DBEAFE" android:textSize="10sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_qn3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="8dp" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12.5sp"/>
+ <TextView android:id="@+id/tw_qt3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6dp" android:maxLines="1" android:textColor="#94A3B8" android:textSize="11sp" android:textStyle="bold"/>
+</LinearLayout>
+<TextView android:id="@+id/tw_mas" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" android:maxLines="1" android:visibility="gone"/>
+</LinearLayout>

@@ -155,6 +155,52 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/tt_widget_libres_info" />
         </receiver>
+        <receiver
+            android:name=".WidgetsVivos$Retraso"
+            android:exported="false"
+            android:label="@string/tt_widget_retraso">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.trenturnos.app.widget.REFRESCAR_RETRASO" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_retraso_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsVivos$MiTren"
+            android:exported="false"
+            android:label="@string/tt_widget_mitren">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.trenturnos.app.widget.REFRESCAR_TREN" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_mitren_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsVivos$Nomina"
+            android:exported="false"
+            android:label="@string/tt_widget_nomina">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_nomina_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsVivos$ConQuien"
+            android:exported="false"
+            android:label="@string/tt_widget_conquien">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_conquien_info" />
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Horas y nómina del mes» (2×2). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="vertical" android:padding="12dp" >
+<TextView android:id="@+id/tw_mes" android:text="HORAS Y NÓMINA" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" android:textStyle="bold" android:maxLines="1"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="4dp">
+<LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+<TextView android:id="@+id/tw_h" android:text="—" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="24sp" android:textStyle="bold" android:maxLines="1"/>
+<TextView android:id="@+id/tw_ref" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" />
+</LinearLayout>
+<LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="right">
+<TextView android:id="@+id/tw_x" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#4ADE80" android:textSize="18sp" android:textStyle="bold" android:maxLines="1"/>
+<TextView android:id="@+id/tw_xl" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" />
+</LinearLayout>
+</LinearLayout>
+<ProgressBar android:id="@+id/tw_prog" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="6dp" android:layout_marginTop="8dp" android:max="1000" android:progress="0" android:progressTint="#38BDF8" android:progressBackgroundTint="#334155"/>
+<TextView android:id="@+id/tw_eur" android:text="Abre TrenTurnos para calcularlo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="11.5sp" android:maxLines="2" android:layout_marginTop="8dp"/>
+</LinearLayout>
