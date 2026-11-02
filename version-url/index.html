@@ -12532,6 +12532,7 @@ function _construirEscrituraCopia(origen, destino, tipoElegido, modoComp){
   if(origen.dias===1){
     var d1 = clonar(o);
     d1.tipo = tipoFinal;
+    if(o.cargadoDesdePdf||o.dejeIncluido) d1.dejeIncluido = true; // sus horas ya llevan el deje (avisos de retraso)
     delete d1.cargadoDesdePdf;
     // FIX — HTDL y Art.51/52 ahora se tratan EXACTAMENTE igual que
     // Ordinario a nivel de estructura (misma celda/celdas), la única
@@ -12557,6 +12558,7 @@ function _construirEscrituraCopia(origen, destino, tipoElegido, modoComp){
   principal.tipo = tipoFinal;
   principal.diaSiguiente = kVtaD;
   if(origen.dias===3) principal.diaIntermedio = kIntD;
+  if(o.cargadoDesdePdf||o.dejeIncluido) principal.dejeIncluido = true;
   delete principal.cargadoDesdePdf;
   if(modoComp==='dinero') _aplicarDineroCopia(principal, esHTDL, esArt5152, true);
 
@@ -12564,11 +12566,13 @@ function _construirEscrituraCopia(origen, destino, tipoElegido, modoComp){
   if(origen.dias===3 && tIntOrigen){
     var intD = clonar(tIntOrigen);
     intD.origenPernocta = kIdaD;
+    if(tIntOrigen.cargadoDesdePdf||tIntOrigen.dejeIncluido) intD.dejeIncluido = true;
     delete intD.cargadoDesdePdf;
     escrituras.push({k:kIntD, data:intD});
   }
   var vtaD = clonar(tVtaOrigen);
   vtaD.origenPernocta = kIdaD;
+  if(tVtaOrigen.cargadoDesdePdf||tVtaOrigen.dejeIncluido) vtaD.dejeIncluido = true;
   delete vtaD.cargadoDesdePdf;
   escrituras.push({k:kVtaD, data:vtaD});
 
@@ -38158,14 +38162,29 @@ async function rtPendientes(){ try{ var mat=String(AJ.matricula||'').trim(); if(
   var r=await sbAdmin.rpc('vig_pendientes',{p_mat:mat}); if(r.error||!r.data) return; rtCola=r.data||[]; rtSiguiente(); }catch(e){} }
 function rtSiguiente(){ var v=rtCola.shift(); if(!v){ rtEnPop=false; return; } rtEnPop=true; rtPop(v,null); }
 function rtHmas(h,m){ var x=/(\d{1,2}):(\d{2})/.exec(h||''); if(!x) return ''; var t=((+x[1])*60+(+x[2])+m+1440)%1440; return Math.floor(t/60)+':'+('0'+t%60).slice(-2); }
-function rtPop(v,min){ var deje=v.en_base?20:15, r=min!=null?min:v.ret_llegada, tot=r+deje, ida=v.tramo!==2, k=v.fecha, t=TV[k], fd=k.split('-');
+// NUEVO — Deje que se suma al retraso de llegada (aclarado por Alex):
+//  · Ida de un ida y vuelta del mismo día: solo los minutos de retraso, sin deje.
+//  · Turno cargado del horario individual (PDF): solo el retraso — su hora final ya lleva el deje.
+//  · Turno puesto a mano: retraso + deje (20 en base / 15 fuera), porque a mano se pone la llegada del tren.
+function rtDeje(v){ var base=v.en_base?20:15, k=v.fecha, t=TV[k]||null;
+  if(v.tipo==='cambio'){ var ref=((typeof TV2!=='undefined'&&TV2[k])||[]).filter(function(x){ return x&&x.turno_referencia_externa; }).pop();
+    if(v.tramo!==2&&ref&&ref.numTrenVuelta&&ref.tipoServicio!=='pernocta2'&&ref.tipoServicio!=='pernocta3') return {d:0,por:'ida'};
+    return {d:base,por:'mano'}; }
+  if(!t) return {d:base,por:'mano'};
+  var o=t.tipo==='vuelta-pernocta'?(TV[t.origenPernocta]||t):t, pern=t.tipo==='vuelta-pernocta'||o.modo==='pernocta'||o.modo==='pernocta3';
+  if(v.tramo!==2&&!pern&&t.numTrenVuelta) return {d:0,por:'ida'};
+  if(t.cargadoDesdePdf||t.dejeIncluido||o.cargadoDesdePdf||o.dejeIncluido) return {d:0,por:'pdf'};
+  return {d:base,por:'mano'}; }
+function rtPop(v,min){ var D=rtDeje(v), deje=D.d, r=min!=null?min:v.ret_llegada, tot=r+deje, ida=v.tramo!==2, k=v.fecha, t=TV[k], fd=k.split('-');
   var htdlDin=v.cuenta&&v.tipo==='htdl'&&t&&(t.tipo==='trabajado'||(t.tipo==='vuelta-pernocta'&&TV[t.origenPernocta]&&TV[t.origenPernocta].tipo==='trabajado'));
   var eur=htdlDin&&AJ.vh?Math.round(tot/60*AJ.vh*100)/100:null;
   var razon=v.cuenta?'':(v.tipo==='cambio'?'':(v.tipo==='htdl'&&ida?'En un HTDL de ida y vuelta, la ida no es el último tramo: <b>queda apuntada pero no suma</b> horas ni dinero. Lo que vale es la vuelta.':'HTDL por días: el retraso <b>solo queda apuntado</b>, no suma dinero.'));
   var h='<div class="rt-pop"><div class="rt-h"><div class="rt-i">'+(ida?'🚆':'🏠')+'</div><div><b>'+(ida?'Ida':'Vuelta')+' · '+v.tren+' llegó'+(v.destino?' a '+limpioV(v.destino):'')+'</b><span>'+(+fd[2])+' '+MESES_C[+fd[1]-1]+' · '+(v.tipo==='cambio'?'🔁 cambio con '+limpioV(v.cambio_con||''):v.tipo==='htdl'?'HTDL':'Jornada grafiada')+' · 📡 Renfe en directo</span></div></div>'+
-    '<div class="rt-tab"><div><span>Llegada prevista → real</span><b>'+(v.llega||'')+' → '+rtHmas(v.llega,r)+'</b></div><div><span>Retraso de llegada</span><b>+'+r+' min</b></div><div class="f"><span>Deje '+(v.en_base?'en base':'fuera de base')+'</span><b>+'+deje+' min</b></div><div class="tot"><span>Retraso que se anota</span><b>+'+tot+' min</b></div></div>'+
+    '<div class="rt-tab"><div><span>Llegada prevista → real</span><b>'+(v.llega||'')+' → '+rtHmas(v.llega,r)+'</b></div><div><span>Retraso de llegada</span><b>+'+r+' min</b></div><div class="f"><span>'+(D.por==='ida'?'Deje (ida de un ida y vuelta)':D.por==='pdf'?'Deje (ya va en tu horario)':'Deje '+(v.en_base?'en base':'fuera de base'))+'</span><b>'+(deje?'+'+deje+' min':'no se suma')+'</b></div><div class="tot"><span>Retraso que se anota</span><b>+'+tot+' min</b></div></div>'+
     '<span class="rt-regla '+(v.cuenta?'c':'a')+'">'+(v.cuenta?'✅ CUENTA PARA HORAS Y DINERO':'📝 SOLO SE ANOTA')+'</span>'+
-    '<div class="rt-big">Se anota <b>+'+tot+' min en la '+(ida?'Ida':'Vuelta')+' ('+v.tren+')</b>:<br>'+r+' min de retraso de llegada + '+deje+' min de deje '+(v.en_base?'en base':'fuera de base')+'.</div>'+
+    '<div class="rt-big">Se anota <b>+'+tot+' min en la '+(ida?'Ida':'Vuelta')+' ('+v.tren+')</b>:<br>'+(D.por==='ida'?r+' min de retraso de llegada. En un ida y vuelta del mismo día, la ida no lleva deje.'
+      :D.por==='pdf'?r+' min de retraso de llegada. El deje ya está en la hora de tu horario individual.'
+      :r+' min de retraso de llegada + '+deje+' min de deje '+(v.en_base?'en base':'fuera de base')+' (turno puesto a mano).')+'</div>'+
     (eur!=null?'<div class="rt-din">💶 HTDL por dinero: es el último tramo (de la toma al deje), así que cuenta.<br><b>+'+tot+' min × '+String(AJ.vh).replace('.',',')+' €/h = +'+eur.toFixed(2).replace('.',',')+' €</b></div>':'')+
     (razon?'<div class="rt-no">'+razon+'</div>':'')+(!t&&v.tipo!=='cambio'?'<div class="rt-no">⚠️ Ese día no tienes ningún turno en el calendario: no hay dónde anotarlo.</div>':'')+
     '<button class="rt-b '+(v.cuenta?'si':'gr')+'" onclick="rtAplicar('+r+')">'+(v.cuenta?'✓ Añadir +'+tot+' min a la '+(ida?'Ida':'Vuelta'):'📝 Anotar +'+tot+' min en la '+(ida?'Ida':'Vuelta'))+'</button>'+
@@ -38176,7 +38195,7 @@ async function rtCambiar(r){ var x=await ttPrompt('Minutos de retraso de llegada
 async function rtResolver(como){ var o=document.getElementById('rt-ov'), v=o&&o._v; if(o) o.style.display='none';
   try{ if(v) await sbAdmin.rpc('vig_resolver',{p_id:v.id,p_mat:String(AJ.matricula||'').trim(),p_como:como}); }catch(e){}
   rtSiguiente(); }
-function rtAplicar(r){ var v=document.getElementById('rt-ov')._v, deje=v.en_base?20:15, tot=r+deje, k=v.fecha, tramo=v.tramo===2?2:1;
+function rtAplicar(r){ var v=document.getElementById('rt-ov')._v, deje=rtDeje(v).d, tot=r+deje, k=v.fecha, tramo=v.tramo===2?2:1;
   var nota={tramo:tramo,minutos:tot,tren:v.tren,llegada:r,deje:deje,fuente:'renfe'};
   if(v.tipo==='cambio'){ var ref=((TV2[k])||[]).filter(function(x){ return x&&x.turno_referencia_externa; }).pop();
     if(ref){ ref.retrasosAnotados=(ref.retrasosAnotados||[]).filter(function(x){ return x.tramo!==tramo; }).concat([nota]); if(typeof saveTV2==='function') saveTV2(); } }

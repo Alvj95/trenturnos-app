@@ -58,10 +58,10 @@ export function procesar(viajes: Obj[], flota: Record<string, Obj>, est: Record<
   }
   return { cambios, avisos };
 }
+// El deje que se suma lo decide la app (depende de si el turno viene del horario individual o se puso a mano).
 function avisoLlegada(v: Obj, r: number) {
-  const deje = v.en_base ? 20 : 15;
   return { matricula_destino: v.mat, titulo: `🚆 El ${v.tren} llegó${v.destino ? " a " + v.destino : ""} con +${r} min`,
-    cuerpo: `${v.tramo === 2 ? "Vuelta" : "Ida"} · +${r} de retraso + ${deje} de deje = +${r + deje} min. Abre TrenTurnos para ${v.cuenta ? "añadirlo" : "anotarlo"} en tu turno.` };
+    cuerpo: `${v.tramo === 2 ? "Vuelta" : "Ida"} · +${r} min de retraso de llegada. Abre TrenTurnos para ${v.cuenta ? "añadirlo" : "anotarlo"} en tu turno.` };
 }
 
 async function rest(ruta: string, init: RequestInit = {}) {
