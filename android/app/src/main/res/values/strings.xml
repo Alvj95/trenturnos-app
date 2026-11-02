@@ -27,4 +27,12 @@
     <string name="tt_widget_reloj_desc">La hora en grande con tu turno de hoy y el de mañana.</string>
     <string name="tt_widget_libres">Días libres del mes</string>
     <string name="tt_widget_libres_desc">Descansos y vacaciones que te quedan este mes.</string>
+    <string name="tt_widget_retraso">Aviso de retraso</string>
+    <string name="tt_widget_retraso_desc">Te avisa cuando hay un retraso de llegada pendiente de añadir a tu turno.</string>
+    <string name="tt_widget_mitren">Mi tren en directo</string>
+    <string name="tt_widget_mitren_desc">Retraso y próxima parada del tren de hoy (datos de Renfe, orientativos).</string>
+    <string name="tt_widget_nomina">Horas y nómina del mes</string>
+    <string name="tt_widget_nomina_desc">Horas hechas este mes, horas HTDL y tu nómina estimada.</string>
+    <string name="tt_widget_conquien">Con quién viajo hoy</string>
+    <string name="tt_widget_conquien_desc">Tus compañeros de hoy en tus trenes, del Horario General.</string>
 </resources>

@@ -62,6 +62,24 @@ public final class WidgetDatos {
         return cache;
     }
 
+    private static JSONObject cacheExtra;
+    private static String cacheExtraCrudo;
+
+    /** Datos extra de los widgets nuevos ("x": matrícula, nómina, con quién viajo…), o null. */
+    static synchronized JSONObject extra(Context ctx) {
+        String crudo = prefs(ctx).getString(K_DATOS, null);
+        if (crudo == null) return null;
+        if (!crudo.equals(cacheExtraCrudo)) {
+            try {
+                cacheExtra = new JSONObject(crudo).optJSONObject("x");
+            } catch (Exception e) {
+                cacheExtra = null;
+            }
+            cacheExtraCrudo = crudo;
+        }
+        return cacheExtra;
+    }
+
     /** El día "AAAA-MM-DD", o null si no hay turno guardado. */
     static JSONObject dia(Context ctx, String clave) {
         JSONObject d = dias(ctx);
@@ -146,5 +164,6 @@ public final class WidgetDatos {
         }
         // widgets nuevos (hoy, semana, mes, agenda…): si alguno fallara, no afecta a la app ni a los demás
         try { WidgetsMas.actualizarTodos(ctx); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widgets nuevos", e); }
+        try { WidgetsVivos.actualizarTodos(ctx); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widgets tanda 2", e); }
     }
 }

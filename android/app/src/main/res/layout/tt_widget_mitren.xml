@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Mi tren en directo» (4×1): retraso y próxima parada del tren de hoy (Renfe, orientativo). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="vertical" android:padding="12dp" android:gravity="center_vertical">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+<TextView android:id="@+id/tw_tit" android:text="🚆 Mi tren en directo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="12sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
+<LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+<TextView android:id="@+id/tw_ret" android:text="—" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="20sp" android:textStyle="bold" android:maxLines="1" android:layout_marginRight="10dp"/>
+<TextView android:id="@+id/tw_pie" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#64748B" android:textSize="10sp" android:maxLines="1"/>
+</LinearLayout>
+<TextView android:id="@+id/tw_lin" android:text="Retraso y próxima parada de tu tren de hoy" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="11.5sp" android:maxLines="1" android:ellipsize="end"/>
+</LinearLayout>
+<TextView android:id="@+id/tw_ref" android:layout_width="36dp" android:layout_height="36dp" android:gravity="center" android:background="@drawable/tt_widget_boton" android:text="⟳" android:textColor="#CBD5E1" android:textSize="17sp" android:layout_marginLeft="8dp"/>
+</LinearLayout>
+</LinearLayout>

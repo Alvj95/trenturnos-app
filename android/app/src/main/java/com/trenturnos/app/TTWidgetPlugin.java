@@ -22,7 +22,10 @@ public class TTWidgetPlugin extends Plugin {
             return;
         }
         WidgetDatos.guardar(getContext(), datos);
-        call.resolve();
+        // Qué widgets que necesitan cálculos de la app están puestos (para no calcular de más).
+        JSObject r = new JSObject();
+        try { r.put("puestos", WidgetsVivos.puestos(getContext())); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widgets puestos", e); }
+        call.resolve(r);
     }
 
     @PluginMethod
