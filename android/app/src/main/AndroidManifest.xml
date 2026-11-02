@@ -56,6 +56,105 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/tt_widget_proximos_info" />
         </receiver>
+        <receiver
+            android:name=".WidgetsMas$Hoy"
+            android:exported="false"
+            android:label="@string/tt_widget_hoy">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_hoy_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Semana"
+            android:exported="false"
+            android:label="@string/tt_widget_semana">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_semana_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Mes"
+            android:exported="false"
+            android:label="@string/tt_widget_mes">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_mes_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Agenda"
+            android:exported="false"
+            android:label="@string/tt_widget_agenda">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_agenda_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Descanso"
+            android:exported="false"
+            android:label="@string/tt_widget_descanso">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_descanso_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Vacaciones"
+            android:exported="false"
+            android:label="@string/tt_widget_vacaciones">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_vacaciones_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Presentacion"
+            android:exported="false"
+            android:label="@string/tt_widget_presentacion">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_presentacion_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Reloj"
+            android:exported="false"
+            android:label="@string/tt_widget_reloj">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_reloj_info" />
+        </receiver>
+        <receiver
+            android:name=".WidgetsMas$Libres"
+            android:exported="false"
+            android:label="@string/tt_widget_libres">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tt_widget_libres_info" />
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

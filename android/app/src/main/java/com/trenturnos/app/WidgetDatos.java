@@ -144,5 +144,6 @@ public final class WidgetDatos {
         for (int id : mgr.getAppWidgetIds(new ComponentName(ctx, ProximosWidget.class))) {
             ProximosWidget.pintar(ctx, mgr, id);
         }
+        WidgetsMas.actualizarTodos(ctx); // widgets nuevos (hoy, semana, mes, agenda…)
     }
 }

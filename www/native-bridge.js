@@ -294,7 +294,9 @@
       if (t.turnoPisado && t.turnoPisado.numTren) f.push(['Turno debajo', 'Tren ' + t.turnoPisado.numTren + (t.contarPisado ? ' · cuenta' : '')]);
       return { k: k, c: corto, i: info.ico || '📅', t: titulo,
         s: tren ? 'Tren ' + tren + (vuelta ? ' / ' + vuelta : '') + (t.linea ? ' · ' + t.linea : '') : titulo,
-        r: trayecto || titulo, h: t.hF || '', f: f, n: t.notas ? String(t.notas) : '' };
+        r: trayecto || titulo, h: t.hF || '', f: f, n: t.notas ? String(t.notas) : '',
+        // para los widgets nuevos (hoy, agenda, presentación…): tren de vuelta, fin del turno y estación de salida
+        v: vuelta, hl: t.hL2 || t.hL || '', sl: t.sal || '' };
     }
     function wgDatos() {
       var TV = window.TV || {}, dias = {};

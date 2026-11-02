@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Agenda de la semana» (4×3): hoy y los 6 días siguientes. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="vertical" android:padding="10dp" >
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Esta semana" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🚆 TRENTURNOS" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold"/></LinearLayout>
+<LinearLayout android:id="@+id/tw_a0" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad0" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_a1" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad1" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_a2" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad2" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_a3" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad3" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_a4" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad4" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_a5" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad5" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at5" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_a6" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+ <TextView android:id="@+id/tw_ad6" android:layout_width="56dp" android:layout_height="wrap_content" android:textColor="#FCD34D" android:textSize="11sp" android:textStyle="bold"/>
+ <TextView android:id="@+id/tw_at6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textColor="#F8FAFC" android:textSize="12sp"/>
+ <TextView android:id="@+id/tw_ah6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="11sp"/>
+</LinearLayout>
+</LinearLayout>
