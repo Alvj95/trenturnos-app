@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Hoy» (2×2): tu turno de hoy. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="vertical" android:padding="12dp" >
+<TextView android:id="@+id/tw_fecha" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" android:textStyle="bold" />
+<TextView android:id="@+id/tw_tren" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="22sp" android:textStyle="bold" android:maxLines="2" android:layout_marginTop="2dp"/>
+<TextView android:id="@+id/tw_horas" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="12sp" android:maxLines="2" android:layout_marginTop="2dp"/>
+<TextView android:id="@+id/tw_tipo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="10sp" android:textStyle="bold" android:background="@drawable/tt_cel_nada" android:paddingLeft="7dp" android:paddingRight="7dp" android:paddingTop="2dp" android:paddingBottom="2dp" android:layout_marginTop="6dp"/>
+</LinearLayout>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Semana» (4×1): los 7 días de esta semana. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="horizontal" android:padding="6dp" >
+<LinearLayout android:id="@+id/tw_s0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_s1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_s2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_s3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_s4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_s5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/tw_s6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_margin="2dp" android:background="@drawable/tt_cel_nada" android:gravity="center" android:orientation="vertical">
+ <TextView android:id="@+id/tw_sd6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sn6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="14sp" android:textStyle="bold" />
+ <TextView android:id="@+id/tw_sc6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CBD5E1" android:textSize="8.5sp" android:textStyle="bold" android:maxLines="1"/>
+</LinearLayout>
+</LinearLayout>

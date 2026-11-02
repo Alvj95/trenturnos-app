@@ -9,4 +9,22 @@
     <string name="tt_widget_calendario_desc">Tu mes con los turnos. Toca un día para ver el turno.</string>
     <string name="tt_widget_proximos">Próximos turnos</string>
     <string name="tt_widget_proximos_desc">Hoy y los próximos días de un vistazo.</string>
+    <string name="tt_widget_hoy">Hoy</string>
+    <string name="tt_widget_hoy_desc">Tu turno de hoy en grande.</string>
+    <string name="tt_widget_semana">Semana</string>
+    <string name="tt_widget_semana_desc">Los 7 días de esta semana con colores.</string>
+    <string name="tt_widget_mes">Mes compacto</string>
+    <string name="tt_widget_mes_desc">El mes en pequeño, solo con colores.</string>
+    <string name="tt_widget_agenda">Agenda de la semana</string>
+    <string name="tt_widget_agenda_desc">Hoy y los 6 días siguientes, con tren y horas.</string>
+    <string name="tt_widget_descanso">Cuenta atrás de descanso</string>
+    <string name="tt_widget_descanso_desc">Cuántos días faltan para tu próximo descanso.</string>
+    <string name="tt_widget_vacaciones">Cuenta atrás de vacaciones</string>
+    <string name="tt_widget_vacaciones_desc">Cuántos días faltan para tus vacaciones.</string>
+    <string name="tt_widget_presentacion">Próxima presentación</string>
+    <string name="tt_widget_presentacion_desc">Cuánto falta para presentarte, en cuenta atrás.</string>
+    <string name="tt_widget_reloj">Reloj con tu turno</string>
+    <string name="tt_widget_reloj_desc">La hora en grande con tu turno de hoy y el de mañana.</string>
+    <string name="tt_widget_libres">Días libres del mes</string>
+    <string name="tt_widget_libres_desc">Descansos y vacaciones que te quedan este mes.</string>
 </resources>

@@ -144,5 +144,7 @@ public final class WidgetDatos {
         for (int id : mgr.getAppWidgetIds(new ComponentName(ctx, ProximosWidget.class))) {
             ProximosWidget.pintar(ctx, mgr, id);
         }
+        // widgets nuevos (hoy, semana, mes, agenda…): si alguno fallara, no afecta a la app ni a los demás
+        try { WidgetsMas.actualizarTodos(ctx); } catch (Exception e) { android.util.Log.w("TrenTurnos", "widgets nuevos", e); }
     }
 }

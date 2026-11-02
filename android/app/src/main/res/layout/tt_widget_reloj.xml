@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Reloj con tu turno» (4×1). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tw_raiz" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/tt_widget_fondo" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
+<TextClock android:id="@+id/tw_reloj" android:layout_width="wrap_content" android:layout_height="wrap_content" android:format12Hour="HH:mm" android:format24Hour="HH:mm" android:fontFamily="sans-serif-light" android:textColor="#F8FAFC" android:textSize="38sp"/>
+<LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="12dp" android:orientation="vertical">
+<TextView android:id="@+id/tw_fecha" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" android:maxLines="1"/>
+<TextView android:id="@+id/tw_turno" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F8FAFC" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
+<TextView android:id="@+id/tw_man" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" android:textSize="10.5sp" android:maxLines="1" android:ellipsize="end"/>
+</LinearLayout>
+</LinearLayout>
