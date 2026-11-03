@@ -1355,6 +1355,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 .alarm-main-row{padding:12px 0;}
 .alarm-sub-row{padding:8px 0 8px 10px;opacity:.6;pointer-events:none;}
 .alarm-sw-active .alarm-sub-row{opacity:1;pointer-events:auto;}
+.hoy-fichar{display:block;width:calc(100% - 24px);margin:10px 12px 12px;border:0;border-radius:12px;padding:11px;background:#16A34A;color:#fff;font-weight:900;font-size:14px;font-family:inherit;cursor:pointer}
+.hoy-fichar:active{transform:scale(.98)}
 .alarm-title{font-size:12px;font-weight:700;color:var(--tx);}
 .alarm-sub{font-size:10px;color:var(--tx3);margin-top:2px;}
 /* Toggle switch */
@@ -4937,6 +4939,18 @@ function megafoniaDingDong(ctx, t){
             </div>
             <label class="alarm-toggle alarm-toggle-sm">
               <input type="checkbox" id="alarm-fichar" onchange="toggleAlarmFichar(this.checked)" checked>
+              <span class="alarm-slider"></span>
+            </label>
+          </div>
+
+          <!-- NUEVO — Subopción: abrir la página de fichaje al tocar la alarma -->
+          <div class="alarm-row alarm-sub-row" id="alarm-opt-abrirfichaje">
+            <div>
+              <div class="alarm-title">🕒 Abrir el fichaje al tocar la alarma</div>
+              <div class="alarm-sub">Abre la página de fichaje dentro de la app</div>
+            </div>
+            <label class="alarm-toggle alarm-toggle-sm">
+              <input type="checkbox" id="alarm-abrirfichaje" onchange="toggleAlarmAbrirFichaje(this.checked)" checked>
               <span class="alarm-slider"></span>
             </label>
           </div>
@@ -18414,6 +18428,8 @@ function loadAjUI(){
     if(aSw)  aSw.checked  = !!AJ.alarmas.activas;
     if(aFi)  aFi.checked  = AJ.alarmas.fichar!==false;
     if(aSa)  aSa.checked  = AJ.alarmas.salida!==false;
+    var aAf = document.getElementById('alarm-abrirfichaje');
+    if(aAf)  aAf.checked  = AJ.alarmas.abrirFichaje!==false;
     if(aLbl){ aLbl.textContent=AJ.alarmas.activas?'Activadas':'Desactivadas';
               aLbl.style.color=AJ.alarmas.activas?'var(--green2)':'var(--tx3)';}
   }
@@ -21430,7 +21446,10 @@ function renderPanelHoy(){
     +(t.nocturno?'<span style="font-size:14px">🌙</span>':'')
     +(t.plusIntlAuto?'<span style="font-size:14px">🌍</span>':'')
     +'</div>'
-    +(rows?'<div class="hoy-cards">'+rows+'</div>':'<div class="hoy-vacio">'+ti.lbl+' registrado</div>');
+    +(rows?'<div class="hoy-cards">'+rows+'</div>':'<div class="hoy-vacio">'+ti.lbl+' registrado</div>')
+    // NUEVO — botón para fichar (abre la página de fichaje dentro de la app)
+    +((['ordinario','trabajado','reserva'].indexOf(t.tipo)>-1 && t.hF)
+      ? '<button type="button" class="hoy-fichar" onclick="abrirFichaje()">🕒 Fichar</button>' : '');
 }
 
 
@@ -22006,7 +22025,10 @@ function alarmaNotificar(titulo, cuerpo, idUnico){
 
   // Notificación del SO
   if(window.Notification && Notification.permission==='granted'){
-    try{ new Notification(titulo, {body:cuerpo, icon:'', tag:idUnico}); }catch(e){}
+    try{ var nAl = new Notification(titulo, {body:cuerpo, icon:'', tag:idUnico});
+      // NUEVO — tocar el aviso de fichar abre el fichaje (si está activado en Ajustes)
+      if(/-fichar$/.test(idUnico) && !(AJ.alarmas && AJ.alarmas.abrirFichaje===false)) nAl.onclick = function(){ try{ window.focus(); }catch(e){} abrirFichaje(); };
+    }catch(e){}
   }
 
   // Toast visual siempre
@@ -22189,6 +22211,28 @@ function toggleAlarmas(activo){
 function toggleAlarmFichar(v){
   if(!AJ.alarmas) AJ.alarmas={activas:false,fichar:true,salida:true};
   AJ.alarmas.fichar=v;
+  localStorage.setItem('aj5',JSON.stringify(AJ));
+  if(typeof _autoGuardarNubeDebounced==='function') _autoGuardarNubeDebounced();
+}
+
+/* NUEVO — Fichaje (maqueta aprobada): la página de fichaje de la empresa.
+   En la app de Android se abre en una pantalla propia dentro de TrenTurnos (FichajeActivity);
+   en la web, en una pestaña nueva. TrenTurnos no lee ni guarda el usuario ni la contraseña. */
+var TT_FICHAJE_URL = 'https://cp.serveo.com/wfp_portal_empleados.aspx?Id=SABfichajetripulantes#Again-No-back-button';
+function abrirFichaje(){
+  try{
+    var C = window.Capacitor, P = C && C.Plugins;
+    if(P && P.TTFichaje && C.isNativePlatform && C.isNativePlatform()){
+      P.TTFichaje.abrir().catch(function(){ window.open(TT_FICHAJE_URL, '_blank'); });
+      return;
+    }
+  }catch(e){}
+  window.open(TT_FICHAJE_URL, '_blank', 'noopener');
+}
+window.abrirFichaje = abrirFichaje;
+function toggleAlarmAbrirFichaje(v){
+  if(!AJ.alarmas) AJ.alarmas={activas:false,fichar:true,salida:true};
+  AJ.alarmas.abrirFichaje=v;
   localStorage.setItem('aj5',JSON.stringify(AJ));
   if(typeof _autoGuardarNubeDebounced==='function') _autoGuardarNubeDebounced();
 }
