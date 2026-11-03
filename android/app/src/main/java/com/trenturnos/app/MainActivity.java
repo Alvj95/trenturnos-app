@@ -32,6 +32,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(TTWidgetPlugin.class);
         // Aviso de versión nueva de Google Play (ver TTActualizarPlugin).
         registerPlugin(TTActualizarPlugin.class);
+        // Fichaje dentro de la app (ver FichajeActivity).
+        registerPlugin(TTFichajePlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();

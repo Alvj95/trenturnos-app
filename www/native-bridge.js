@@ -180,7 +180,7 @@
         var toma = new Date(d); toma.setHours(h[0], h[1], 0, 0);
         if (AJ.alarmas.fichar !== false && ['ordinario', 'trabajado', 'reserva'].indexOf(t.tipo) > -1) {
           out.push({ id: ID_AL + i * 2, at: new Date(toma.getTime() - 5 * 60000),
-            title: '⏰ Fichar en ' + t.hF, body: 'Turno ' + t.tipo + ' · Firma en 5 minutos' });
+            title: '⏰ Fichar en ' + t.hF, body: 'Turno ' + t.tipo + ' · Firma en 5 minutos', fichar: true });
         }
         if (AJ.alarmas.salida !== false && ['ordinario', 'trabajado'].indexOf(t.tipo) > -1 && t.sal && AJ.base && !alMismaEst(t.sal, AJ.base)) {
           out.push({ id: ID_AL + i * 2 + 1, at: new Date(toma.getTime() - 45 * 60000),
@@ -220,10 +220,12 @@
           window.__alarmasNativas = false; alN = 0;
           return alBorrarProgramadas().then(alPintarEstado);
         }
-        return alCanal().then(alBorrarProgramadas).then(function () {
+        return alCanal().then(alAcciones).then(alBorrarProgramadas).then(function () {
           if (!lista.length) return null;
           return LocalNotifications.schedule({ notifications: lista.map(function (a) {
-            return { id: a.id, title: a.title, body: a.body, channelId: CANAL_AL, schedule: { at: a.at, allowWhileIdle: true } };
+            var n = { id: a.id, title: a.title, body: a.body, channelId: CANAL_AL, schedule: { at: a.at, allowWhileIdle: true } };
+            if (a.fichar) { n.actionTypeId = ACC_FICHAR; n.extra = { tt: 'fichar' }; }
+            return n;
           }) });
         }).then(function (r) {
           window.__alarmasNativas = true; alN = lista.length; alInexacta = !!(r && r.warning);
@@ -232,6 +234,26 @@
       }).catch(function () { window.__alarmasNativas = false; alPintarEstado(); });
     }
     function alPronto() { clearTimeout(alTimer); alTimer = setTimeout(alProgramar, 1200); }
+    // ── Fichaje desde la alarma: botón «🕒 Fichar ahora» en la notificación de fichar.
+    // Al tocarlo (o al tocar la notificación, si está activado en Ajustes) se abre la página
+    // de fichaje dentro de la app (TTFichaje → FichajeActivity).
+    var ACC_FICHAR = 'tt_fichar', alAccionesYa = null;
+    function alAcciones() {
+      if (alAccionesYa) return alAccionesYa;
+      alAccionesYa = (LocalNotifications.registerActionTypes ? LocalNotifications.registerActionTypes({ types: [{ id: ACC_FICHAR,
+        actions: [{ id: 'fichar', title: '🕒 Fichar ahora', foreground: true }] }] }) : Promise.resolve()).catch(function () {});
+      return alAccionesYa;
+    }
+    if (LocalNotifications.addListener) LocalNotifications.addListener('localNotificationActionPerformed', function (ev) {
+      try {
+        var n = ev && ev.notification, ex = n && n.extra;
+        if (!ex || ex.tt !== 'fichar') return;
+        var aj = (window.AJ && AJ.alarmas) || {};
+        if (ev.actionId === 'fichar' || (ev.actionId === 'tap' && aj.abrirFichaje !== false)) {
+          if (P.TTFichaje) P.TTFichaje.abrir().catch(function () {});
+        }
+      } catch (e) {}
+    });
     window.__alarmasReprogramar = alPronto;
     window.addEventListener('load', function () {
       // Cambios de turnos o de ajustes de alarma → se reprograman.
@@ -247,7 +269,9 @@
         LocalNotifications.checkPermissions().then(function (p) {
           if (p.display !== 'granted') { if (window.toast) toast('⚠️ Activa las notificaciones de TrenTurnos en Android'); return; }
           return alCanal().then(function () {
-            return LocalNotifications.schedule({ notifications: [{ id: ID_AL + 999, title: '⏰ Prueba de alarma', body: 'Así te llegará el aviso para fichar', channelId: CANAL_AL, schedule: { at: new Date(Date.now() + 10000), allowWhileIdle: true } }] });
+            return alAcciones().then(function () {
+              return LocalNotifications.schedule({ notifications: [{ id: ID_AL + 999, title: '⏰ Prueba de alarma', body: 'Así te llegará el aviso para fichar · toca «Fichar ahora» para probar el fichaje', channelId: CANAL_AL, schedule: { at: new Date(Date.now() + 10000), allowWhileIdle: true }, actionTypeId: ACC_FICHAR, extra: { tt: 'fichar' } }] });
+            });
           }).then(function () { if (window.toast) toast('🔔 En 10 s llega una notificación de prueba: puedes bloquear el móvil'); });
         }).catch(function () {});
       };
