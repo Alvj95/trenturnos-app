@@ -41,6 +41,16 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Alarma de fichar la salida (con el retraso del tren) y su reprogramación al reiniciar -->
+        <receiver
+            android:name=".FichajeSalida$Receptor"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Widgets de la pantalla de inicio -->
         <receiver
             android:name=".CalendarioWidget"

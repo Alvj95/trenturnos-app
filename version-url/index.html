@@ -1357,6 +1357,25 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 .alarm-sw-active .alarm-sub-row{opacity:1;pointer-events:auto;}
 .hoy-fichar{display:block;width:calc(100% - 24px);margin:10px 12px 12px;border:0;border-radius:12px;padding:11px;background:#16A34A;color:#fff;font-weight:900;font-size:14px;font-family:inherit;cursor:pointer}
 .hoy-fichar:active{transform:scale(.98)}
+#fich-q{position:fixed;inset:0;z-index:2147482000;background:rgba(2,6,23,.62);display:flex;align-items:center;justify-content:center;padding:20px}
+#fich-q .fich-q-c{width:100%;max-width:400px;background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:20px;padding:18px 16px 12px;color:var(--tx,#F8FAFC)}
+#fich-q .fich-q-t{font-size:16px;margin:8px 0 4px}#fich-q .fich-q-s{font-size:12.5px;color:var(--tx2,#CBD5E1)}
+#fich-q .fich-q-b{display:flex;gap:10px;margin-top:14px}#fich-q .fich-q-b button{flex:1;border-radius:13px;padding:13px;font-weight:800;font-size:14.5px;font-family:inherit;border:1.5px solid var(--div,#334155);background:none;color:var(--tx2,#CBD5E1)}
+#fich-q .fich-q-b .si{background:var(--acc,#2563EB);border-color:var(--acc,#2563EB);color:#fff}
+#fich-q .fich-q-o{display:block;margin:10px auto 0;background:none;border:0;color:var(--tx3,#94A3B8);font-size:12.5px;font-family:inherit;text-decoration:underline}
+.hoy-fich-est{font-size:12px;margin:10px 12px 0}
+.hoy-ctrl{display:block;width:calc(100% - 24px);margin:0 12px 12px;border:1px solid var(--div,#1E3350);border-radius:12px;padding:10px;background:var(--s2,#132236);color:var(--tx2,#CBD5E1);font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer}
+#fich-ov{display:none;position:fixed;inset:0;z-index:2147480000;background:var(--bg,#07111F);color:var(--tx,#F8FAFC);flex-direction:column}
+#fich-ov.on{display:flex}
+#fich-ov .fich-hd{display:flex;align-items:center;padding:14px 14px 8px}#fich-ov .fich-hd b{flex:1;font-size:17px}
+#fich-ov .fich-x{width:36px;height:36px;border-radius:10px;border:0;background:var(--s2,#132236);color:var(--tx,#fff);font-size:16px}
+#fich-ov .fich-mes{display:flex;align-items:center;justify-content:space-between;padding:0 10px 8px}#fich-ov .fich-mes button{background:none;border:0;color:var(--tx2,#CBD5E1);font-size:22px;padding:2px 12px}#fich-ov .fich-mes button:disabled{opacity:.25}
+#fich-ov .fich-res{display:flex;gap:6px;padding:0 14px 10px}#fich-ov .fich-res div{flex:1;background:var(--s2,#132236);border-radius:10px;padding:7px;text-align:center;font-size:10.5px;color:var(--tx3,#94A3B8)}#fich-ov .fich-res b{display:block;font-size:16px;color:var(--tx,#fff)}
+#fich-ov .fich-lista{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#fich-ov .fich-l{display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border:0;border-top:1px solid var(--div,#1E3350);background:none;color:var(--tx,#F8FAFC);font-size:12.5px;font-family:inherit;text-align:left}
+#fich-ov .fich-d{width:52px;flex:none;font-weight:900;color:#FCD34D;font-size:11.5px}#fich-ov .fich-c{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#fich-ov .fich-c i{font-style:normal;color:var(--tx3,#94A3B8)}
+#fich-ov .fich-pie,#fich-ov .fich-vacio{padding:12px 14px 24px;font-size:11px;color:var(--tx3,#94A3B8);line-height:1.45}
+
 .alarm-title{font-size:12px;font-weight:700;color:var(--tx);}
 .alarm-sub{font-size:10px;color:var(--tx3);margin-top:2px;}
 /* Toggle switch */
@@ -4934,11 +4953,23 @@ function megafoniaDingDong(ctx, t){
           <!-- Subopción: Fichar -->
           <div class="alarm-row alarm-sub-row" id="alarm-opt-fichar">
             <div>
-              <div class="alarm-title">⏰ Fichar</div>
-              <div class="alarm-sub">5 min antes · Ordinario / Trabajado / Reserva</div>
+              <div class="alarm-title">⏰ Fichar entrada</div>
+              <div class="alarm-sub">5 min antes de la toma · Ordinario / Trabajado / Reserva / Vuelta de pernocta</div>
             </div>
             <label class="alarm-toggle alarm-toggle-sm">
               <input type="checkbox" id="alarm-fichar" onchange="toggleAlarmFichar(this.checked)" checked>
+              <span class="alarm-slider"></span>
+            </label>
+          </div>
+
+          <!-- NUEVO — Subopción: fichar la salida al acabar el deje -->
+          <div class="alarm-row alarm-sub-row" id="alarm-opt-salidafichaje">
+            <div>
+              <div class="alarm-title">🕒 Fichar salida (deje)</div>
+              <div class="alarm-sub">Al acabar el deje: +15 fuera de base, +20 en base. Con retraso, se aplaza sola</div>
+            </div>
+            <label class="alarm-toggle alarm-toggle-sm">
+              <input type="checkbox" id="alarm-salidafichaje" onchange="toggleAlarmSalidaFichaje(this.checked)" checked>
               <span class="alarm-slider"></span>
             </label>
           </div>
@@ -4969,6 +5000,7 @@ function megafoniaDingDong(ctx, t){
 
           <!-- Botón de prueba -->
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--div)">
+            <button onclick="abrirControlFichaje()" class="hoy-ctrl" style="width:100%;margin:0 0 8px">📋 Control de fichaje</button>
             <button onclick="alarmaTest()" class="alarm-test-btn">🔔 Probar sonido de alarma</button>
             <div style="font-size:9px;color:var(--tx3);margin-top:5px;text-align:center">Toca para verificar que el audio funciona en tu móvil</div>
           </div>
@@ -18430,6 +18462,8 @@ function loadAjUI(){
     if(aSa)  aSa.checked  = AJ.alarmas.salida!==false;
     var aAf = document.getElementById('alarm-abrirfichaje');
     if(aAf)  aAf.checked  = AJ.alarmas.abrirFichaje!==false;
+    var aSf = document.getElementById('alarm-salidafichaje');
+    if(aSf)  aSf.checked  = AJ.alarmas.salidaFichaje!==false;
     if(aLbl){ aLbl.textContent=AJ.alarmas.activas?'Activadas':'Desactivadas';
               aLbl.style.color=AJ.alarmas.activas?'var(--green2)':'var(--tx3)';}
   }
@@ -21448,8 +21482,9 @@ function renderPanelHoy(){
     +'</div>'
     +(rows?'<div class="hoy-cards">'+rows+'</div>':'<div class="hoy-vacio">'+ti.lbl+' registrado</div>')
     // NUEVO — botón para fichar (abre la página de fichaje dentro de la app)
-    +((['ordinario','trabajado','reserva'].indexOf(t.tipo)>-1 && t.hF)
-      ? '<button type="button" class="hoy-fichar" onclick="abrirFichaje()">🕒 Fichar</button>' : '');
+    +((typeof fichPlan==='function' && fichPlan(k))
+      ? fichTxtHoy(k)+'<button type="button" class="hoy-fichar" onclick="abrirFichaje()">🕒 Fichar</button>'
+        +'<button type="button" class="hoy-ctrl" onclick="abrirControlFichaje()">📋 Control de fichaje</button>' : '');
 }
 
 
@@ -22027,7 +22062,7 @@ function alarmaNotificar(titulo, cuerpo, idUnico){
   if(window.Notification && Notification.permission==='granted'){
     try{ var nAl = new Notification(titulo, {body:cuerpo, icon:'', tag:idUnico});
       // NUEVO — tocar el aviso de fichar abre el fichaje (si está activado en Ajustes)
-      if(/-fichar$/.test(idUnico) && !(AJ.alarmas && AJ.alarmas.abrirFichaje===false)) nAl.onclick = function(){ try{ window.focus(); }catch(e){} abrirFichaje(); };
+      if(/-fichar(-salida)?$/.test(idUnico) && !(AJ.alarmas && AJ.alarmas.abrirFichaje===false)) nAl.onclick = function(){ try{ window.focus(); }catch(e){} abrirFichaje(); };
     }catch(e){}
   }
 
@@ -22099,7 +22134,7 @@ function alarmaCheck(){
   // 2. ALARMA 1 — Fichar (5 min antes de hF)
   // Tipos elegibles: ordinario, trabajado, reserva
   if(AJ.alarmas.fichar){
-    var tiposF = ['ordinario','trabajado','reserva'];
+    var tiposF = ['ordinario','trabajado','reserva','vuelta-pernocta'];
     var elegible = false;
     for(var ii=0; ii<tiposF.length; ii++){
       if(t.tipo===tiposF[ii]){ elegible=true; break; }
@@ -22119,6 +22154,16 @@ function alarmaCheck(){
         }
       }
     }
+  }
+
+  // NUEVO — Fichar salida al acabar el deje (en la web, a la hora prevista)
+  if(AJ.alarmas.salidaFichaje!==false && typeof fichPlan==='function'){
+    [-1,0].forEach(function(dd){
+      var dx=new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate()+dd), kx=dx.getFullYear()+'-'+pad(dx.getMonth()+1)+'-'+pad(dx.getDate()), px=fichPlan(kx);
+      if(!px||px.s==null||px.sDia!==-dd) return;
+      var dif=nowM-px.s;
+      if(dif>=0&&dif<=3) alarmaNotificar('🕒 Fichar salida · '+fichHora(px.s), (px.tren?'Tren '+px.tren+' · ':'')+(px.deje?'deje '+(px.enBase?'en base':'fuera de base')+' '+px.deje+' min':'fin del turno'), kx+'-fichar-salida');
+    });
   }
 
   // 3. ALARMA 2 — Salida fuera de base (45 min antes de hF si es fuera de base)
@@ -22227,14 +22272,202 @@ function abrirFichaje(){
       return;
     }
   }catch(e){}
+  try{ sessionStorage.setItem('fichAbierto', String(Date.now())); }catch(e){}
   window.open(TT_FICHAJE_URL, '_blank', 'noopener');
 }
+// Web: al volver a TrenTurnos tras abrir el fichaje en otra pestaña, se pregunta si has fichado.
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) return;
+  var t=0; try{ t=+sessionStorage.getItem('fichAbierto')||0; }catch(e){}
+  if(t && Date.now()-t>3000){ try{ sessionStorage.removeItem('fichAbierto'); }catch(e){} if(window.fichPreguntar) fichPreguntar(t); }
+});
 window.abrirFichaje = abrirFichaje;
 function toggleAlarmAbrirFichaje(v){
   if(!AJ.alarmas) AJ.alarmas={activas:false,fichar:true,salida:true};
   AJ.alarmas.abrirFichaje=v;
   localStorage.setItem('aj5',JSON.stringify(AJ));
   if(typeof _autoGuardarNubeDebounced==='function') _autoGuardarNubeDebounced();
+}
+function toggleAlarmSalidaFichaje(v){
+  if(!AJ.alarmas) AJ.alarmas={activas:false,fichar:true,salida:true};
+  AJ.alarmas.salidaFichaje=v;
+  localStorage.setItem('aj5',JSON.stringify(AJ));
+  if(typeof _autoGuardarNubeDebounced==='function') _autoGuardarNubeDebounced();
+}
+
+/* ═══ NUEVO — Fichaje: horas que tocan, «¿Has fichado?» y Control de fichaje (maqueta aprobada) ═══
+   · Entrada: a la hora de toma (la alarma suena 5 min antes). Días: ordinario, trabajado, reserva y
+     vuelta de pernocta.
+   · Salida: al acabar el deje. Ida y vuelta el mismo día: solo al volver a base (+20). Pernocta: el día
+     de la ida al llegar al destino (+15) y el de la vuelta al llegar a base (+20). Turno del horario
+     individual (PDF): su hora final ya lleva el deje (+0). Reserva sin pinchar: a la hora fin, sin deje.
+     Con retraso, en la app de Android la alarma se aplaza sola (FichajeSalida.java).
+   · Lo que fichas se apunta en AJ.fichajes = { 'AAAA-MM-DD': { e:'06:36', s:'18:03' } } (se guarda con
+     tus ajustes y en la copia de la nube). El fichaje de la empresa (PDF) queda para más adelante. */
+var FICH_TIPOS = ['ordinario','trabajado','reserva','vuelta-pernocta'];
+function fichMin(h){ var m=/(\d{1,2}):(\d{2})/.exec(String(h||'')); return m?(+m[1])*60+(+m[2]):null; }
+function fichHora(x){ x=((x%1440)+1440)%1440; return ('0'+Math.floor(x/60)).slice(-2)+':'+('0'+(x%60)).slice(-2); }
+function fichNum(n){ return String(n||'').replace(/\D/g,'').replace(/^0+/,''); }
+function fichMismaEst(a,b){ function n(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,''); } a=n(a); b=n(b); return !!a&&!!b&&(a===b||a.indexOf(b)===0||b.indexOf(a)===0); }
+// Lo que toca fichar un día: { e:min, s:min, sDia:0|1, tren, llega:min, llegaDia, deje, enBase, resumen, pern } o null.
+function fichPlan(k){
+  var t=(typeof TV!=='undefined'&&TV[k])||null; if(!t||FICH_TIPOS.indexOf(t.tipo)<0) return null;
+  var p={ pern: t.tipo==='vuelta-pernocta'||t.modo==='pernocta'||t.modo==='pernocta3', tren:'', llega:null, llegaDia:0, deje:0, enBase:false };
+  if(t.tipo==='reserva'){
+    p.e=fichMin(t.reservaHoraToma||t.hF);
+    var fin=fichMin(t.reservaHoraLlegada||t.hL);
+    if(fin==null&&p.e!=null) fin=p.e+480; // 8 horas
+    p.s=fin; p.resumen='Reserva';
+  } else {
+    p.e=fichMin(t.hF);
+    var V=[]; try{ if(typeof rtViajesDia==='function') V=rtViajesDia(k).filter(function(v){ return v&&fichNum(v.tren)&&fichMin(v.llega)!=null; }); }catch(e){ V=[]; }
+    if(V.length){
+      var v=V[V.length-1]; v.fecha=k;
+      var d=0; try{ d=(typeof rtDeje==='function'?rtDeje(v).d:0)||0; }catch(e){}
+      p.tren=fichNum(v.tren); p.llega=fichMin(v.llega); p.deje=d; p.enBase=!!v.en_base; p.s=p.llega+d;
+      p.resumen=V.map(function(x){ return fichNum(x.tren); }).filter(function(x,i,a){ return a.indexOf(x)===i; }).join('/');
+    } else {
+      var hl=fichMin(t.hL2||t.hL), base=(typeof AJ!=='undefined'&&AJ.base)||'';
+      var enBase=fichMismaEst(t.lle2||t.lle,base)||(!!t.numTrenVuelta&&!p.pern);
+      var dj=(t.cargadoDesdePdf||t.dejeIncluido)?0:(enBase?20:15);
+      p.enBase=enBase; p.deje=dj; p.s=hl==null?null:hl+dj;
+      p.resumen=[fichNum(t.numTren),fichNum(t.numTrenVuelta)].filter(Boolean).join('/')||((typeof TIPO_INFO!=='undefined'&&TIPO_INFO[t.tipo]&&TIPO_INFO[t.tipo].lbl)||t.tipo);
+    }
+  }
+  if(p.e==null&&p.s==null) return null;
+  // Pasada la medianoche: la salida (o la llegada) es del día siguiente.
+  if(p.s!=null&&p.e!=null&&p.s<p.e){ p.sDia=1; }
+  if(p.s!=null&&p.s>=1440){ p.sDia=(p.sDia||0)+Math.floor(p.s/1440); p.s=p.s%1440; }
+  if(p.llega!=null&&p.e!=null&&p.llega<p.e) p.llegaDia=1;
+  p.sDia=p.sDia||0;
+  return p;
+}
+window.fichPlan=fichPlan;
+function fichFecha(k,dias,min){ var x=k.split('-').map(Number), d=new Date(x[0],x[1]-1,x[2]+(dias||0)); d.setHours(0,min||0,0,0); return d; }
+function fichReg(){ if(!AJ.fichajes||typeof AJ.fichajes!=='object') AJ.fichajes={}; return AJ.fichajes; }
+function fichGuardar(){
+  var R=fichReg(), lim=key(new Date().getFullYear()-1,new Date().getMonth()+1,new Date().getDate());
+  Object.keys(R).forEach(function(k){ if(k<lim||!R[k]||(!R[k].e&&!R[k].s)) delete R[k]; }); // solo el último año
+  localStorage.setItem('aj5',JSON.stringify(AJ));
+  if(typeof _autoGuardarNubeDebounced==='function') _autoGuardarNubeDebounced();
+  try{ renderPanelHoy(); }catch(e){}
+  if(document.getElementById('fich-ov')&&document.getElementById('fich-ov').classList.contains('on')) fichPintar();
+}
+function fichApuntar(k,cual,hora){ var R=fichReg(); R[k]=R[k]||{}; if(hora) R[k][cual]=hora; else delete R[k][cual]; fichGuardar(); }
+// ¿Entrada o salida? La que toca más cerca de esa hora (y que aún no esté apuntada).
+function fichAdivinar(ts){
+  var best=null, R=fichReg(), d0=new Date(ts);
+  for(var i=-1;i<=1;i++){
+    var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i), k=key(d.getFullYear(),d.getMonth()+1,d.getDate()), p=fichPlan(k);
+    if(!p) continue;
+    [['e',0,p.e],['s',p.sDia,p.s]].forEach(function(c){
+      if(c[2]==null) return;
+      var dist=Math.abs(ts-fichFecha(k,c[1],c[2]).getTime())+((R[k]&&R[k][c[0]])?36e6:0);
+      if(!best||dist<best.dist) best={k:k,cual:c[0],dist:dist};
+    });
+  }
+  if(!best||best.dist>6*3600e3){ var h=new Date(ts), kh=key(h.getFullYear(),h.getMonth()+1,h.getDate()); best={k:kh,cual:(R[kh]&&R[kh].e)?'s':'e'}; }
+  return best;
+}
+// Al volver de la página de fichaje: «¿Has fichado la entrada?»
+function fichPreguntar(ts){
+  try{
+    ts=+ts||Date.now(); if(Date.now()-ts>12*3600e3) return;
+    var g=fichAdivinar(ts), hora=fichHora(new Date(ts).getHours()*60+new Date(ts).getMinutes());
+    var old=document.getElementById('fich-q'); if(old) old.remove();
+    var o=document.createElement('div'); o.id='fich-q';
+    function pinta(){
+      var hoyK=key(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate());
+      var x=g.k.split('-'), dia=g.k===hoyK?'':' del '+['dom','lun','mar','mié','jue','vie','sáb'][new Date(+x[0],x[1]-1,+x[2]).getDay()]+' '+(+x[2]);
+      o.innerHTML='<div class="fich-q-c"><div style="font-size:28px">🕒</div>'
+        +'<div class="fich-q-t">¿Has fichado la <b>'+(g.cual==='e'?'entrada':'salida')+'</b>'+dia+'?</div>'
+        +'<div class="fich-q-s">Se apunta a las <b>'+hora+'</b> en tu Control de fichaje.</div>'
+        +'<div class="fich-q-b"><button type="button" data-a="no">No</button><button type="button" data-a="si" class="si">✅ Sí, fichado</button></div>'
+        +'<button type="button" data-a="otro" class="fich-q-o">Era la '+(g.cual==='e'?'salida':'entrada')+'</button></div>';
+    }
+    pinta();
+    o.addEventListener('click',function(ev){
+      var a=ev.target&&ev.target.getAttribute&&ev.target.getAttribute('data-a');
+      if(ev.target===o) a='no';
+      if(a==='otro'){ g.cual=g.cual==='e'?'s':'e'; pinta(); return; }
+      if(a==='si'){ fichApuntar(g.k,g.cual,hora); if(typeof toast==='function') toast('✅ '+(g.cual==='e'?'Entrada':'Salida')+' apuntada a las '+hora); }
+      if(a==='si'||a==='no') o.remove();
+    });
+    document.body.appendChild(o);
+  }catch(e){ console.warn('fichPreguntar',e); }
+}
+window.fichPreguntar=fichPreguntar;
+window.fichCerrarPregunta=function(){ var o=document.getElementById('fich-q'); if(o){ o.remove(); return true; } return false; };
+// Estado de un día para la tarjeta de hoy y el Control.
+function fichEstado(k){
+  var p=fichPlan(k); if(!p) return null;
+  var r=fichReg()[k]||{}, ahora=Date.now(), out={p:p,r:r,falta:0,pend:0};
+  [['e',0,p.e],['s',p.sDia,p.s]].forEach(function(c){
+    if(c[2]==null||r[c[0]]) return;
+    if(fichFecha(k,c[1],c[2]).getTime()+(c[0]==='e'?30:90)*60000<ahora) out.falta++; else out.pend++;
+  });
+  out.ico=out.falta?'⚠️':out.pend?'⏳':'✅';
+  return out;
+}
+function fichTxtHoy(k){
+  var st=fichEstado(k); if(!st) return '';
+  function una(c,n){ var v=st.r[c], pl=c==='e'?st.p.e:st.p.s;
+    return v?'<span style="color:var(--green2)">✅ '+n+' '+v+'</span>':'<span style="color:var(--tx3)">'+n+' pendiente'+(pl!=null?' ('+fichHora(pl)+')':'')+'</span>'; }
+  return '<div class="hoy-fich-est">'+una('e','Entrada')+' · '+una('s','Salida')+'</div>';
+}
+// ── Pantalla «📋 Control de fichaje» ──
+var FICH_MES=null;
+function abrirControlFichaje(){
+  var o=document.getElementById('fich-ov');
+  if(!o){ o=document.createElement('div'); o.id='fich-ov'; document.body.appendChild(o);
+    o.addEventListener('click',function(ev){
+      var a=ev.target.closest&&ev.target.closest('[data-f]'); if(!a) return;
+      var f=a.getAttribute('data-f');
+      if(f==='x') cerrarControlFichaje();
+      else if(f==='ant'||f==='sig'){ FICH_MES=new Date(FICH_MES.getFullYear(),FICH_MES.getMonth()+(f==='ant'?-1:1),1); fichPintar(); }
+      else fichEditar(f);
+    }); }
+  var h=new Date(); FICH_MES=new Date(h.getFullYear(),h.getMonth(),1);
+  o.classList.add('on'); fichPintar();
+}
+function cerrarControlFichaje(){ var o=document.getElementById('fich-ov'); if(o&&o.classList.contains('on')){ o.classList.remove('on'); return true; } return false; }
+window.abrirControlFichaje=abrirControlFichaje; window.cerrarControlFichaje=cerrarControlFichaje;
+function fichPintar(){
+  var o=document.getElementById('fich-ov'); if(!o) return;
+  var hoy=new Date(), y=FICH_MES.getFullYear(), m=FICH_MES.getMonth(), ult=new Date(y,m+1,0).getDate();
+  var esEste=y===hoy.getFullYear()&&m===hoy.getMonth(), futuro=new Date(y,m,1)>hoy, hasta=esEste?hoy.getDate():ult;
+  var DS=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'], filas='', ok=0, falta=0, pern=0;
+  for(var d=futuro?0:hasta; d>=1; d--){
+    var k=key(y,m+1,d), st=fichEstado(k), t=TV[k], ds=DS[new Date(y,m,d).getDay()]+' '+d, txt, ico;
+    if(!st){
+      var ti=t&&TIPO_INFO[t.tipo]; txt='<i>'+(ti?ti.lbl:(t?t.tipo:'Sin turno'))+'</i>'; ico='<span style="color:var(--tx3)">—</span>';
+    } else {
+      if(st.falta) falta++; else if(!st.pend) ok++; if(st.p.pern) pern++;
+      var v=function(c){ var x=st.r[c]; if(x) return x; var pl=c==='e'?st.p.e:st.p.s; if(pl==null) return '—';
+        var vencido=fichFecha(k,c==='e'?0:st.p.sDia,pl).getTime()+(c==='e'?30:90)*60000<Date.now();
+        return vencido?'<b style="color:var(--amber2)">falta</b>':'<i>pendiente</i>'; };
+      txt=(st.p.pern?'🌙 ':'')+st.p.resumen+' · E '+v('e')+' · S '+v('s'); ico=st.ico;
+    }
+    filas+='<button type="button" class="fich-l" data-f="'+k+'"><span class="fich-d">'+ds+'</span><span class="fich-c">'+txt+'</span><span>'+ico+'</span></button>';
+  }
+  o.innerHTML='<div class="fich-hd"><b>📋 Control de fichaje</b><button type="button" class="fich-x" data-f="x">✕</button></div>'
+    +'<div class="fich-mes"><button type="button" data-f="ant">‹</button><b>'+MESES[m]+' '+y+'</b><button type="button" data-f="sig"'+(esEste?' disabled':'')+'>›</button></div>'
+    +'<div class="fich-res"><div><b style="color:var(--green2)">'+ok+'</b>completos</div><div><b style="color:var(--amber2)">'+falta+'</b>con faltas</div><div><b>'+pern+'</b>pernoctas</div></div>'
+    +'<div class="fich-lista">'+(filas||'<div class="fich-vacio">Sin días este mes.</div>')
+    +'<div class="fich-pie">Toca un día para corregir la hora o apuntar un fichaje a mano. Se apunta lo que fichas desde TrenTurnos (al cerrar la página de fichaje te pregunta). Más adelante: comparar con el fichaje de la empresa.</div></div>';
+}
+async function fichEditar(k){
+  var r=fichReg()[k]||{}, p=fichPlan(k);
+  if(!p&&!r.e&&!r.s){ if(typeof toast==='function') toast('Ese día no tiene turno para fichar'); return; }
+  function ok(v){ return v===''||/^([01]?\d|2[0-3]):[0-5]\d$/.test(v); }
+  var e=await ttPrompt('Hora de ENTRADA fichada (HH:MM). Déjalo vacío para quitarla.'+(p&&p.e!=null?'\nTocaba a las '+fichHora(p.e)+'.':''), r.e||'');
+  if(e==null) return; e=String(e).trim();
+  if(!ok(e)){ ttAlert('⚠️ Escribe la hora así: 06:36'); return; }
+  var s=await ttPrompt('Hora de SALIDA fichada (HH:MM). Déjalo vacío para quitarla.'+(p&&p.s!=null?'\nTocaba a las '+fichHora(p.s)+'.':''), r.s||'');
+  if(s==null) return; s=String(s).trim();
+  if(!ok(s)){ ttAlert('⚠️ Escribe la hora así: 18:03'); return; }
+  function norm(v){ return v?('0'+v).slice(-5):''; }
+  var R=fichReg(); R[k]={}; if(e) R[k].e=norm(e); if(s) R[k].s=norm(s); fichGuardar();
 }
 
 function toggleAlarmSalida(v){
@@ -35398,6 +35631,9 @@ if(typeof window.renderDiaArea === 'function' && !window._renderDiaArea_ctWrappe
   var _ultimoAtrasInicio = 0;
   function visible(id){ var e=document.getElementById(id); return !!(e && getComputedStyle(e).display!=='none'); }
   function pantallaNuevaAtras(){
+    // Fichaje: la pregunta «¿Has fichado?» y el Control de fichaje
+    if(window.fichCerrarPregunta && window.fichCerrarPregunta()) return true;
+    if(window.cerrarControlFichaje && window.cerrarControlFichaje()) return true;
     // «Con quién viaja»: del mes al buscador, y luego se cierra
     if(window.cqvAtras && window.cqvAtras()) return true;
     // Aviso de retraso al llegar: se cierra como «Ahora no», pero sin apuntarlo — vuelve a salir la próxima vez.

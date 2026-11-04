@@ -178,7 +178,7 @@
         var t = TV[alClave(d)], h = t && alHora(t.hF);
         if (!t || !h) continue;
         var toma = new Date(d); toma.setHours(h[0], h[1], 0, 0);
-        if (AJ.alarmas.fichar !== false && ['ordinario', 'trabajado', 'reserva'].indexOf(t.tipo) > -1) {
+        if (AJ.alarmas.fichar !== false && ['ordinario', 'trabajado', 'reserva', 'vuelta-pernocta'].indexOf(t.tipo) > -1) {
           out.push({ id: ID_AL + i * 2, at: new Date(toma.getTime() - 5 * 60000),
             title: '⏰ Fichar en ' + t.hF, body: 'Turno ' + t.tipo + ' · Firma en 5 minutos', fichar: true });
         }
@@ -213,9 +213,31 @@
     window.__alarmaPermisoExacto = function () {
       if (LocalNotifications.changeExactNotificationSetting) LocalNotifications.changeExactNotificationSetting().then(function () { alProgramar(); }).catch(function () {});
     };
+    // ── Fichar la SALIDA al acabar el deje: la programa Android (FichajeSalida.java), que además
+    // mira el retraso del tren en Renfe y aplaza la alarma. Aquí solo se calcula la hora prevista.
+    function alSalidas(activas) {
+      if (!P.TTFichaje || !P.TTFichaje.programarSalidas) return Promise.resolve();
+      var out = [], AJ = window.AJ || {}, A = AJ.alarmas || {}, ahora = Date.now();
+      if (activas && A.salidaFichaje !== false && typeof window.fichPlan === 'function') {
+        for (var i = -1; i < DIAS_AL; i++) {
+          var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i);
+          var k = alClave(d), p = null;
+          try { p = window.fichPlan(k); } catch (e) { p = null; }
+          if (!p || p.s == null) continue;
+          var fin = new Date(d); fin.setDate(fin.getDate() + (p.sDia || 0)); fin.setHours(0, p.s, 0, 0);
+          if (fin.getTime() < ahora - 60000) continue;
+          var llega = 0;
+          if (p.tren && p.llega != null) { var l = new Date(d); l.setDate(l.getDate() + (p.llegaDia || 0)); l.setHours(0, p.llega, 0, 0); llega = l.getTime(); }
+          out.push({ id: 700 + (i + 1), k: k, fin: fin.getTime(), llega: llega, tren: p.tren || '', deje: p.deje || 0, base: !!p.enBase,
+            txt: p.tren ? '' : (p.resumen === 'Reserva' ? 'Fin de la reserva' : 'Fin del turno') });
+        }
+      }
+      return P.TTFichaje.programarSalidas({ lista: JSON.stringify(out), abrir: A.abrirFichaje !== false }).catch(function () {});
+    }
     function alProgramar() {
       return LocalNotifications.checkPermissions().then(function (p) {
         var lista = alCalcular(), on = window.AJ && AJ.alarmas && AJ.alarmas.activas;
+        alSalidas(p.display === 'granted' && on);
         if (p.display !== 'granted' || !on) {
           window.__alarmasNativas = false; alN = 0;
           return alBorrarProgramadas().then(alPintarEstado);
@@ -244,6 +266,15 @@
         actions: [{ id: 'fichar', title: '🕒 Fichar ahora', foreground: true }] }] }) : Promise.resolve()).catch(function () {});
       return alAccionesYa;
     }
+    // Al volver de la página de fichaje (abierta desde la app o desde una alarma): «¿Has fichado?»
+    function fichPendiente() {
+      if (!P.TTFichaje || !P.TTFichaje.pendiente) return;
+      P.TTFichaje.pendiente().then(function (r) {
+        if (r && r.abierto && typeof window.fichPreguntar === 'function') window.fichPreguntar(r.abierto);
+      }).catch(function () {});
+    }
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(fichPendiente, 400); });
+    window.addEventListener('load', function () { setTimeout(fichPendiente, 6000); });
     if (LocalNotifications.addListener) LocalNotifications.addListener('localNotificationActionPerformed', function (ev) {
       try {
         var n = ev && ev.notification, ex = n && n.extra;
@@ -257,7 +288,7 @@
     window.__alarmasReprogramar = alPronto;
     window.addEventListener('load', function () {
       // Cambios de turnos o de ajustes de alarma → se reprograman.
-      ['saveTV', 'toggleAlarmas', 'toggleAlarmFichar', 'toggleAlarmSalida'].forEach(function (f) {
+      ['saveTV', 'toggleAlarmas', 'toggleAlarmFichar', 'toggleAlarmSalida', 'toggleAlarmSalidaFichaje', 'toggleAlarmAbrirFichaje'].forEach(function (f) {
         var orig = window[f];
         if (typeof orig !== 'function') return;
         window[f] = function () { var r = orig.apply(this, arguments); alPronto(); return r; };

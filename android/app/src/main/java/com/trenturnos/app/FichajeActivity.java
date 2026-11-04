@@ -115,6 +115,11 @@ public class FichajeActivity extends AppCompatActivity {
             return WindowInsetsCompat.CONSUMED;
         });
 
+        // Para el Control de fichaje: al volver a la app se pregunta «¿Has fichado?» con esta hora.
+        if (savedInstanceState == null) {
+            try { getSharedPreferences("tt_fichaje", MODE_PRIVATE).edit().putLong("abierto", System.currentTimeMillis()).apply(); } catch (Exception ignored) {}
+        }
+
         configurarWeb();
         if (savedInstanceState == null || web.restoreState(savedInstanceState) == null) web.loadUrl(URL_FICHAJE);
 
