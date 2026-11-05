@@ -22141,15 +22141,17 @@ function alarmaCheck(){
     for(var ii=0; ii<tiposF.length; ii++){
       if(t.tipo===tiposF[ii]){ elegible=true; break; }
     }
-    if(elegible && t.hF){
-      var minF = alarmaToMin(t.hF);
+    // La reserva guarda su toma aparte (reservaHoraToma): antes no tenía alarma de entrada.
+    var hTomaF = t.hF || (t.tipo==='reserva' ? t.reservaHoraToma : '') || '';
+    if(elegible && hTomaF){
+      var minF = alarmaToMin(hTomaF);
       if(minF >= 0){
         var diff = minF - nowM;
         // Ventana: entre 6 y 4 minutos antes (30s de margen por el intervalo)
         if(diff>=3 && diff<=7){   // ventana 5 min ±2
           var idF = hoy+'-fichar';
           alarmaNotificar(
-            '⏰ Fichar en '+t.hF,
+            '⏰ Fichar en '+hTomaF,
             'Turno '+(t.tipo)+' · Firma en 5 minutos',
             idF
           );

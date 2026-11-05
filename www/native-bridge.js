@@ -175,12 +175,13 @@
       if (!AJ || !TV || !AJ.alarmas || !AJ.alarmas.activas) return out;
       for (var i = 0; i < DIAS_AL; i++) {
         var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i);
-        var t = TV[alClave(d)], h = t && alHora(t.hF);
+        // La reserva guarda su toma aparte (reservaHoraToma): antes no tenía alarma de entrada.
+        var t = TV[alClave(d)], hT = t ? (t.hF || (t.tipo === 'reserva' ? t.reservaHoraToma : '') || '') : '', h = t && alHora(hT);
         if (!t || !h) continue;
         var toma = new Date(d); toma.setHours(h[0], h[1], 0, 0);
         if (AJ.alarmas.fichar !== false && ['ordinario', 'trabajado', 'reserva', 'vuelta-pernocta'].indexOf(t.tipo) > -1) {
           out.push({ id: ID_AL + i * 2, at: new Date(toma.getTime() - 5 * 60000),
-            title: '⏰ Fichar en ' + t.hF, body: 'Turno ' + t.tipo + ' · Firma en 5 minutos', fichar: true });
+            title: '⏰ Fichar en ' + hT, body: 'Turno ' + t.tipo + ' · Firma en 5 minutos', fichar: true });
         }
         if (AJ.alarmas.salida !== false && ['ordinario', 'trabajado'].indexOf(t.tipo) > -1 && t.sal && AJ.base && !alMismaEst(t.sal, AJ.base)) {
           out.push({ id: ID_AL + i * 2 + 1, at: new Date(toma.getTime() - 45 * 60000),
