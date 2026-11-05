@@ -428,6 +428,28 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 .vista-btn.act{background:var(--s1);color:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .vista-btn.act-comp{background:rgba(168,85,247,.25);color:#c084fc}
 .vista-btn.act-both{background:rgba(99,102,241,.2);color:#a5b4fc}
+/* NUEVO — Horario del compañero (maqueta C + D) */
+.vt2{margin:2px 12px 8px!important;display:flex}
+.vt2 .vista-btn{font-size:12.5px;padding:8px 2px;border-radius:9px}
+.vt2 .vista-btn.act{background:#2563EB;color:#fff;box-shadow:none}
+.days.days-comp{grid-template-rows:repeat(6,minmax(0,1fr) 19px);height:384px}
+.cmp-fila{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:3px;position:relative;align-items:center}
+.cmp-fila em{position:absolute;left:-9px;top:50%;transform:translateY(-50%) rotate(-90deg);font-style:normal;font-size:7px;font-weight:900;color:#C4B5FD;pointer-events:none}
+.cmp-c{font-size:8.5px;font-weight:900;text-align:center;border-radius:6px;padding:2px 0;white-space:nowrap;overflow:hidden;line-height:13px;cursor:pointer}
+.cmp-c.vacio{visibility:hidden}
+.cmp-tren{background:#1E3A8A;color:#93C5FD}.cmp-dh{background:#4C1D95;color:#C4B5FD}.cmp-des{background:#14532D;color:#86EFAC}
+.cmp-res{background:#78350F;color:#FCD34D}.cmp-vac{background:#0C4A6E;color:#7DD3FC}.cmp-oth{background:#334155;color:#CBD5E1}.cmp-nada{background:transparent;color:transparent}
+.dc.dc-comp{border-width:1.5px}.cal-modo-comp-solo .dc.dc-comp > span:first-of-type{opacity:1}.dc.dc-comp .dcn{font-weight:800;font-size:13px}.dc.dc-comp .cmp-cod{font-size:9px;font-weight:900;margin-top:3px;max-width:100%;overflow:hidden;white-space:nowrap}
+.dc.dc-comp.cmp-tren{border-color:#93C5FD}.dc.dc-comp.cmp-dh{border-color:#C4B5FD}.dc.dc-comp.cmp-des{border-color:#86EFAC}.dc.dc-comp.cmp-res{border-color:#FCD34D}.dc.dc-comp.cmp-vac{border-color:#7DD3FC}
+.cmpd{background:var(--s2,#132236);border:1px solid var(--div,#1E3350);border-radius:14px;padding:10px 12px;margin:2px 0 10px}
+.cmpd-t{font-size:11px;color:var(--tx3,#94A3B8);font-weight:800;margin-bottom:4px}
+.cmpd-r{display:flex;gap:9px;padding:8px 0;border-top:1px solid var(--div,#1E3350);align-items:flex-start}.cmpd-r:first-of-type{border-top:0}
+.cmpd-r b{font-size:13.5px;color:var(--tx,#F8FAFC)}
+.cmpd-who{flex:none;font-size:10px;font-weight:900;border-radius:7px;padding:3px 6px;color:#fff;background:#2563EB}.cmpd-who.pr{background:#7C3AED}
+.cmpd-dest{font-size:12.5px;color:#FCD34D;font-weight:700;margin-top:2px}
+.cmpd-ex{font-size:11px;color:var(--tx3,#94A3B8);margin-top:2px;line-height:1.4}
+.cmpd-pie{font-size:10.5px;color:var(--tx3,#94A3B8);margin-top:4px}
+
 
 .dc-ico{font-size:14px;line-height:1;margin-top:0}
 
@@ -4366,14 +4388,15 @@ function megafoniaDingDong(ctx, t){
         <div class="mn-lbl" id="mn-lbl"></div>
         <div class="mn-sub" id="mn-sub"></div>
       </div>
-      <div class="vista-toggle" id="vista-toggle" style="display:none">
-        <button id="vista-mio"   class="vista-btn act" onclick="setVistaMode('mio')">📅 Mis turnos</button>
-        <button id="vista-comp"  class="vista-btn"     onclick="setVistaMode('comp')">👤 Compañero</button>
-        <button id="vista-ambos" class="vista-btn"     onclick="setVistaMode('ambos')">⚖ Comparar</button>
-        <button id="vista-quitar-comp" class="vista-btn" onclick="quitarCompanero()" title="Quitar compañero" style="flex:0;padding:0 8px;color:var(--tx3)">✕</button>
-      </div>
       <div class="mn-hoy" onclick="irHoy()">Hoy</div>
       <button class="mn-btn" onclick="chM(1)" title="Mes siguiente">›</button>
+    </div>
+    <!-- NUEVO — Horario del compañero: «Yo / Ambos / Nombre», a todo el ancho debajo del mes -->
+    <div class="vista-toggle vt2" id="vista-toggle" style="display:none">
+      <button id="vista-mio"   class="vista-btn act" onclick="setVistaMode('mio')">Yo</button>
+      <button id="vista-ambos" class="vista-btn"     onclick="setVistaMode('ambos')">Ambos</button>
+      <button id="vista-comp"  class="vista-btn"     onclick="setVistaMode('comp')">Compañero</button>
+      <button id="vista-quitar-comp" class="vista-btn" onclick="quitarCompanero()" title="Quitar compañero" style="flex:0;padding:0 10px;color:var(--tx3)">✕</button>
     </div>
 
     <!-- Contenedor con swipe táctil horizontal -->
@@ -8308,6 +8331,11 @@ var COMP_DATA  = _leerJSONseguro('comp5', {});
 var vistaMode  = 'mio'; // 'mio' | 'comp' | 'ambos'
 
 function saveComp(){ localStorage.setItem('comp5', JSON.stringify(COMP_DATA)); }
+// ARREGLO — mes del compañero importado contado de 0 a 11, como el calendario. Al importar se
+// guardaba de 1 a 12 (el del Horario General: noviembre = 11) y el calendario lo comparaba con
+// noviembre = 10, así que nunca coincidía y el compañero no se veía. Las importaciones nuevas
+// llevan v:2 (ya de 0 a 11); las anteriores se corrigen al leerlas.
+function compMes0(){ if(!COMP_DATA || COMP_DATA.mes==null) return null; return COMP_DATA.v===2 ? COMP_DATA.mes : COMP_DATA.mes-1; }
 
 // ── NUEVO — Módulo Artículo 51 y 52 (100% aditivo, claves propias) ──
 // ART5152_DIAS: bolsa de días de descanso generados, indexada por el
@@ -14242,37 +14270,67 @@ function compartirOFallback(blob, tramos, mensajePersonalizado){
 // tarjeta sencilla — pero claramente marcados como orientativos/
 // bloqueados. El modo "Mis turnos" nunca llama a esto.
 function _renderVistaSoloLecturaCompanero(d, k, t, fstr){
-  var partes = [];
-  partes.push('<div style="padding:2px 4px 10px;font-size:13px;color:var(--tx2);font-weight:700">'+fstr+'</div>');
-
-  if(vistaMode==='ambos'){
-    partes.push(_tarjetaOrientativaPropia(t));
-  }
-
-  // NUEVO — mismo motivo que en aplicarVistaCompanero(): si el
-  // PDF importado es de otro mes distinto al que se está viendo, no
-  // se muestra el turno del compañero (evita mostrar el día 5 de un
-  // mes cuando el PDF cargado es de otro mes distinto).
+  // NUEVO (maqueta C + D aprobada) — al tocar un día: los dos turnos, con su destino.
   var _kParts = k.split('-').map(Number);
   var mesMostrado = _kParts[1]-1, anioMostrado = _kParts[0];
-  var mesNoCoincide = (COMP_DATA.anio!=null && COMP_DATA.mes!=null) && (COMP_DATA.anio!==anioMostrado || COMP_DATA.mes!==mesMostrado);
-
+  var mesNoCoincide = (COMP_DATA.anio!=null && COMP_DATA.mes!=null) && (COMP_DATA.anio!==anioMostrado || compMes0()!==mesMostrado);
+  var DS=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'], dt=new Date(anioMostrado,_kParts[1]-1,_kParts[2]);
+  var h='<div class="cmpd"><div class="cmpd-t">'+DS[dt.getDay()]+' '+_kParts[2]+' '+MESES_C[_kParts[1]-1].toUpperCase()+'</div>';
+  if(vistaMode==='ambos') h+=_cmpFilaPropia(t);
   if(mesNoCoincide){
-    partes.push('<div class="ibox" style="margin-top:10px;opacity:.7"><span class="ibox-i">📅</span><span>El horario importado de '+(COMP_DATA.name||'este compañero')+' es de otro mes — no se muestra aquí para evitar confusiones.</span></div>');
-    return partes.join('');
-  }
-
-  var codigo = (COMP_DATA.days && COMP_DATA.days[String(d)]) || '';
-  if(codigo){
-    var ci = (COMP_DATA.horasCI||{})[d] || '';
-    var co = (COMP_DATA.horasCO||{})[d] || '';
-    var ruta = (COMP_DATA.rutaPorDia||{})[d] || '';
-    partes.push(_tarjetaOrientativaCompanero(COMP_DATA.name, codigo, ci, co, ruta));
+    h+='<div class="cmpd-r"><span class="cmpd-who pr">'+compIniciales()+'</span><div><div class="cmpd-ex">El horario importado de '+compNombreCorto()+' es de otro mes.</div></div></div>';
   } else {
-    partes.push('<div class="ibox" style="margin-top:10px;opacity:.7"><span class="ibox-i">👤</span><span>'+(COMP_DATA.name||'Compañero')+' no tiene turno registrado este día (según el Horario General).</span></div>');
+    h+=_cmpFilaCompanero(d);
   }
-
-  return partes.join('');
+  return h+'<div class="cmpd-pie">Toca otro día para ver los dos turnos · solo lectura (para editar, «Yo»)</div></div>';
+}
+// Tu turno ese día: tren y horas, 📍 destino y una nota corta.
+function _cmpFilaPropia(t){
+  var tit='', dest='', ex='';
+  if(!t){ tit='Sin turno'; }
+  else {
+    var ti=(typeof TIPO_INFO!=='undefined'&&TIPO_INFO[t.tipo])||{lbl:t.tipo||'Turno'}, base=(AJ&&AJ.base)||'';
+    var trenes=[t.numTren,t.numTrenVuelta].filter(Boolean).filter(function(x,i,a){ return a.indexOf(x)===i; });
+    if(t.tipo==='reserva'){
+      var tm=t.reservaHoraToma||t.hF||'', fn=t.reservaHoraLlegada||t.hL||'';
+      tit='Reserva'+(tm?' · '+tm+(fn?'–'+fn:''):''); dest=base?base+' (en base)':'';
+    } else if(trenes.length){
+      var fin=t.hL2||t.hL||'';
+      tit=trenes.join(' / ')+(t.hF?' · '+t.hF+(fin?'–'+fin:''):'');
+      var pern=t.modo==='pernocta'||t.modo==='pernocta3';
+      if(t.tipo==='vuelta-pernocta'){ dest=(t.sal||'')+(t.lle||base?' → '+(t.lle||base):''); ex='Vuelta de pernocta'; }
+      else if(t.numTrenVuelta&&!pern){ dest=[t.sal||base,t.lle,t.lle2||base].filter(Boolean).join(' → '); ex='Ida y vuelta'; }
+      else { dest=[t.sal||base,t.lle].filter(Boolean).join(' → '); if(pern) ex='Pernocta'+(t.lle?' en '+t.lle:''); }
+    } else { tit=ti.lbl||t.tipo; }
+  }
+  return _cmpFila('Tú','yo',tit,dest,ex);
+}
+// Su turno ese día (Horario General): trenes con DH bien leído, horas, 📍 ruta.
+function _cmpFilaCompanero(d){
+  var codigo=(COMP_DATA.days&&COMP_DATA.days[String(d)])||'';
+  if(!codigo) return _cmpFila(compIniciales(),'pr','Sin turno registrado','','según el Horario General');
+  var ci=(COMP_DATA.horasCI||{})[d]||'', co=(COMP_DATA.horasCO||{})[d]||'';
+  var C=compLeer(codigo), tit, ex='';
+  if(C.trenes.length){
+    tit=C.trenes.map(function(x){ return x.num+(x.dh==='dh'?' DH':''); }).join(' / ')+(ci?' · '+ci+(co?'–'+co:''):'');
+    var notas=C.trenes.map(function(x,i){
+      var cual=C.trenes.length>1?(i===0?' (ida)':i===1?' (vuelta)':''):'';
+      var e=x.dh==='todo'?'trabajando':x.dh==='dh'?'de DH (viajando, sin trabajar)':x.dh==='tdh'?'trabaja la 1ª mitad y va de DH la 2ª':'va de DH la 1ª mitad y trabaja la 2ª';
+      return x.num+cual+': '+e+(x.um?' · UM':''); });
+    ex=notas.join('<br>');
+  } else {
+    var N={DO:'Descanso',DES:'Descanso',R:'Reserva',F:'Franco / Reserva',DOP:'DOP',VAC:'Vacaciones',V:'Vacaciones',B:'Baja',LD:'Libre disposición'};
+    tit=C.cods.map(function(c){ return N[c]||c; }).join(' ')||codigo;
+    if(ci) tit+=' · '+ci+(co?'–'+co:'');
+  }
+  var ruta=String((COMP_DATA.rutaPorDia||{})[d]||'').split(/\s+/).filter(Boolean).map(function(c){ return (typeof _pdfTraducirEstacion==='function'&&_pdfTraducirEstacion(c))||c; })
+    .filter(function(x,i,a){ return i===0||x!==a[i-1]; }).join(' → ');
+  return _cmpFila(compIniciales(),'pr',tit,ruta,ex);
+}
+function _cmpEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function _cmpFila(who,cls,tit,dest,ex){
+  return '<div class="cmpd-r"><span class="cmpd-who '+cls+'">'+_cmpEsc(who)+'</span><div><b>'+_cmpEsc(tit)+'</b>'
+    +(dest?'<div class="cmpd-dest">📍 '+_cmpEsc(dest)+'</div>':'')+(ex?'<div class="cmpd-ex">'+ex+'</div>':'')+'</div></div>';
 }
 
 // Tarjeta de solo lectura para TU PROPIO turno, usada solo en modo
@@ -20996,6 +21054,7 @@ function renderVistaToggle() {
   var hasComp = Object.keys(COMP_DATA).length > 0;
   if (!hasComp) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'flex';
+  var bc = document.getElementById('vista-comp'); if (bc) bc.textContent = compNombreCorto();
 }
 
 // ── Import modal — selector destino ─────────────────────────
@@ -21029,41 +21088,86 @@ function setVistaMode(mode) {
 // por renderSlide() — no modifica ninguna clase ni dato existente de
 // las celdas, solo añade un elemento visual encima.
 function aplicarVistaCompanero(grid, y, m){
-  // FIX — antes, al volver a "Mis turnos", la función se salía aquí
-  // mismo sin quitar la clase que atenúa la celda — si venías de
-  // "Compañero", esa apariencia se quedaba "pegada" aunque ya
-  // estuvieras en Mis turnos. Ahora se limpia siempre primero, así
-  // Mis turnos vuelve a verse exactamente como antes de esta función.
-  grid.classList.remove('cal-modo-comp-solo');
+  // NUEVO (maqueta C + D aprobada):
+  //  · «Ambos»: tus días como siempre y, debajo de cada semana, una fila con sus turnos (color por tipo).
+  //  · «Compañero»: solo su mes, cada día con su color y su turno.
+  //  · Al tocar un día, abajo los dos turnos con su destino (ver _renderVistaSoloLecturaCompanero).
+  grid.classList.remove('cal-modo-comp-solo','days-comp');
+  grid.querySelectorAll('.cmp-fila').forEach(function(x){ x.remove(); });
   if(vistaMode==='mio') return;
   if(!COMP_DATA || !COMP_DATA.days || !Object.keys(COMP_DATA.days).length) return;
-  // FIX — versión anterior (fijar el mes a mano) se rompía en cuanto
-  // cambiaba el PDF. La versión de después (no comprobar nada) traía
-  // turnos del compañero a CUALQUIER mes que se mirase, incluso meses
-  // donde ese PDF ni siquiera está cargado — el fallo que se acaba de
-  // reportar. Ahora se usa el mes/año REAL, leído de la cabecera del
-  // propio PDF al importar (COMP_DATA.anio/mes) — solo se pinta si
-  // coincide con el mes que se está viendo. Si no se pudo leer el mes
-  // del PDF (caso raro), se sigue mostrando como antes, avisando ya
-  // en el momento de importar (ver importarComoCompanero).
-  if(COMP_DATA.anio!=null && COMP_DATA.mes!=null && (COMP_DATA.anio!==y || COMP_DATA.mes!==m)) return;
-
-  if(vistaMode==='comp') grid.classList.add('cal-modo-comp-solo'); else grid.classList.remove('cal-modo-comp-solo');
-
-  var celdas = grid.querySelectorAll('[data-k]');
-  celdas.forEach(function(c){
-    var k = c.dataset.k;
-    var d = parseInt(k.split('-')[2], 10);
-    var texto = COMP_DATA.days[String(d)] || '';
-    if(!texto) return;
-    var corto = texto.length>9 ? texto.slice(0,8)+'…' : texto;
-    var badge = document.createElement('span');
-    badge.className = 'dc-comp-badge';
-    badge.title = COMP_DATA.name+': '+texto;
-    badge.textContent = corto;
-    c.appendChild(badge);
+  // Solo en el mes que se importó (COMP_DATA.anio/mes, de 0 a 11: ver compMes0).
+  if(COMP_DATA.anio!=null && COMP_DATA.mes!=null && (COMP_DATA.anio!==y || compMes0()!==m)) return;
+  if(vistaMode==='comp'){
+    grid.classList.add('cal-modo-comp-solo');
+    grid.querySelectorAll('[data-k]').forEach(function(c){
+      var d=parseInt(c.dataset.k.split('-')[2],10), txt=COMP_DATA.days[String(d)]||'', ch=compChip(txt);
+      c.innerHTML='<span class="dcn">'+d+'</span><span class="cmp-cod">'+_cmpEsc(ch.txt)+'</span>';
+      c.className=c.className.replace(/\bdc-(ord|res|des|baj|tra|cmp|vac|dop|art|pmd)\b/g,'')+' dc-comp '+ch.cls;
+    });
+    return;
+  }
+  // «Ambos»: una fila suya debajo de cada semana.
+  grid.classList.add('days-comp');
+  var hijos=[].slice.call(grid.children).filter(function(x){ return x.classList.contains('dc'); });
+  var ini=0;
+  while(ini<hijos.length){
+    var semana=hijos.slice(ini,ini+7), fila=document.createElement('div');
+    fila.className='cmp-fila';
+    var h='';
+    for(var j=0;j<7;j++){
+      var c=semana[j], k=c&&c.dataset?c.dataset.k:null;
+      if(!k){ h+='<span class="cmp-c vacio"></span>'; continue; }
+      var d=parseInt(k.split('-')[2],10), ch=compChip(COMP_DATA.days[String(d)]||'');
+      h+='<span class="cmp-c '+ch.cls+'" data-k="'+k+'">'+_cmpEsc(ch.txt)+'</span>';
+    }
+    fila.innerHTML='<em>'+_cmpEsc(compIniciales())+'</em>'+h;
+    var ult=semana[semana.length-1];
+    if(ult&&ult.nextSibling) grid.insertBefore(fila, ult.nextSibling); else grid.appendChild(fila);
+    ini+=7;
+  }
+  // Tocar su turno = tocar ese día
+  grid.querySelectorAll('.cmp-c[data-k]').forEach(function(x){
+    x.onclick=function(){ var c=grid.querySelector('.dc[data-k="'+x.getAttribute('data-k')+'"]'); if(c) c.click(); };
   });
 }
+// Lee una celda del Horario General: trenes (ida y vuelta) con su DH, y códigos (DES, R…).
+// Misma regla que «Con quién viaja»: «3113-3113DH» = trabaja la 1ª mitad y DH la 2ª; «3113DH-3113» al revés;
+// «3113DH» = DH todo; el primer número distinto es la ida y el segundo la vuelta.
+function compLeer(cell){
+  var toks=String(cell||'').split(/[^0-9A-Za-z]+/).filter(Boolean), trenes=[], idx={}, cods=[];
+  toks.forEach(function(t){ var mm=t.match(/(\d{2,6})/);
+    if(!mm){ cods.push(t.toUpperCase()); return; }
+    var n=mm[1].replace(/^0+(?=\d)/,''), dh=/DH/i.test(t);
+    if(idx[n]===undefined){ idx[n]=trenes.length; trenes.push({num:n, partes:[], um:false}); }
+    trenes[idx[n]].partes.push(dh); if(/UM/i.test(t)) trenes[idx[n]].um=true; });
+  trenes.forEach(function(x){ var p=x.partes, a=p[0], b=p[p.length-1];
+    x.dh = p.length<2 ? (a?'dh':'todo') : (a&&b?'dh':(!a&&!b?'todo':(a?'dht':'tdh'))); });
+  return {trenes:trenes, cods:cods};
+}
+// Texto corto y color de su turno para la fila / la celda.
+function compChip(cell){
+  var C=compLeer(cell);
+  if(C.trenes.length){
+    var todoDH=C.trenes.every(function(x){ return x.dh==='dh'; }), algoDH=C.trenes.some(function(x){ return x.dh!=='todo'; });
+    var txt=C.trenes[0].num+(C.trenes.length>1?'+':'')+(algoDH?'DH':'');
+    return {txt:txt, cls: todoDH?'cmp-dh':'cmp-tren'};
+  }
+  var c=C.cods[0]||'';
+  // (OFF_CODES del buscador no se ve desde aquí: misma tabla, con los nombres de la app)
+  var tipo=({DO:'des',DES:'des',DOP:'des',R:'res',F:'res',RES:'res',VAC:'vac',V:'vac'})[c]||(c?'oth':'');
+  var N={DO:'DES'};
+  return {txt:(N[c]||c).slice(0,6), cls: tipo==='des'?'cmp-des':tipo==='res'?'cmp-res':tipo==='vac'?'cmp-vac':tipo==='dop'?'cmp-des':(c?'cmp-oth':'cmp-nada')};
+}
+function compNombreCorto(){
+  var s=String((COMP_DATA&&COMP_DATA.name)||'Compañero').trim().replace(/\s+/g,' '), nom=s, ap='';
+  if(s.indexOf(',')>0){ ap=s.split(',')[0].trim(); nom=s.split(',').slice(1).join(' ').trim(); }
+  else { var p=s.split(' '); if(p.length>2){ ap=p.slice(0,2).join(' '); nom=p.slice(2).join(' '); } }
+  function cap(x){ return x.toLowerCase().replace(/(^|[\s-])(\S)/g,function(a,b,c){ return b+c.toUpperCase(); }); }
+  var n1=cap((nom.split(' ')[0])||s), a1=ap?ap.replace(/^(DE|DEL|LA|LOS|LAS)\s+/i,'').charAt(0).toUpperCase()+'.':'';
+  return (n1+(a1?' '+a1:'')).trim();
+}
+function compIniciales(){ var n=compNombreCorto().replace(/\./g,'').split(' '); return ((n[0]||'').charAt(0)+(n[1]||'').charAt(0)).toUpperCase()||'👤'; }
 
 // Se llama desde el botón "👤 Ver su horario junto al mío" del perfil
 // de un compañero en el Buscador. `entry` es la misma tupla que ya
@@ -21089,7 +21193,8 @@ function importarComoCompanero(id, name, days, horasCI, horasCO, rutaPorDia){
     id:id, name:name, days:days,
     horasCI:horasCI||{}, horasCO:horasCO||{}, rutaPorDia:rutaPorDia||{},
     anio: mesAnioReal ? mesAnioReal.anio : null,
-    mes: mesAnioReal ? mesAnioReal.mes : null
+    mes: mesAnioReal ? mesAnioReal.mes-1 : null, // de 0 a 11, como el calendario (ver compMes0)
+    v: 2
   };
   saveComp();
   if(!mesAnioReal){
@@ -22141,15 +22246,17 @@ function alarmaCheck(){
     for(var ii=0; ii<tiposF.length; ii++){
       if(t.tipo===tiposF[ii]){ elegible=true; break; }
     }
-    if(elegible && t.hF){
-      var minF = alarmaToMin(t.hF);
+    // La reserva guarda su toma aparte (reservaHoraToma): antes no tenía alarma de entrada.
+    var hTomaF = t.hF || (t.tipo==='reserva' ? t.reservaHoraToma : '') || '';
+    if(elegible && hTomaF){
+      var minF = alarmaToMin(hTomaF);
       if(minF >= 0){
         var diff = minF - nowM;
         // Ventana: entre 6 y 4 minutos antes (30s de margen por el intervalo)
         if(diff>=3 && diff<=7){   // ventana 5 min ±2
           var idF = hoy+'-fichar';
           alarmaNotificar(
-            '⏰ Fichar en '+t.hF,
+            '⏰ Fichar en '+hTomaF,
             'Turno '+(t.tipo)+' · Firma en 5 minutos',
             idF
           );
@@ -37446,13 +37553,70 @@ function mtTarjeta(){
   var vie=document.getElementById('mt-card'); if(vie) vie.remove();
   var f=document.getElementById('mt-fab'); if(!f){ f=document.createElement('button'); f.id='mt-fab'; f.onclick=function(){ mtAbrir(); }; document.body.appendChild(f); }
   var hoy=mtHoy(), r=null; for(var i=0;i<hoy.length&&!r;i++) r=mtRetraso(hoy[i].n);
-  f.innerHTML='🚆 Mi tren'+(r?(r.m>0?'<small class="mt-sr">+'+r.m+'′</small>':'<small class="mt-sv">✓</small>'):'');
+  f.innerHTML='🚆<span class="mtf-t"> Mi tren'+(r?(r.m>0?'<small class="mt-sr">+'+r.m+'′</small>':'<small class="mt-sv">✓</small>'):'')+'</span>';
+  mtfPreparar(f);
   mtFabVer();
 }
+// NUEVO (maqueta aprobada) — «Mi tren» se puede mover con el dedo y se minimiza solo:
+//  · Arrastrar: se mueve a cualquier parte; al soltar se pega al borde más cercano y se recuerda (localStorage mtFabPos).
+//  · Sin tocarlo 4 s: se minimiza (pestaña con 🚆 pegada al borde). Un toque lo despliega; otro toque abre «Mi tren».
+var MTF={t:null, mini:false, arr:false, x0:0, y0:0, fx:0, fy:0, movido:false, visible:false};
+function mtfPos(){ try{ return JSON.parse(localStorage.getItem('mtFabPos')||'null'); }catch(e){ return null; } }
+function mtfAplicar(f){
+  var p=mtfPos(); if(!p) return;
+  var h=window.innerHeight, alto=f.offsetHeight||46, y=Math.max(70, Math.min(h-alto-80, Math.round(p.y*h)));
+  f.style.bottom='auto'; f.style.top=y+'px';
+  if(p.lado==='l'){ f.style.left='10px'; f.style.right='auto'; } else { f.style.right='10px'; f.style.left='auto'; }
+  f.classList.toggle('lado-l', p.lado==='l'); f.classList.toggle('lado-r', p.lado!=='l');
+}
+function mtfReloj(){ clearTimeout(MTF.t); MTF.t=setTimeout(function(){ var f=document.getElementById('mt-fab'); if(f&&!MTF.arr){ MTF.mini=true; f.classList.add('mini'); } }, 4000); }
+function mtfDesplegar(f){ MTF.mini=false; f.classList.remove('mini'); mtfReloj(); }
+function mtfPreparar(f){
+  if(f._mtf) return; f._mtf=true;
+  f.onclick=null;
+  if(!f.classList.contains('lado-l')) f.classList.add('lado-r');
+  f.addEventListener('pointerdown', function(ev){
+    if(ev.button!=null&&ev.button!==0) return;
+    clearTimeout(MTF.t); MTF.arr=true; MTF.movido=false;
+    var r=f.getBoundingClientRect(); MTF.x0=ev.clientX; MTF.y0=ev.clientY; MTF.fx=r.left; MTF.fy=r.top;
+    try{ f.setPointerCapture(ev.pointerId); }catch(e){}
+  });
+  f.addEventListener('pointermove', function(ev){
+    if(!MTF.arr) return;
+    var dx=ev.clientX-MTF.x0, dy=ev.clientY-MTF.y0;
+    if(!MTF.movido && Math.abs(dx)+Math.abs(dy)<9) return;
+    if(!MTF.movido){ MTF.movido=true; f.classList.remove('mini'); MTF.mini=false; f.classList.add('mtf-drag'); }
+    var w=f.offsetWidth, h=f.offsetHeight;
+    var x=Math.max(4, Math.min(window.innerWidth-w-4, MTF.fx+dx)), y=Math.max(60, Math.min(window.innerHeight-h-70, MTF.fy+dy));
+    f.style.right='auto'; f.style.bottom='auto'; f.style.left=x+'px'; f.style.top=y+'px';
+  });
+  function soltar(ev){
+    if(!MTF.arr) return; MTF.arr=false;
+    if(MTF.movido){
+      f.classList.remove('mtf-drag');
+      var r=f.getBoundingClientRect(), lado=(r.left+r.width/2)<window.innerWidth/2?'l':'r';
+      try{ localStorage.setItem('mtFabPos', JSON.stringify({lado:lado, y:r.top/window.innerHeight})); }catch(e){}
+      mtfAplicar(f); mtfReloj();
+      return;
+    }
+    // Toque: minimizado → se despliega; desplegado → abre «Mi tren»
+    if(MTF.mini){ mtfDesplegar(f); return; }
+    mtfReloj(); try{ mtAbrir(); }catch(e){}
+  }
+  f.addEventListener('pointerup', soltar);
+  f.addEventListener('pointercancel', function(){ if(MTF.arr){ MTF.arr=false; f.classList.remove('mtf-drag'); if(MTF.movido){ mtfAplicar(f); } mtfReloj(); } });
+  f.addEventListener('click', function(ev){ ev.preventDefault(); }); // el toque lo gestiona pointerup
+  window.addEventListener('resize', function(){ mtfAplicar(f); });
+  mtfAplicar(f);
+}
+
 // Solo en el Calendario de Tripulante (no encima de otras pantallas)
 function mtFabVer(){ var f=document.getElementById('mt-fab'); if(!f) return; var pc=document.getElementById('p-cal'), ov_=document.getElementById('mt-ov');
   var tapado=['portal-perfil','portal-tripulante-acceso','portal-interventor-screen','portal-interventor-acceso'].some(function(id){ var e=document.getElementById(id); return e&&getComputedStyle(e).display!=='none'; });
-  f.style.display=(pc&&pc.classList.contains('on')&&!tapado&&!(ov_&&ov_.classList.contains('on')))?'':'none'; }
+  var ver=(pc&&pc.classList.contains('on')&&!tapado&&!(ov_&&ov_.classList.contains('on')));
+  f.style.display=ver?'':'none';
+  // Al volver a verse, empieza la cuenta de 4 s para minimizarse
+  if(ver&&!MTF.visible&&!MTF.mini){ mtfReloj(); } MTF.visible=ver; }
 setInterval(mtFabVer, 700);
 window.mtTarjeta=mtTarjeta;
 
@@ -37571,7 +37735,7 @@ var st=document.createElement('style'); st.textContent=
  '.mt-mapa{height:210px;border-radius:16px;overflow:hidden;margin-bottom:10px;background:#DCE7D3}.mt-pin div{width:40px;height:40px;border-radius:50%;background:#DC2626;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px #0007}'+
  '.mt-pin span{position:absolute;left:50%;top:44px;transform:translateX(-50%);background:#111827;color:#fff;font:800 11px Inter,sans-serif;padding:2px 6px;border-radius:6px;white-space:nowrap}'+
  '.mt-ahora{background:#fff;color:#111;border-radius:14px;padding:10px 12px;margin-bottom:8px}.mt-ahora .h{font-size:11px;color:#6B7280;font-weight:900;letter-spacing:1px}.mt-ahora .g{font-size:18px;font-weight:900;line-height:1.2}.mt-ahora .s{font-size:13.5px;margin-top:2px}.mt-par i{font-style:normal;font-size:11px;font-weight:900}'+
- '#mt-fab{position:fixed;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:9000;background:linear-gradient(135deg,#1D4ED8,#0EA5E9);color:#fff;border:2px solid #ffffff33;border-radius:28px;padding:11px 15px;font:900 14px Inter,sans-serif;box-shadow:0 6px 16px #0008;cursor:pointer}#mt-fab small{font-size:11.5px;margin-left:5px}'+
+ '#mt-fab{position:fixed;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:9000;background:linear-gradient(135deg,#1D4ED8,#0EA5E9);color:#fff;border:2px solid #ffffff33;border-radius:28px;padding:11px 15px;font:900 14px Inter,sans-serif;box-shadow:0 6px 16px #0008;cursor:pointer}#mt-fab small{font-size:11.5px;margin-left:5px}#mt-fab{touch-action:none;-webkit-user-select:none;user-select:none;transition:left .28s cubic-bezier(.3,1.3,.5,1),right .28s cubic-bezier(.3,1.3,.5,1),top .28s,padding .3s,opacity .3s,transform .3s,border-radius .3s}#mt-fab.mtf-drag{transition:none;transform:scale(1.08);box-shadow:0 12px 26px #000a}#mt-fab .mtf-t{display:inline}#mt-fab.mini{padding:11px 12px;opacity:.78}#mt-fab.mini .mtf-t{display:none}#mt-fab.mini.lado-r{transform:translateX(12px);border-radius:28px 0 0 28px}#mt-fab.mini.lado-l{transform:translateX(-12px);border-radius:0 28px 28px 0}'+
  '.mt-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.mt-cab .mt-sub{margin-bottom:0}'+
  '.mt-pill{background:#DC2626;color:#fff;font:900 16px Inter,sans-serif;border-radius:20px;padding:7px 13px;text-align:center;white-space:nowrap}.mt-pill small{display:block;font-size:9.5px;font-weight:800;opacity:.9}.mt-pill.ok{background:#16A34A}.mt-pill.mano{background:#B45309;cursor:pointer}'+
  '.mt-tl{position:relative;padding-left:36px;margin-top:6px}.mt-tl:before{content:"";position:absolute;left:14px;top:10px;bottom:14px;width:4px;background:#334155;border-radius:2px}'+
