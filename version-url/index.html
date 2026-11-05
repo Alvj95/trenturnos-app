@@ -8306,6 +8306,11 @@ var COMP_DATA  = _leerJSONseguro('comp5', {});
 var vistaMode  = 'mio'; // 'mio' | 'comp' | 'ambos'
 
 function saveComp(){ localStorage.setItem('comp5', JSON.stringify(COMP_DATA)); }
+// ARREGLO — mes del compañero importado contado de 0 a 11, como el calendario. Al importar se
+// guardaba de 1 a 12 (el del Horario General: noviembre = 11) y el calendario lo comparaba con
+// noviembre = 10, así que nunca coincidía y el compañero no se veía. Las importaciones nuevas
+// llevan v:2 (ya de 0 a 11); las anteriores se corrigen al leerlas.
+function compMes0(){ if(!COMP_DATA || COMP_DATA.mes==null) return null; return COMP_DATA.v===2 ? COMP_DATA.mes : COMP_DATA.mes-1; }
 
 // ── NUEVO — Módulo Artículo 51 y 52 (100% aditivo, claves propias) ──
 // ART5152_DIAS: bolsa de días de descanso generados, indexada por el
@@ -14253,7 +14258,7 @@ function _renderVistaSoloLecturaCompanero(d, k, t, fstr){
   // mes cuando el PDF cargado es de otro mes distinto).
   var _kParts = k.split('-').map(Number);
   var mesMostrado = _kParts[1]-1, anioMostrado = _kParts[0];
-  var mesNoCoincide = (COMP_DATA.anio!=null && COMP_DATA.mes!=null) && (COMP_DATA.anio!==anioMostrado || COMP_DATA.mes!==mesMostrado);
+  var mesNoCoincide = (COMP_DATA.anio!=null && COMP_DATA.mes!=null) && (COMP_DATA.anio!==anioMostrado || compMes0()!==mesMostrado);
 
   if(mesNoCoincide){
     partes.push('<div class="ibox" style="margin-top:10px;opacity:.7"><span class="ibox-i">📅</span><span>El horario importado de '+(COMP_DATA.name||'este compañero')+' es de otro mes — no se muestra aquí para evitar confusiones.</span></div>');
@@ -21044,7 +21049,7 @@ function aplicarVistaCompanero(grid, y, m){
   // coincide con el mes que se está viendo. Si no se pudo leer el mes
   // del PDF (caso raro), se sigue mostrando como antes, avisando ya
   // en el momento de importar (ver importarComoCompanero).
-  if(COMP_DATA.anio!=null && COMP_DATA.mes!=null && (COMP_DATA.anio!==y || COMP_DATA.mes!==m)) return;
+  if(COMP_DATA.anio!=null && COMP_DATA.mes!=null && (COMP_DATA.anio!==y || compMes0()!==m)) return;
 
   if(vistaMode==='comp') grid.classList.add('cal-modo-comp-solo'); else grid.classList.remove('cal-modo-comp-solo');
 
@@ -21087,7 +21092,8 @@ function importarComoCompanero(id, name, days, horasCI, horasCO, rutaPorDia){
     id:id, name:name, days:days,
     horasCI:horasCI||{}, horasCO:horasCO||{}, rutaPorDia:rutaPorDia||{},
     anio: mesAnioReal ? mesAnioReal.anio : null,
-    mes: mesAnioReal ? mesAnioReal.mes : null
+    mes: mesAnioReal ? mesAnioReal.mes-1 : null, // de 0 a 11, como el calendario (ver compMes0)
+    v: 2
   };
   saveComp();
   if(!mesAnioReal){
