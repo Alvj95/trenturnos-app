@@ -37553,13 +37553,70 @@ function mtTarjeta(){
   var vie=document.getElementById('mt-card'); if(vie) vie.remove();
   var f=document.getElementById('mt-fab'); if(!f){ f=document.createElement('button'); f.id='mt-fab'; f.onclick=function(){ mtAbrir(); }; document.body.appendChild(f); }
   var hoy=mtHoy(), r=null; for(var i=0;i<hoy.length&&!r;i++) r=mtRetraso(hoy[i].n);
-  f.innerHTML='🚆 Mi tren'+(r?(r.m>0?'<small class="mt-sr">+'+r.m+'′</small>':'<small class="mt-sv">✓</small>'):'');
+  f.innerHTML='🚆<span class="mtf-t"> Mi tren'+(r?(r.m>0?'<small class="mt-sr">+'+r.m+'′</small>':'<small class="mt-sv">✓</small>'):'')+'</span>';
+  mtfPreparar(f);
   mtFabVer();
 }
+// NUEVO (maqueta aprobada) — «Mi tren» se puede mover con el dedo y se minimiza solo:
+//  · Arrastrar: se mueve a cualquier parte; al soltar se pega al borde más cercano y se recuerda (localStorage mtFabPos).
+//  · Sin tocarlo 4 s: se minimiza (pestaña con 🚆 pegada al borde). Un toque lo despliega; otro toque abre «Mi tren».
+var MTF={t:null, mini:false, arr:false, x0:0, y0:0, fx:0, fy:0, movido:false, visible:false};
+function mtfPos(){ try{ return JSON.parse(localStorage.getItem('mtFabPos')||'null'); }catch(e){ return null; } }
+function mtfAplicar(f){
+  var p=mtfPos(); if(!p) return;
+  var h=window.innerHeight, alto=f.offsetHeight||46, y=Math.max(70, Math.min(h-alto-80, Math.round(p.y*h)));
+  f.style.bottom='auto'; f.style.top=y+'px';
+  if(p.lado==='l'){ f.style.left='10px'; f.style.right='auto'; } else { f.style.right='10px'; f.style.left='auto'; }
+  f.classList.toggle('lado-l', p.lado==='l'); f.classList.toggle('lado-r', p.lado!=='l');
+}
+function mtfReloj(){ clearTimeout(MTF.t); MTF.t=setTimeout(function(){ var f=document.getElementById('mt-fab'); if(f&&!MTF.arr){ MTF.mini=true; f.classList.add('mini'); } }, 4000); }
+function mtfDesplegar(f){ MTF.mini=false; f.classList.remove('mini'); mtfReloj(); }
+function mtfPreparar(f){
+  if(f._mtf) return; f._mtf=true;
+  f.onclick=null;
+  if(!f.classList.contains('lado-l')) f.classList.add('lado-r');
+  f.addEventListener('pointerdown', function(ev){
+    if(ev.button!=null&&ev.button!==0) return;
+    clearTimeout(MTF.t); MTF.arr=true; MTF.movido=false;
+    var r=f.getBoundingClientRect(); MTF.x0=ev.clientX; MTF.y0=ev.clientY; MTF.fx=r.left; MTF.fy=r.top;
+    try{ f.setPointerCapture(ev.pointerId); }catch(e){}
+  });
+  f.addEventListener('pointermove', function(ev){
+    if(!MTF.arr) return;
+    var dx=ev.clientX-MTF.x0, dy=ev.clientY-MTF.y0;
+    if(!MTF.movido && Math.abs(dx)+Math.abs(dy)<9) return;
+    if(!MTF.movido){ MTF.movido=true; f.classList.remove('mini'); MTF.mini=false; f.classList.add('mtf-drag'); }
+    var w=f.offsetWidth, h=f.offsetHeight;
+    var x=Math.max(4, Math.min(window.innerWidth-w-4, MTF.fx+dx)), y=Math.max(60, Math.min(window.innerHeight-h-70, MTF.fy+dy));
+    f.style.right='auto'; f.style.bottom='auto'; f.style.left=x+'px'; f.style.top=y+'px';
+  });
+  function soltar(ev){
+    if(!MTF.arr) return; MTF.arr=false;
+    if(MTF.movido){
+      f.classList.remove('mtf-drag');
+      var r=f.getBoundingClientRect(), lado=(r.left+r.width/2)<window.innerWidth/2?'l':'r';
+      try{ localStorage.setItem('mtFabPos', JSON.stringify({lado:lado, y:r.top/window.innerHeight})); }catch(e){}
+      mtfAplicar(f); mtfReloj();
+      return;
+    }
+    // Toque: minimizado → se despliega; desplegado → abre «Mi tren»
+    if(MTF.mini){ mtfDesplegar(f); return; }
+    mtfReloj(); try{ mtAbrir(); }catch(e){}
+  }
+  f.addEventListener('pointerup', soltar);
+  f.addEventListener('pointercancel', function(){ if(MTF.arr){ MTF.arr=false; f.classList.remove('mtf-drag'); if(MTF.movido){ mtfAplicar(f); } mtfReloj(); } });
+  f.addEventListener('click', function(ev){ ev.preventDefault(); }); // el toque lo gestiona pointerup
+  window.addEventListener('resize', function(){ mtfAplicar(f); });
+  mtfAplicar(f);
+}
+
 // Solo en el Calendario de Tripulante (no encima de otras pantallas)
 function mtFabVer(){ var f=document.getElementById('mt-fab'); if(!f) return; var pc=document.getElementById('p-cal'), ov_=document.getElementById('mt-ov');
   var tapado=['portal-perfil','portal-tripulante-acceso','portal-interventor-screen','portal-interventor-acceso'].some(function(id){ var e=document.getElementById(id); return e&&getComputedStyle(e).display!=='none'; });
-  f.style.display=(pc&&pc.classList.contains('on')&&!tapado&&!(ov_&&ov_.classList.contains('on')))?'':'none'; }
+  var ver=(pc&&pc.classList.contains('on')&&!tapado&&!(ov_&&ov_.classList.contains('on')));
+  f.style.display=ver?'':'none';
+  // Al volver a verse, empieza la cuenta de 4 s para minimizarse
+  if(ver&&!MTF.visible&&!MTF.mini){ mtfReloj(); } MTF.visible=ver; }
 setInterval(mtFabVer, 700);
 window.mtTarjeta=mtTarjeta;
 
@@ -37678,7 +37735,7 @@ var st=document.createElement('style'); st.textContent=
  '.mt-mapa{height:210px;border-radius:16px;overflow:hidden;margin-bottom:10px;background:#DCE7D3}.mt-pin div{width:40px;height:40px;border-radius:50%;background:#DC2626;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px #0007}'+
  '.mt-pin span{position:absolute;left:50%;top:44px;transform:translateX(-50%);background:#111827;color:#fff;font:800 11px Inter,sans-serif;padding:2px 6px;border-radius:6px;white-space:nowrap}'+
  '.mt-ahora{background:#fff;color:#111;border-radius:14px;padding:10px 12px;margin-bottom:8px}.mt-ahora .h{font-size:11px;color:#6B7280;font-weight:900;letter-spacing:1px}.mt-ahora .g{font-size:18px;font-weight:900;line-height:1.2}.mt-ahora .s{font-size:13.5px;margin-top:2px}.mt-par i{font-style:normal;font-size:11px;font-weight:900}'+
- '#mt-fab{position:fixed;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:9000;background:linear-gradient(135deg,#1D4ED8,#0EA5E9);color:#fff;border:2px solid #ffffff33;border-radius:28px;padding:11px 15px;font:900 14px Inter,sans-serif;box-shadow:0 6px 16px #0008;cursor:pointer}#mt-fab small{font-size:11.5px;margin-left:5px}'+
+ '#mt-fab{position:fixed;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:9000;background:linear-gradient(135deg,#1D4ED8,#0EA5E9);color:#fff;border:2px solid #ffffff33;border-radius:28px;padding:11px 15px;font:900 14px Inter,sans-serif;box-shadow:0 6px 16px #0008;cursor:pointer}#mt-fab small{font-size:11.5px;margin-left:5px}#mt-fab{touch-action:none;-webkit-user-select:none;user-select:none;transition:left .28s cubic-bezier(.3,1.3,.5,1),right .28s cubic-bezier(.3,1.3,.5,1),top .28s,padding .3s,opacity .3s,transform .3s,border-radius .3s}#mt-fab.mtf-drag{transition:none;transform:scale(1.08);box-shadow:0 12px 26px #000a}#mt-fab .mtf-t{display:inline}#mt-fab.mini{padding:11px 12px;opacity:.78}#mt-fab.mini .mtf-t{display:none}#mt-fab.mini.lado-r{transform:translateX(12px);border-radius:28px 0 0 28px}#mt-fab.mini.lado-l{transform:translateX(-12px);border-radius:0 28px 28px 0}'+
  '.mt-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.mt-cab .mt-sub{margin-bottom:0}'+
  '.mt-pill{background:#DC2626;color:#fff;font:900 16px Inter,sans-serif;border-radius:20px;padding:7px 13px;text-align:center;white-space:nowrap}.mt-pill small{display:block;font-size:9.5px;font-weight:800;opacity:.9}.mt-pill.ok{background:#16A34A}.mt-pill.mano{background:#B45309;cursor:pointer}'+
  '.mt-tl{position:relative;padding-left:36px;margin-top:6px}.mt-tl:before{content:"";position:absolute;left:14px;top:10px;bottom:14px;width:4px;background:#334155;border-radius:2px}'+
