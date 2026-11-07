@@ -358,7 +358,12 @@
     function wgTrenes(t) {
       var n = function (x) { return String(x || '').replace(/\D/g, '').replace(/^0+/, ''); }, base = (window.AJ && AJ.base) || '', l = [];
       if (n(t.numTren)) l.push({ n: n(t.numTren), o: t.sal || base, d: t.lle || '', hs: t.hF || '', hl: t.hL || '' });
+      // también los trenes de continuidad (tras la ida y tras la vuelta), en el orden del día
+      function cont(arr) { (arr || []).forEach(function (c) { if (c && n(c.tren)) l.push({ n: n(c.tren), o: c.salida || '', d: c.llegada || '', hs: c.horaInicio || '', hl: c.horaFin || '' }); }); }
+      cont(t.continuidad);
       if (n(t.numTrenVuelta) && n(t.numTrenVuelta) !== n(t.numTren)) l.push({ n: n(t.numTrenVuelta), o: t.sal2 || t.lle || '', d: t.lle2 || base, hs: t.hF2 || '', hl: t.hL2 || '' });
+      cont(t.continuidadVuelta);
+      var visto = {}; l = l.filter(function (x) { if (visto[x.n]) return false; visto[x.n] = 1; return true; });
       return l.length ? l : undefined;
     }
     // ── Widgets de la tanda 2 y 3 ──

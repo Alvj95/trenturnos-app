@@ -22430,7 +22430,19 @@ function fichPlan(k){
   } else {
     p.e=fichMin(t.hF);
     var V=[]; try{ if(typeof rtViajesDia==='function') V=rtViajesDia(k).filter(function(v){ return v&&fichNum(v.tren)&&fichMin(v.llega)!=null; }); }catch(e){ V=[]; }
-    if(V.length){
+    // ARREGLO — si el día acaba con un tren de continuidad (tras la vuelta, o tras la ida en una pernocta
+    // o un turno solo de ida), la salida es al llegar ESE último tren, no el de vuelta/ida.
+    var esIV=!!t.numTrenVuelta&&!p.pern;
+    var contFin=((esIV||t.tipo==='vuelta-pernocta')?(t.continuidadVuelta||[]):(t.numTrenVuelta?[]:(t.continuidad||[]))).filter(function(c){ return c&&fichNum(c.tren)&&fichMin(c.horaFin)!=null; });
+    if(V.length&&contFin.length&&!(typeof TV2!=='undefined'&&TV2&&TV2[k]&&TV2[k].some(function(r){ return r&&r.turno_referencia_externa; }))){
+      var cf=contFin[contFin.length-1], baseA=(typeof AJ!=='undefined'&&AJ.base)||'';
+      var enB=fichMismaEst(cf.llegada,baseA)||(esIV&&!cf.llegada);
+      var djC=(t.cargadoDesdePdf||t.dejeIncluido)?0:(enB?20:15);
+      p.tren=fichNum(cf.tren); p.llega=fichMin(cf.horaFin); p.deje=djC; p.enBase=enB; p.s=p.llega+djC;
+      var cTren=function(arr){ return (arr||[]).map(function(c){ return fichNum(c&&c.tren); }); };
+      var todos=[fichNum(t.numTren)].concat(cTren(t.continuidad),[fichNum(t.numTrenVuelta)],cTren(t.continuidadVuelta));
+      p.resumen=todos.filter(function(x,i,a){ return x&&a.indexOf(x)===i; }).join('/');
+    } else if(V.length){
       var v=V[V.length-1]; v.fecha=k;
       var d=0; try{ d=(typeof rtDeje==='function'?rtDeje(v).d:0)||0; }catch(e){}
       p.tren=fichNum(v.tren); p.llega=fichMin(v.llega); p.deje=d; p.enBase=!!v.en_base; p.s=p.llega+d;
@@ -37514,10 +37526,16 @@ function aMin(h){ var m=String(h||'').match(/(\d{1,2}):(\d{2})/); return m?(+m[1
 function aHora(x){ x=((x%1440)+1440)%1440; return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2); }
 function ahoraMin(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); }
 // Trenes del turno de hoy (ida y vuelta) y trenes guardados en «Estaciones y Horarios»
+// ARREGLO — también los trenes de continuidad (t.continuidad tras la ida y t.continuidadVuelta tras la
+// vuelta): antes solo se miraban el tren de ida y el de vuelta. Orden del día: ida → continuidad →
+// vuelta → continuidad de la vuelta. Sin repetir el mismo número.
 function mtHoy(){ var t=(typeof TV!=='undefined'&&TV[hoyK()])||null, l=[]; if(!t) return l;
+  function cont(arr){ (arr||[]).forEach(function(c){ if(c&&c.tren) l.push({n:num(c.tren), sal:c.salida||'', lle:c.llegada||'', hS:c.horaInicio||'', hL:c.horaFin||'', cont:true}); }); }
   if(t.numTren) l.push({n:num(t.numTren), sal:t.sal||AJ.base||'', lle:t.lle||'', hS:t.hF||'', hL:t.hL||''});
+  cont(t.continuidad);
   if(t.numTrenVuelta) l.push({n:num(t.numTrenVuelta), sal:t.sal2||t.lle||'', lle:t.lle2||AJ.base||'', hS:t.hF2||'', hL:t.hL2||''});
-  return l.filter(function(x){ return x.n; }); }
+  cont(t.continuidadVuelta);
+  var visto={}; return l.filter(function(x){ if(!x.n||visto[x.n]) return false; visto[x.n]=1; return true; }); }
 function mtInfo(n){ n=num(n); var h=mtHoy().filter(function(x){ return x.n===n; })[0]; if(h) return h;
   var s=(typeof SF!=='undefined'?SF:[]).filter(function(x){ return num(x.numTren)===n; })[0];
   if(s) return {n:n, sal:s.sal||'', lle:s.lle||'', hS:s.hF||'', hL:s.hL||''};
