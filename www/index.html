@@ -5269,8 +5269,11 @@ function megafoniaDingDong(ctx, t){
     <div class="paso-h-body" style="padding-bottom:6px">
       <div class="paso-h-tit">Días Libres</div>
       <div class="paso-h-sub">El admin ya los publicó para tu base — los busca y los marca en su mes</div>
-      <button id="btnCargarDiasLibres" class="upload-btn" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#FCD34D;width:100%;justify-content:center" onclick="cargarDiasLibresPrevistos()">🧘 Cargar días libres</button>
+      <button id="btnCargarDiasLibres" class="upload-btn" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#FCD34D;width:100%;justify-content:center" onclick="cargarDiasLibresPrevistos()">🧘 Cargar días libres del mes</button>
       <div class="upload-status" id="estadoDiasLibresTrip" style="margin-top:6px"></div>
+      <!-- NUEVO — Días libres del AÑO: cada fin de semana del PDF anual de tu base → DO en el calendario. Ver cargarLibresAnioPrevistos(). -->
+      <button id="btnCargarLibresAnio" class="upload-btn" style="background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.45);color:#86EFAC;width:100%;justify-content:center;margin-top:8px" onclick="cargarLibresAnioPrevistos()">🗓️ Cargar días libres del año</button>
+      <div class="upload-status" id="estadoLibresAnioTrip" style="margin-top:6px"></div>
     </div>
   </div>
 
@@ -7386,6 +7389,37 @@ function megafoniaDingDong(ctx, t){
       </div>
       <button class="m-save" style="width:100%;margin-bottom:8px" onclick="cargarHistorialDiasLibres()">🔄 Actualizar lista</button>
       <div id="dlHistorialLista"><div class="estado-archivo sin-archivo">Toca "Actualizar lista" para ver lo guardado.</div></div>
+    </div>
+
+    <!-- NUEVO — Días libres del AÑO (fines de semana). Confirmado por
+         Alex: un PDF por base y año (sede + año + PDF). Se reconoce solo
+         (parsearBufferPdfLibresAnio) y se guarda en config_global con
+         tipo 'libres_anio_<sede>_<AAAA>'. Cada compañero lo carga en su
+         calendario desde Horario → Días Libres. -->
+    <div class="admin-card">
+      <div class="admin-card-hdr">
+        <div class="admin-card-ico" style="background:rgba(22,163,74,.15);color:#4ADE80">🗓️</div>
+        <div>
+          <div class="admin-card-tit">Días libres del año</div>
+          <div class="admin-card-sub">El PDF anual de fines de semana por base. Cada compañero lo carga en su calendario (sábado y domingo como DO). Mes vacío = vacaciones.</div>
+        </div>
+      </div>
+      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--tx3);display:block;margin-bottom:4px">1. SEDE DE ESTE ARCHIVO</label>
+      <input class="aj-nombre-inp" id="selSedeLibresAnio" list="listaSedes" placeholder="Escribe la sede (Barcelona, Bilbao...)" autocomplete="off" style="margin-bottom:10px" onfocus="this.select()">
+      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--tx3);display:block;margin-bottom:4px">2. AÑO</label>
+      <input type="number" inputmode="numeric" class="aj-nombre-inp" id="anioLibresAnio" placeholder="Se detecta solo del PDF (ej. 2027)" style="margin-bottom:10px">
+      <label style="font-size:10px;font-weight:800;letter-spacing:.3px;color:var(--tx3);display:block;margin-bottom:4px">3. ARCHIVO</label>
+      <div class="filepick" onclick="document.getElementById('fileLibresAnio').click()">
+        <div class="fp-ico">📄</div>
+        <div class="fp-txt" id="txtLibresAnio">Toca para elegir el PDF</div>
+      </div>
+      <input type="file" id="fileLibresAnio" accept="application/pdf" style="display:none" onchange="document.getElementById('txtLibresAnio').textContent = this.files[0] ? this.files[0].name : 'Toca para elegir el PDF'">
+      <button class="m-save" style="width:100%;margin-top:8px" onclick="subirLibresAnioAdmin(document.getElementById('fileLibresAnio').files[0])">4. Subir y Publicar</button>
+      <div class="estado-archivo sin-archivo" id="estadoLibresAnio">Aún no hay ningún archivo activo.</div>
+      <div style="height:1px;background:var(--div,#1E3350);margin:12px 0 10px"></div>
+      <div class="admin-card-tit" style="font-size:13px;margin-bottom:6px">Años guardados</div>
+      <button class="m-save" style="width:100%;margin-bottom:8px" onclick="cargarHistorialLibresAnio()">🔄 Actualizar lista</button>
+      <div id="laHistorialLista"><div class="estado-archivo sin-archivo">Toca "Actualizar lista" para ver lo guardado.</div></div>
     </div>
 
       </div>
@@ -18811,6 +18845,108 @@ async function _cargarDiasLibresDeFila(filaElegida, elEstado, matricula){
   }
 }
 
+// NUEVO — Días libres del AÑO (tripulante). Confirmado por Alex: el
+// admin publica el PDF anual de fines de semana por base; aquí, con un
+// toque, se busca el de TU base, se saca tu fila por matrícula y cada
+// fin de semana se pone en el Calendario como DO (Descanso), sábado y
+// domingo. Meses sin fin de semana = vacaciones: no se toca nada. Los
+// días ya pasados no se tocan. Si un día ya tiene un turno distinto,
+// se pregunta antes de sustituirlo (igual que Días Libres del mes).
+// También se apunta en diasLibresPrevistosIndice() como "DO", así la
+// celda avisa ⚠️ si más adelante te ponen un turno encima.
+async function cargarLibresAnioPrevistos(){
+  var elEstado = document.getElementById('estadoLibresAnioTrip');
+  function aviso(t){ if(elEstado) elEstado.textContent = t; }
+  var matricula = (AJ.matricula||'').trim();
+  if(!matricula){ aviso('Primero pon tu matrícula en Ajustes.'); return; }
+  var sedeSlug = _baseSlug(_sedeUsuarioActual());
+  if(!sedeSlug){ aviso('Primero pon tu Estación Base en Ajustes.'); return; }
+  if(!sbAdmin){ aviso('No se pudo conectar. Inténtalo de nuevo en unos segundos.'); return; }
+  aviso('Buscando el PDF del año de tu base...');
+  try{
+    var resp = await sbAdmin.from('config_global').select('*').like('tipo', 'libres_anio_'+sedeSlug+'_%');
+    if(resp.error){ aviso('No se pudo comprobar: ' + resp.error.message); return; }
+    var filas = (resp.data||[]).filter(function(f){ return /_(\d{4})$/.test(f.tipo); });
+    if(!filas.length){ aviso('El admin todavía no ha publicado los días libres del año para tu base.'); return; }
+    filas.sort(function(a,b){ return parseInt(b.tipo.slice(-4),10) - parseInt(a.tipo.slice(-4),10); });
+    if(filas.length===1){ await _cargarLibresAnioDeFila(filas[0], elEstado, matricula); return; }
+    window._libresAnioFilasParaElegir = filas; // leído por _elegirLibresAnio()
+    if(elEstado){
+      var html = '<div style="margin:4px 0 4px;color:var(--tx3)">Hay varios años publicados — elige cuál cargar:</div>';
+      filas.forEach(function(f, i){
+        html += '<button onclick="_elegirLibresAnio('+i+')" style="display:block;width:100%;text-align:left;'
+          +'background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.4);border-radius:8px;'
+          +'color:#86EFAC;font-size:12.5px;font-weight:700;padding:8px 10px;margin-top:6px;cursor:pointer">🗓️ '+f.tipo.slice(-4)+'</button>';
+      });
+      elEstado.innerHTML = html;
+    }
+  }catch(err){
+    console.log('Error buscando Días libres del año:', err);
+    aviso('No se pudo completar: ' + (err && err.message ? err.message : String(err)));
+  }
+}
+async function _elegirLibresAnio(indice){
+  var elEstado = document.getElementById('estadoLibresAnioTrip');
+  var fila = (window._libresAnioFilasParaElegir||[])[indice];
+  if(!fila){ if(elEstado) elEstado.textContent = 'No se pudo identificar ese año, inténtalo de nuevo.'; return; }
+  await _cargarLibresAnioDeFila(fila, elEstado, (AJ.matricula||'').trim());
+}
+async function _cargarLibresAnioDeFila(filaElegida, elEstado, matricula){
+  function aviso(t){ if(elEstado) elEstado.textContent = t; }
+  try{
+    var anio = parseInt(filaElegida.tipo.slice(-4),10);
+    aviso('Descargando...');
+    var respArchivo = await fetch(filaElegida.url_archivo);
+    if(!respArchivo.ok){ aviso('No se pudo descargar el archivo.'); return; }
+    var buf = await respArchivo.arrayBuffer();
+    aviso('Reconociendo tu matrícula...');
+    var datos = await parsearBufferPdfLibresAnio(buf);
+    var propia = (datos.filas||[]).filter(function(f){ return f.matricula===matricula; })[0];
+    if(!propia){ aviso('Tu matrícula no aparece en el PDF de ' + anio + ' de tu base.'); return; }
+
+    var h = new Date();
+    var hoy = h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');
+    var idx = diasLibresPrevistosIndice();
+    var nFindes = 0, nuevos = 0, yaEstaban = 0, mantenidos = 0, pasados = 0, raros = 0, sinFinde = [];
+    for(var mes=1; mes<=12; mes++){
+      var txt = propia.findes[mes];
+      if(!txt){ sinFinde.push(MESES[mes-1].toLowerCase()); continue; }
+      var fechas = libresAnioFechas(anio, mes, txt);
+      if(!fechas){ raros++; continue; }
+      nFindes++;
+      for(const fechaISO of fechas){
+        if(fechaISO < hoy){ pasados++; continue; }
+        if(!idx[fechaISO]) idx[fechaISO] = 'DO';
+        if(TV[fechaISO]){
+          var tipoExistente = TV[fechaISO].tipo;
+          if(['descanso','dop','comp'].indexOf(tipoExistente)!==-1){ yaEstaban++; continue; } // ya es un día libre: no se toca
+          var lbl = (TIPO_INFO[tipoExistente]&&TIPO_INFO[tipoExistente].lbl) || tipoExistente;
+          var dSem = new Date(fechaISO+'T12:00:00').getDay()===6 ? 'sábado' : 'domingo';
+          var sustituir = await ttConfirm('El ' + dSem + ' ' + fechaISO + ' ya tiene un turno puesto: ' + lbl + '.\nEl PDF de días libres del año dice que libras ese fin de semana (DO).\n\n¿Quieres sustituirlo?');
+          if(!sustituir){ mantenidos++; continue; }
+        }
+        TV[fechaISO] = {tipo:'descanso'};
+        nuevos++;
+      }
+    }
+    localStorage.setItem(_diasLibresPrevistosClaveIndice(), JSON.stringify(idx));
+    if(nuevos) saveTV();
+
+    var partes = [nFindes + ' fines de semana → ' + nuevos + ' días puestos como DO'];
+    if(yaEstaban) partes.push(yaEstaban + ' ya eran día libre (no se tocan)');
+    if(mantenidos) partes.push(mantenidos + ' con turno que dejaste tal cual');
+    if(pasados) partes.push(pasados + ' ya pasados (no se tocan)');
+    if(sinFinde.length) partes.push('sin fin de semana (vacaciones): ' + sinFinde.join(', '));
+    if(raros) partes.push(raros + ' fechas raras que no se cargaron');
+    if(elEstado) elEstado.innerHTML = '✅ <b>' + anio + ' cargado en el calendario</b><br>· ' + partes.join('<br>· ');
+    toast('✅ Días libres del año cargados en tu Calendario');
+    if(typeof renderCal==='function') renderCal();
+  }catch(err){
+    console.log('Error cargando Días libres del año:', err);
+    aviso('No se pudo completar: ' + (err && err.message ? err.message : String(err)));
+  }
+}
+
 function saveAj(){
   AJ.nombre=document.getElementById('aj-nom').value.trim()||'Mis Turnos';
   var elSaludoInpSave = document.getElementById('aj-nombre-saludo');
@@ -26879,6 +27015,122 @@ async function eliminarDiasLibresMes(tipo){
   cargarHistorialDiasLibres();
 }
 
+// NUEVO — Días libres del AÑO (admin). Mismo patrón que
+// subirDiasLibresAdmin: se lee el PDF ANTES de publicarlo
+// (parsearBufferPdfLibresAnio) y se registra en config_global con
+// tipo 'libres_anio_<sede>_<AAAA>' (no empieza por 'dias_libres_',
+// así no se mezcla con los Días Libres del mes).
+async function subirLibresAnioAdmin(file){
+  if(!perfilAdminActual || perfilAdminActual.rol !== 'admin') return;
+  var elEstado = document.getElementById('estadoLibresAnio');
+  function aviso(t){ elEstado.classList.remove('sin-archivo'); elEstado.textContent = t; }
+  if(!file){ aviso('Elige antes el archivo (paso 3).'); return; }
+  var sedeSel = document.getElementById('selSedeLibresAnio');
+  var sedeNombre = sedeSel ? sedeSel.value.trim() : '';
+  if(!sedeNombre){ aviso('Selecciona antes la sede de este archivo (paso 1).'); return; }
+  var campoAnio = document.getElementById('anioLibresAnio');
+  var anioTxt = campoAnio ? campoAnio.value.trim() : '';
+
+  aviso('Leyendo el archivo...');
+  var datos = null, errorTecnico = null, bufferParaSubir = null;
+  try{
+    bufferParaSubir = await file.arrayBuffer();
+    datos = await parsearBufferPdfLibresAnio(bufferParaSubir.slice(0));
+  }catch(errVal){
+    console.log('Error validando Días libres del año:', errVal);
+    errorTecnico = errVal && errVal.message ? errVal.message : String(errVal);
+  }
+  if(!anioTxt && datos && datos.anio){ anioTxt = String(datos.anio); if(campoAnio) campoAnio.value = anioTxt; }
+  if(!/^20\d\d$/.test(anioTxt)){ aviso('Indica el año (paso 2) — no se pudo detectar solo desde el archivo.'); return; }
+  var anio = parseInt(anioTxt,10);
+
+  var filas = (datos && datos.filas) || [];
+  var nFindes = 0, raras = 0, dudas = 0;
+  filas.forEach(function(f){
+    dudas += f.dudas.length;
+    Object.keys(f.findes).forEach(function(m){
+      nFindes++;
+      if(!libresAnioFechas(anio, parseInt(m,10), f.findes[m])) raras++;
+    });
+  });
+  if(!filas.length){
+    var msg = errorTecnico
+      ? ('No se ha podido leer el archivo por completo (' + errorTecnico + '). ¿Quieres publicarlo de todas formas?')
+      : 'Este archivo no parece un PDF de fines de semana del año: no se ha reconocido ninguna matrícula con sus meses. ¿Quieres publicarlo de todas formas?';
+    if(!await ttConfirm(msg)){ elEstado.classList.add('sin-archivo'); elEstado.textContent = 'Subida cancelada — el archivo no se reconoció.'; return; }
+  } else if(raras || dudas){
+    if(!await ttConfirm('Ojo: ' + (raras ? raras + ' fechas no caen en sábado-domingo de ' + anio : '') + (raras && dudas ? ' y ' : '') + (dudas ? dudas + ' fechas no se pudieron colocar en un mes' : '') + '. Esas no se cargarán a nadie. ¿Es el año correcto? ¿Publicar de todas formas?')){
+      elEstado.classList.add('sin-archivo'); elEstado.textContent = 'Subida cancelada — revisa el año o el archivo.'; return;
+    }
+  }
+
+  var tipo = 'libres_anio_' + _baseSlug(sedeNombre) + '_' + anio;
+  aviso('Subiendo...');
+  var path = tipo + '/' + Date.now() + '_' + _nombreArchivoSeguro(file.name);
+  var subida = await sbAdmin.storage.from('admin-archivos').upload(path, bufferParaSubir, { upsert:true, contentType: file.type||'application/pdf' });
+  if(subida.error){ aviso('Error al subir: ' + subida.error.message); return; }
+  var urlData = sbAdmin.storage.from('admin-archivos').getPublicUrl(path);
+  var tabla = await sbAdmin.from('config_global').upsert({
+    tipo: tipo,
+    sede: sedeNombre,
+    nombre_archivo: file.name,
+    url_archivo: urlData.data.publicUrl,
+    fecha_subida: new Date().toISOString(),
+    subido_por: perfilAdminActual.id,
+    subido_por_email: perfilAdminActual.email || ''
+  });
+  if(tabla.error){ aviso('Archivo subido, pero no se pudo registrar: ' + tabla.error.message); return; }
+  aviso('✅ ' + sedeNombre + ' · ' + anio + ' · ' + filas.length + ' personas · ' + (nFindes - raras) + ' fines de semana comprobados (sábado y domingo reales). Meses vacíos = vacaciones.');
+  toast('✅ Días libres del año publicados para ' + sedeNombre);
+
+  sedeSel.value = '';
+  var campoArchivo = document.getElementById('fileLibresAnio');
+  if(campoArchivo) campoArchivo.value = '';
+  var txt = document.getElementById('txtLibresAnio');
+  if(txt) txt.textContent = 'Toca para elegir el PDF';
+  if(campoAnio) campoAnio.value = '';
+  cargarHistorialLibresAnio();
+}
+async function cargarHistorialLibresAnio(){
+  var cont = document.getElementById('laHistorialLista');
+  if(!cont || !sbAdmin) return;
+  cont.innerHTML = '<div class="estado-archivo sin-archivo">Cargando...</div>';
+  var r = await sbAdmin.from('config_global').select('*').like('tipo','libres_anio_%');
+  if(!r || r.error){
+    cont.innerHTML = '<div class="estado-archivo sin-archivo">No se pudo cargar la lista'+(r&&r.error?(': '+r.error.message):'')+'.</div>';
+    return;
+  }
+  var filas = (r.data||[]).map(function(f){
+    var m = f.tipo.match(/_(\d{4})$/);
+    return { tipo:f.tipo, sede: f.sede || '(sin sede)', anio: m?parseInt(m[1],10):null, fecha_subida:f.fecha_subida };
+  }).filter(function(f){ return f.anio; });
+  if(!filas.length){
+    cont.innerHTML = '<div class="estado-archivo sin-archivo">Aún no se ha subido ningún año.</div>';
+    return;
+  }
+  var porSede = {};
+  filas.forEach(function(f){ (porSede[f.sede] = porSede[f.sede] || []).push(f); });
+  cont.innerHTML = Object.keys(porSede).sort().map(function(sede){
+    return '<div class="hg-grupo"><div class="hg-grupo-tit">📍 '+sede+'</div>'
+      + porSede[sede].sort(function(a,b){ return b.anio-a.anio; }).map(function(it){
+          var fecha = it.fecha_subida ? new Date(it.fecha_subida).toLocaleDateString('es-ES') : '';
+          return '<div class="hg-hist-item">'
+            + '<div class="hg-hist-mes">Año '+it.anio+'</div>'
+            + '<div class="hg-hist-meta">Subido '+fecha+'</div>'
+            + '<button class="nadm-hist-del" onclick="eliminarLibresAnio(\''+it.tipo+'\')">🗑 Eliminar</button>'
+          + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('');
+}
+async function eliminarLibresAnio(tipo){
+  if(!perfilAdminActual || perfilAdminActual.rol !== 'admin') return;
+  if(!await ttConfirm('¿Eliminar este año de días libres? No se puede deshacer. A quien ya lo cargó no se le borra nada de su calendario.')) return;
+  var r = await sbAdmin.from('config_global').delete().eq('tipo', tipo);
+  if(r.error){ alert('No se pudo eliminar: '+r.error.message); return; }
+  cargarHistorialLibresAnio();
+}
+
 // NUEVO — Sube el Gráfico + el Informe de Intervención, junto con el
 // nombre del servicio y la fecha de inicio. NO procesa los PDF aquí
 // (el admin no necesita esperar el cruce) — cada compañero los
@@ -27673,6 +27925,83 @@ async function parsearBufferPdfDiasLibres(buf){
   }
   var mesNum = MESES_NOMBRE_DIAS_LIBRES.indexOf(acc.mesTxt) + 1;
   return { sede: acc.sede, mes: mesNum||null, anio: acc.anioTxt?parseInt(acc.anioTxt,10):null, filas: acc.filas };
+}
+
+// ═══════════════════════════════════════════════════════════
+// NUEVO — Días libres del AÑO (fines de semana). La empresa publica
+// un PDF por base y año: una fila por persona (matrícula + nombre) y
+// una columna por mes con el fin de semana libre que le toca
+// ("16-17" = sábado 16 y domingo 17). Un mes vacío = está de
+// vacaciones ese mes. Se lee por COORDENADAS: cada fecha va al mes
+// cuya cabecera (ENERO…DICIEMBRE) le queda justo encima. Probado con
+// el PDF real de Barcelona 2027 (289 personas, todas las fechas en
+// sábado). Devuelve {anio, filas:[{matricula,nombre,findes:{1:"16-17",…},dudas:[]}]}.
+// ═══════════════════════════════════════════════════════════
+async function parsearBufferPdfLibresAnio(buf){
+  await asegurarPdfWorkerSeguro();
+  var pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  var acc = {anio:null, anioSuelto:null, centros:null, filas:[]};
+  for(var pi=1; pi<=pdf.numPages; pi++){
+    var page = await pdf.getPage(pi);
+    var alto = page.getViewport({scale:1}).height;
+    var content = await page.getTextContent();
+    var ws = [];
+    content.items.forEach(function(it){
+      var s = (it.str||'').trim();
+      if(!s) return;
+      var x0 = it.transform[4];
+      ws.push({t:s, x0:x0, cx: x0 + (it.width||0)/2, y: alto - it.transform[5]});
+    });
+    _parsearPaginaLibresAnio(ws, acc);
+  }
+  return {anio: acc.anio || acc.anioSuelto, filas: acc.filas};
+}
+function _parsearPaginaLibresAnio(ws, acc){
+  var M = MESES_NOMBRE_DIAS_LIBRES;
+  var cab = {};
+  ws.forEach(function(w){
+    var up = w.t.toUpperCase();
+    if(M.indexOf(up)!==-1) cab[up] = w.cx;
+    var a = up.match(/FINES\s+DE\s+SEMANA\D*(20\d\d)/);
+    if(a) acc.anio = parseInt(a[1],10);
+    else if(!acc.anioSuelto){ var b = up.match(/^(?:.*\D)?(20\d\d)(?:\D.*)?$/); if(b) acc.anioSuelto = parseInt(b[1],10); }
+  });
+  // La cabecera de meses suele salir solo en la 1ª página: las demás usan las mismas columnas.
+  if(Object.keys(cab).length===12) acc.centros = M.map(function(m){ return cab[m]; });
+  if(!acc.centros) return;
+  var limiteNombre = acc.centros[0] - 12;
+  ws.filter(function(w){ return /^\d{5,7}$/.test(w.t) && w.cx < limiteNombre; }).forEach(function(m){
+    var fila = ws.filter(function(w){ return Math.abs(w.y - m.y) < 2.5; });
+    var nombre = fila.filter(function(w){ return w!==m && w.x0>m.x0 && w.cx<limiteNombre && !/^\d{1,2}-\d{1,2}$/.test(w.t); })
+      .sort(function(a,b){ return a.x0-b.x0; }).map(function(w){ return w.t; }).join(' ');
+    var findes = {}, dudas = [];
+    fila.forEach(function(w){
+      if(!/^\d{1,2}-\d{1,2}$/.test(w.t)) return;
+      var mejor = -1, dist = Infinity;
+      acc.centros.forEach(function(c,i){ var d = Math.abs(c - w.cx); if(d<dist){ dist=d; mejor=i; } });
+      if(dist>14 || findes[mejor+1]){ dudas.push(w.t); return; }
+      findes[mejor+1] = w.t;
+    });
+    acc.filas.push({matricula:m.t, nombre:nombre, findes:findes, dudas:dudas});
+  });
+}
+// "16-17" del mes (1-12) → ['AAAA-MM-16','AAAA-MM-17'] solo si de verdad
+// es sábado + domingo. Si no cuadra devuelve null (no se carga nada raro).
+function libresAnioFechas(anio, mes, txt){
+  var p = String(txt||'').split('-').map(function(n){ return parseInt(n,10); });
+  if(p.length!==2 || !p[0] || !p[1]) return null;
+  // Normalmente el sábado es de ese mes ("31-1" en julio = sáb 31 jul + dom 1 ago).
+  // Por si algún PDF lo pusiera en la columna del domingo, se prueba también el mes anterior.
+  var sab = new Date(anio, mes-1, p[0]);
+  if(sab.getDate()!==p[0] || sab.getDay()!==6){
+    if(p[0] <= p[1]) return null;
+    sab = new Date(anio, mes-2, p[0]);
+    if(sab.getDate()!==p[0] || sab.getDay()!==6) return null;
+  }
+  var dom = new Date(sab.getFullYear(), sab.getMonth(), sab.getDate()+1);
+  if(dom.getDate()!==p[1]) return null;
+  function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  return [iso(sab), iso(dom)];
 }
 
 // NUEVO — Solicitudes de acceso para matrículas que todavía no están
