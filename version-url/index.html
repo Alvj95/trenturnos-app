@@ -39218,72 +39218,153 @@ function agtContexto(){
   return ctx;
 }
 
-/* ── Entender la frase (español de la calle, sin acentos) ── */
-function agtNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
-function agtEntender(texto, ctx){
-  var t = ' '+agtNorm(texto)+' ', t0 = t, q = {texto:texto, dias:[], ofrece:[], horas:{}};
-  // 1) Horas (se quitan del texto para no confundirlas con días)
-  var reH = /(?:(llegue|llegar|llegada|llega|llegan|acabe|acabar|termine|terminar|salga|salir|sale|salen|tome|tomar|toma|empiece|empezar|entre|entrar|empieza)\b([a-z ]{0,14}?))?\b(antes|despues|desde|hasta|a partir) de (las |la )?(\d{1,2})(?:[:.h](\d{2}))?\s*(h|horas)?\b|\b(antes|despues) de (las |la )?(\d{1,2})(?:[:.h](\d{2}))?/g;
+/* ── Entender la frase (español de la calle, con faltas y abreviaturas) ── */
+function agtNorm(s){
+  var t = ' '+String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[¿?¡!.,;:()"«»]/g,' ').replace(/\s+/g,' ')+' ';
+  var CAMBIOS = [
+    [/ (q|k|ke|qe) /g,' que '], [/ (kien|qien|kn) /g,' quien '], [/ (xq|pq|porq|porke) /g,' porque '], [/ (tb|tmb) /g,' tambien '],
+    [/ (x) /g,' por '], [/ (d) /g,' de '], [/ (mñn|mnn|mana) /g,' manana '], [/ (pa) /g,' para '],
+    [/pernot+a/g,'pernocta'], [/pernocata|pernoxta/g,'pernocta'], [/(b|v)aca(s|c|z)?i?ones?/g,'vacaciones'], [/vacas /g,'vacaciones '],
+    [/dscanso|decanso|descaso/g,'descanso'], [/ fin d(e)? semana/g,' finde'], [/ fines de semana/g,' finde'], [/ fin de semana/g,' finde'],
+    [/ (sabdo|savado|sbado|sab) /g,' sabado '], [/ (miercole|mierkoles|miercoles|mier|mie) /g,' miercoles '], [/ (biernes|vierne|vie) /g,' viernes '], [/ (jeves|juebes|jueve|jue) /g,' jueves '], [/ (domigo|dom) /g,' domingo '], [/ (lune|lun) /g,' lunes '], [/ (marte|mar) /g,' martes '],
+    [/ libr(o|as|a|an|amos) /g, function(m){ return m; }]
+  ];
+  CAMBIOS.forEach(function(c){ t = t.replace(c[0], c[1]); });
+  return t.replace(/\s+/g,' ').trim();
+}
+var AGT_GLOSARIO = {
+  dh: '<b>DH</b> = vas en el tren como viajero, <b>sin trabajar</b> (para ir o volver de tu servicio). Por ejemplo «3113DH» es volver de DH en el 3113. Si pone «3113-3113DH», trabajas la primera mitad y vuelves de DH la segunda.',
+  pernocta: 'Una <b>pernocta</b> es cuando duermes fuera de tu base: vas un día y vuelves al siguiente. Para los cambios cuenta como <b>un solo viaje de dos días</b>, se cambia entero.',
+  um: '<b>UM</b> = el tren va en <b>doble composición</b> (dos trenes enganchados). Lo pone en el Horario al lado del número.',
+  reserva: 'La <b>reserva</b> (R) es estar disponible por si hace falta cubrir un servicio. Si te «pinchan», pasa a ser un turno normal.',
+  dop: '<b>DOP</b> es un día de descanso que te devuelven (descanso pendiente). Cuenta como día libre.',
+  ld: '<b>LD</b> = <b>libre disposición</b>: día libre.',
+  do: '<b>DO</b> = <b>descanso</b>: día libre.',
+  deje: 'El <b>deje</b> es lo que tardas en dejar el servicio al llegar: 20 min en base y 15 fuera. Por eso tu salida es un poco después de la llegada del tren.',
+  toma: 'La <b>toma</b> es la hora a la que empiezas el servicio (la que sale en «CI» del Horario).',
+  idayvuelta: 'Un <b>ida y vuelta</b> es ir y volver a tu base el mismo día. En el Horario suelen ser dos trenes, uno par y otro impar (van en sentidos contrarios).',
+  cp: '<b>CP</b> y <b>FE</b> son <b>vacaciones</b>.',
+  b: '<b>B</b> = baja.', ex: '<b>EX</b> = excedencia.'
+};
+function agtEntender(texto, ctx, ultima){
+  var t = ' '+agtNorm(texto)+' ', q = {texto:texto, dias:[], ofrece:[], horas:{}, explica:[]};
+  var t0 = t;
+  // 0) Franjas habladas («de mañana», «de tarde», «que acabe pronto»…) — antes que los días
+  var FR = [
+    [/ (acabe|acabar|termine|terminar|llegue|llegar|salir de trabajar|plegar|plegue) (pronto|temprano|prontito) /, function(){ q.horas.coMax = 900; q.explica.push('que llegues <b>antes de las 15:00</b> <i>(así entiendo «que acabe pronto»)</i>'); }],
+    [/ (turno |turnos )?(de|por la|de la) (manana|madrugada) | temprano | tempranito /, function(){ q.horas.ciMax = 600; q.explica.push('que tomes <b>antes de las 10:00</b> <i>(así entiendo «de mañana»)</i>'); }],
+    [/ (turno |turnos )?(de|por la|de la) tarde /, function(){ q.horas.ciMin = 840; q.explica.push('que tomes <b>a partir de las 14:00</b> <i>(así entiendo «de tarde»)</i>'); }],
+    [/ (turno |turnos )?(de|por la|de la) noche | nocturno /, function(){ q.horas.ciMin = 1080; q.explica.push('que tomes <b>a partir de las 18:00</b> <i>(así entiendo «de noche»)</i>'); }],
+    [/ (salga|salir|empiece|empezar|entre|entrar|tome|tomar) (tarde|mas tarde) /, function(){ q.horas.ciMin = 600; q.explica.push('que tomes <b>a partir de las 10:00</b> <i>(así entiendo «que salga tarde»)</i>'); }]
+  ];
+  FR.forEach(function(f){ if(f[0].test(t)){ f[1](); t = t.replace(f[0],' '); } });
+  // 1) Horas concretas
+  var reH = /(?:(llegue|llegar|llegada|llega|llegan|llego|acabe|acabar|acabo|termine|terminar|termino|salga|salir|sale|salen|salgo|tome|tomar|toma|tomo|empiece|empezar|empiezo|entre|entrar|entro|empieza)\b([a-z ]{0,14}?))?\b(antes|despues|desde|hasta|a partir) de (las |la )?(\d{1,2})(?:[:.h](\d{2}))?\s*(h|horas)?\b|\b(antes|despues) de (las |la )?(\d{1,2})(?:[:.h](\d{2}))?/g;
   t = t.replace(reH, function(all, verbo, medio, cuando, la, hh, mm, hs, c2, la2, hh2, mm2){
     var cu = cuando || c2, H = parseInt(hh||hh2,10), M = parseInt(mm||mm2||'0',10);
     if(isNaN(H) || H>24) return all;
     var min = H*60+M, v = verbo||'';
-    var esSalida = /^(salga|salir|sale|salen|tome|tomar|toma|empiece|empezar|entre|entrar|empieza)$/.test(v);
+    var esSalida = /^(salga|salir|sale|salen|salgo|tome|tomar|toma|tomo|empiece|empezar|empiezo|entre|entrar|entro|empieza)$/.test(v);
     var antes = (cu==='antes' || cu==='hasta');
     if(esSalida){ if(antes) q.horas.ciMax = min; else q.horas.ciMin = min; }
     else if(v){ if(antes) q.horas.coMax = min; else q.horas.coMin = min; }
     else { if(antes) q.horas.coMax = min; else q.horas.ciMin = min; }
     return ' ';
   });
-  // 2) Mes nombrado (para fines de semana / avisar si no es el del Horario)
+  t = t.replace(/ a las \d{1,2}(:\d{2})? /g,' ');
+  // 2) Números de tren (3 a 5 cifras)
+  var mt = t.match(/\b(\d{3,5})\s*(dh)?\b/); if(mt){ q.tren = mt[1].replace(/^0+/,''); t = t.replace(mt[0],' '); }
+  // 3) Mes nombrado
   AGT.MESES.forEach(function(m, i){ if(new RegExp('\\b'+m+'\\b').test(t)) q.mesNombrado = i+1; });
-  // 3) Parte "a cambio" → días que ofreces
-  var corte = t.search(/\b(a cambio|puedo dar|te doy|le doy|doy|ofrezco|por mi|por el mio|por la mia|por el de|por la de)\b/);
+  var mesRef = (q.mesNombrado && q.mesNombrado!==ctx.mes) ? q.mesNombrado : null;
+  // 4) Días relativos y rangos
+  var hoy = ctx.hoyDia;
+  function sumar(d){ return (hoy && d>=1 && d<=ctx.nDias) ? d : null; }
+  function proxSem(ds, desde){ for(var d=desde; d<=ctx.nDias; d++){ if(ctx.diaSem(d)===ds) return d; } return null; }
+  if(/ (este|el|al|un|del|para el|proximo|que viene|siguiente) finde | finde (que viene|proximo|siguiente) | finde /.test(t) && !/ finde (del |de )?\d/.test(t)){
+    // «el finde»: el sábado de esta semana (si hoy es sábado, hoy); dicho en domingo, el siguiente.
+    var desdeF = hoy || 1;
+    if(hoy && ctx.diaSem(hoy)===6 && /(que viene|proximo|siguiente)/.test(t)) desdeF = hoy+1;
+    var sab = proxSem(6, desdeF);
+    if(sab){ q.finde = [sab, sab+1]; q.findeHG = true; }
+  }
+  if(/ (semana que viene|proxima semana|siguiente semana) /.test(t) && hoy){
+    var lun = proxSem(1, hoy+1); if(lun){ q.rango = [lun, Math.min(lun+6, ctx.nDias)]; q.rangoTxt = 'la semana que viene'; }
+  } else if(/ esta semana /.test(t) && hoy){
+    var dom = proxSem(0, hoy) || ctx.nDias; q.rango = [hoy, dom]; q.rangoTxt = 'esta semana';
+  } else if(/ este mes | en todo el mes | del mes /.test(t)){ q.rango = [hoy||1, ctx.nDias]; q.rangoTxt = 'este mes'; }
+  var mr = t.match(/ del (\d{1,2}) al (\d{1,2}) /); if(mr){ q.rango = [parseInt(mr[1],10), parseInt(mr[2],10)]; q.rangoTxt = 'del '+mr[1]+' al '+mr[2]; t = t.replace(mr[0],' '); }
+  // 5) «a cambio» → días que ofreces
+  var corte = t.search(/\b(a cambio|puedo dar|te doy|le doy|doy|ofrezco|por mi|por el mio|por la mia|por el de|por la de|y le doy|y te doy)\b/);
   var tPedido = corte>=0 ? t.slice(0, corte) : t, tOfrece = corte>=0 ? t.slice(corte) : '';
   function diasDe(s){
     var out = [];
-    if(/\bpasado manana\b/.test(s) && ctx.hoyDia){ out.push(ctx.hoyDia+2); s = s.replace(/\bpasado manana\b/,' '); }
-    if(/\bmanana\b/.test(s) && ctx.hoyDia) out.push(ctx.hoyDia+1);
-    if(/\bhoy\b/.test(s) && ctx.hoyDia) out.push(ctx.hoyDia);
+    if(/\bpasado manana\b/.test(s)){ var pm = sumar((hoy||0)+2); if(pm) out.push(pm); s = s.replace(/\bpasado manana\b/,' '); }
+    if(/\bmanana\b/.test(s)){ var mn = sumar((hoy||0)+1); if(mn) out.push(mn); }
+    if(/\bhoy\b/.test(s) && hoy) out.push(hoy);
     var SEM = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
-    var re = /\b(domingo|lunes|martes|miercoles|jueves|viernes|sabado)?\s*(?:el |dia |del )?(\d{1,2})\b(?!\s*(?:h|horas|:))|\b(domingo|lunes|martes|miercoles|jueves|viernes|sabado)\b/g, m;
+    var re = /\b(domingo|lunes|martes|miercoles|jueves|viernes|sabado)?\s*(?:el |dia |del |para el |al )?(\d{1,2})\b(?!\s*(?:h|horas|:|-\d))|\b(domingo|lunes|martes|miercoles|jueves|viernes|sabado)\b/g, m;
     while((m = re.exec(s))){
       if(m[2]){ var n = parseInt(m[2],10); if(n>=1 && n<=31) out.push(n); }
-      else if(m[3]){
-        var ds = SEM.indexOf(m[3]), desde = ctx.hoyDia || 1;
-        for(var d=desde; d<=ctx.nDias; d++){ if(ctx.diaSem(d)===ds){ out.push(d); break; } }
-      }
+      else if(m[3]){ var d0 = proxSem(SEM.indexOf(m[3]), hoy || 1); if(d0) out.push(d0); }
     }
     return out.filter(function(d,i,a){ return d>=1 && d<=ctx.nDias && a.indexOf(d)===i; });
   }
-  q.dias = diasDe(tPedido); q.ofrece = diasDe(tOfrece);
-  if(!q.dias.length && q.ofrece.length && corte<0) { q.dias = q.ofrece; q.ofrece = []; }
-  // 4) Preferencias
-  if(/\b(sin pernocta|no (sea |sean |tenga )?(pernocta|dormida)|ida y vuelta|sin dormir|no dormir|no duerma|volver el mismo dia)\b/.test(t)) q.pernocta = 'no';
-  else if(/\b(pernocta|pernota|dormida|dormir fuera|duerma fuera|que duerma|noche fuera)\b/.test(t)) q.pernocta = 'si';
-  if(/\breserva\b/.test(t)) q.reserva = true;
-  // Destino: cualquier estación que salga en el Horario (menos la base)
-  var vistos = {};
-  ctx.personas.forEach(function(p){ p.viajes.forEach(function(v){ v.ruta.forEach(function(c){ if(c!==ctx.base) vistos[c]=1; }); }); });
-  Object.keys(vistos).forEach(function(c){
-    var n = agtNorm(agtNombreEst(c)).split(/[ \/-]/)[0];
-    if(n.length>=4 && new RegExp('\\b'+n+'\\b').test(t)) q.destino = c;
-  });
-  // 5) Qué quiere
-  var pregunta = /\b(quien|quienes|alguien|cuantos|cuantas|que turnos?|cuales|hay algun)\b/.test(t0);
-  var cambio = /\b(cambi|cambio|cambiar|cambie|por la mia|por el mio|por mi|quiero un turno|busco un turno|necesito un turno|me lo cambie)/.test(t0);
-  if(/\b(hola|buenas|ayuda|que puedes|que sabes|como funciona)\b/.test(t0) && !q.dias.length) q.accion = 'ayuda';
-  else if(/\bvacacion/.test(t0)) q.accion = 'vacaciones';
-  else if(/\b(finde|fin de semana|fines de semana)\b/.test(t0) && /\b(libra|libran|libre|libres|descansa|toca|tocan)\b/.test(t0) && !cambio) q.accion = 'findes';
-  else if(pregunta && !cambio && /\b(libra|libran|libre|libres|descansa|descansan|no trabaja|no trabajan)\b/.test(t0)) q.accion = 'libres';
-  else if(pregunta && !cambio && /\b(turno|turnos|tren|trenes|llega|llegan|llegue|sale|salen|salga)\b/.test(t0)) q.accion = 'turnos';
-  else if(/\b(librar|libre|descansar|no trabajar|quitarme|me quite|quitar)\b/.test(t0)) q.accion = 'librar';
-  else if(q.dias.length) q.accion = 'cambio';
-  else q.accion = 'nose';
-  // Fin de semana: el número son los dos días ("6-7")
-  var fs = t.match(/\b(\d{1,2})\s*(?:-|y|al)\s*(\d{1,2})\b/); if(fs) q.finde = [parseInt(fs[1],10), parseInt(fs[2],10)];
+  if(!mesRef){ q.dias = diasDe(tPedido); q.ofrece = diasDe(tOfrece); }
+  if(!q.dias.length && q.ofrece.length && corte<0){ q.dias = q.ofrece; q.ofrece = []; }
+  if(!q.dias.length && q.finde && q.findeHG) q.dias = [q.finde[0]];
+  var fs = t.match(/\b(\d{1,2})\s*(?:-|y|al)\s*(\d{1,2})\b/); if(fs && / finde /.test(t)){ q.finde = [parseInt(fs[1],10), parseInt(fs[2],10)]; q.findeHG = !mesRef; }
   var qn = t.match(/\b(primera|segunda|1a|2a)\s+quincena\b/); if(qn) q.quincena = /primera|1a/.test(qn[1]) ? 1 : 2;
   var sm = t.match(/\b(primera|segunda|tercera|cuarta|ultima|1a|2a|3a|4a)\s+semana\b/); if(sm) q.semana = {primera:1,'1a':1,segunda:2,'2a':2,tercera:3,'3a':3,cuarta:4,'4a':4,ultima:5}[sm[1]];
+  // 6) Preferencias
+  if(/ (sin pernocta|no (sea |sean |tenga )?(pernocta|dormida)|ida y vuelta|sin dormir|no dormir|no duerma|volver el mismo dia|dormir en casa) /.test(t)) q.pernocta = 'no';
+  else if(/ (pernocta|dormida|dormir fuera|duerma fuera|que duerma|noche fuera|acepto pernocta|aceptar pernocta) /.test(t)) q.pernocta = 'si';
+  if(/ (de )?reserva /.test(t) && !/ quien (esta|estan|hay) de reserva /.test(t)) q.reserva = true;
+  var vistos = {};
+  ctx.personas.forEach(function(p){ p.viajes.forEach(function(v){ v.ruta.forEach(function(c){ if(c!==ctx.base) vistos[c]=1; }); }); });
+  var dests = [];
+  Object.keys(vistos).forEach(function(c){
+    var n = agtNorm(agtNombreEst(c)).split(/[ \/-]/)[0];
+    if((n.length>=4 && new RegExp('\\b'+n+'\\b').test(t0)) || new RegExp(' '+c.toLowerCase()+' ').test(t0)){ dests.push(c); if(!q.destinoTxt && n.length>=4 && new RegExp('\\b'+n+'\\b').test(t0)) q.destinoTxt = n.charAt(0).toUpperCase()+n.slice(1); }
+  });
+  if(dests.length){ q.destinos = dests; q.destino = dests[0]; }
+  // 7) Qué quiere (sobre el texto completo)
+  var T = t0;
+  var quien = / (quien|quienes|alguien|cuantos|cuantas|gente|companeros|personas) /.test(T);
+  var yoW = / (tengo|hago|trabajo|me toca|mi turno|mis turnos|llego|salgo|tomo|entro|acabo|termino|libro|mis libres|mis descansos|mis vacaciones|mi horario|voy yo|estoy) /.test(T);
+  var cambio = / (cambi\w*|me (lo |la )?(hace|haga|cubra|cubre)|me hagan|quiero un turno|quiero una|busco un turno|necesito un turno|dame opciones|opciones para|alguna opcion|que opciones|hay opciones|quiero hacer|quiero trabajar|me interesa) /.test(T);
+  var glos = T.match(/ (que es|que significa|que quiere decir|que son|significado de|explicame|define) (la |el |un |una |lo de )?(dh|pernocta|um|reserva|dop|ld|do|deje|toma|ida y vuelta|cp|fe|b|ex)\b/) || T.match(/^ (dh|pernocta|um|dop|ld|deje) $/);
+  if(glos) { q.accion = 'glosario'; q.termino = (glos[3]||glos[1]).replace(/ /g,''); }
+  else if(/ (gracias|grax|crack|genial|perfecto|maquina|fenomeno|te quiero|buen trabajo|muy bien|que bueno|guay|top) /.test(T) && T.length < 40) q.accion = 'gracias';
+  else if(/^ (hola|buenas|buenos dias|buenas tardes|buenas noches|hey|ey|que tal|holi)( .{0,14})? $/.test(T)) q.accion = 'hola';
+  else if(/ (ayuda|que puedes|que sabes|como funciona|que te puedo|que puedo preguntar|como te uso) /.test(T)) q.accion = 'ayuda';
+  else if(/ (porque|por que) /.test(T) && / (ojo|choca|chocaria|sale|salia|no puede|no encaja|aviso) /.test(T)) q.accion = 'porque';
+  else if(/ (no me sirve|no me vale|ninguno|ninguna|no me gusta|no me convence|nada de eso) /.test(T)) q.accion = 'nosirve';
+  else if(/^ (mas|mas opciones|otras|otros|ver mas|ensename mas|muestrame mas|siguientes|mas por favor|alguna mas|hay mas) $/.test(T) || / (mas opciones|ver mas|ensename mas|muestrame mas) /.test(T)) q.accion = 'mas';
+  else if(/ con quien (voy|viajo|trabajo|estoy|coincido|me toca|salgo|vuelvo|hago) / .test(T)) q.accion = 'conquien';
+  else if(q.tren && !cambio && (quien || / (hace|hacen|lleva|llevan|tiene|tienen|va|van) /.test(T))) q.accion = 'quientren';
+  else if(/ (vacaciones) /.test(T) && (/ mis vacaciones | tengo vacaciones | estoy de vacaciones | me tocan /.test(T) && !quien)) q.accion = 'misvacaciones';
+  else if(/ vacaciones /.test(T)) q.accion = 'vacaciones';
+  else if(quien && / de baja /.test(T)) { q.accion = 'quiencod'; q.cods = ['B']; q.codTxt = 'de baja'; }
+  else if(quien && / (de reserva|reserva) /.test(T)) { q.accion = 'quiencod'; q.cods = ['R']; q.codTxt = 'de reserva'; }
+  else if(quien && / (excedencia) /.test(T)) { q.accion = 'quiencod'; q.cods = ['EX']; q.codTxt = 'de excedencia'; }
+  else if(!quien && yoW && / (cuando libro|cuando descanso|mis libres|mis descansos|cuantos (dias )?(libres|descansos)|dias libres tengo|libro este|cuando tengo (libre|descanso)|que dias libro) /.test(T)) q.accion = 'mislibres';
+  else if(/ (cuando libro|cuantos descansos|cuantos dias libres|mis dias libres|mis descansos) /.test(T)) q.accion = 'mislibres';
+  else if(/ finde /.test(T) && / (libra|libran|libre|libres|descansa|descansan|toca|tocan|librar|libro) /.test(T) && !cambio && !/ (quiero|necesito) librar /.test(T)) q.accion = (q.findeHG && quien) ? 'libresfinde' : (quien || !q.findeHG ? 'findes' : 'mislibres');
+  else if(quien && !cambio && / (libra|libran|libre|libres|descansa|descansan|no trabaja|no trabajan|esta libre|estan libres) /.test(T)) q.accion = 'libres';
+  else if(quien && !cambio && q.destino && / (va|van|viaja|viajan|tiene|tienen|hace|hacen|pernocta|duerme|duermen) /.test(T)) q.accion = 'quiendestino';
+  else if(quien && !cambio && / (trabaja|trabajan|curra|curran) /.test(T)) q.accion = 'quientrabaja';
+  else if(!quien && !cambio && yoW && !/ (librar|quitarme|me quite) /.test(T)) q.accion = 'mihorario';
+  else if(!cambio && / (que|cuales|hay) (turnos?|trenes?) | turnos? (hay|de|que) | trenes? (hay|que|salen|llegan) /.test(T)) q.accion = 'turnos';
+  else if(/ (librar|libre|descansar|no trabajar|quitarme|me quite|quitar|no puedo ir|no puedo trabajar|tengo un compromiso|tengo un asunto) /.test(T)) q.accion = 'librar';
+  else if(cambio || q.dias.length) q.accion = q.dias.length ? 'cambio' : 'cambioSinDia';
+  else q.accion = 'nose';
+  // «y el 28?» / «y mañana?» → misma pregunta de antes con otro día
+  if(ultima && /^ y (el |la |para el |del |al |que tal el |que tal )?/.test(T) && T.length < 34 && (q.dias.length || q.finde) && ['nose','cambio'].indexOf(q.accion)!==-1){
+    var base = Object.assign({}, ultima);
+    base.dias = q.dias; base.finde = q.finde; base.findeHG = q.findeHG; base.ofrece = []; base.texto = texto; base.explica = [];
+    return base;
+  }
   return q;
 }
 
@@ -39293,7 +39374,7 @@ function agtCumple(v, q, dia){
   if(q.pernocta==='si' && !v.pernocta) return false;
   if(q.reserva && !v.reserva) return false;
   if(!q.reserva && v.reserva && (q.horas.coMax!=null || q.destino)) return false;
-  if(q.destino && v.ruta.indexOf(q.destino)===-1) return false;
+  if(q.destino && !(q.destinos||[q.destino]).some(function(c){ return v.ruta.indexOf(c)!==-1; })) return false;
   var ci = v.ci, co = (v.dias[0]===dia) ? (v.coDia1!=null ? v.coDia1 : v.co) : v.co;
   if(q.horas.ciMin!=null && (ci==null || ci < q.horas.ciMin)) return false;
   if(q.horas.ciMax!=null && (ci==null || ci > q.horas.ciMax)) return false;
@@ -39380,6 +39461,10 @@ function agtListaNombres(ps, max){
 function agtResponderCambio(q, ctx){
   var yo = ctx.yo, X = q.dias[0];
   if(q.mesNombrado && q.mesNombrado!==ctx.mes) return 'Ahora mismo tengo cargado el Horario General de <b>'+AGT.MESES[ctx.mes-1]+'</b>. Para '+AGT.MESES[q.mesNombrado-1]+', cámbialo arriba en Compañeros (selector de mes) y vuelve a preguntarme 😉';
+  if(q.accion==='librar' && !yo.porDia[q.dias[0]]){
+    var cL = yo.dias[q.dias[0]], rL = agtDiaDe(yo, q.dias[0], ctx, true);
+    return 'Buenas noticias: el <b>'+ctx.diaTxt(q.dias[0])+'</b> ya '+rL.txt+'. No hace falta cambiar nada 😉';
+  }
   if(q.accion==='librar' && q.ofrece.length){
     var malos = q.ofrece.filter(function(d){ var c = yo.dias[d]; return c && (c.tipo==='ausente' || (c.tipo!=='libre' && c.tipo!=='nada' && c.tipo!=='otro')); });
     if(malos.length===q.ofrece.length){
@@ -39387,11 +39472,19 @@ function agtResponderCambio(q, ctx){
         +q.ofrece.map(function(d){ var c = yo.dias[d]; return c.tipo==='ausente' ? 'estás '+AGT.AUSENTE[c.cod] : 'ya trabajas'; }).join(' / ')+'. Dime otro día en el que libres.';
     }
   }
+  var cX = yo.dias[X], quiereTrabajar = / (quiero hacer|quiero trabajar|hacer un turno|trabajar ese|cubrir|hacerle) /.test(' '+agtNorm(q.texto)+' ');
+  if(cX && cX.tipo==='ausente' && !yo.porDia[X]){
+    var rA = agtAusenteRango(yo, X, ctx);
+    return '¡Ojo! El <b>'+ctx.diaTxt(X)+'</b> estás '+AGT.AUSENTE[cX.cod]+(cX.cod==='FE'||cX.cod==='CP'?' 🏖️':'')+(rA&&rA[0]!==rA[1]?' ('+agtTramoTxt(rA)+')':'')+'. No tienes nada que cambiar'+(cX.cod==='B'?'… ¡cuídate mucho! 💪':'… ¡a desconectar'+(agtNombrePila()?', '+agtEsc(agtNombrePila()):'')+'! 😎');
+  }
+  if(cX && cX.tipo==='libre' && !yo.porDia[X] && q.accion==='cambio' && !quiereTrabajar){
+    return 'El <b>'+ctx.diaTxt(X)+'</b> ya libras ('+(AGT.NOMBRE_COD[cX.cod]||cX.cod).toLowerCase()+') 😄 No hace falta cambiar nada… ¡disfrútalo!<br>Si lo que quieres es <b>hacer</b> un turno ese día (por ejemplo, para devolver un favor), dime «quiero hacer un turno el '+X+'».';
+  }
   var R = agtBuscarCambios(q, ctx);
   AGT_RES = [];
   if(R.sinTurno){
     var c0 = yo.dias[X];
-    return 'El <b>'+ctx.diaTxt(X)+'</b> ya no trabajas ('+agtEsc((c0&&c0.cod&&AGT.NOMBRE_COD[c0.cod])||'sin turno')+') 😊 No hay nada que cambiar.';
+    return 'El <b>'+ctx.diaTxt(X)+'</b> ya libras ('+agtEsc((c0&&c0.cod&&AGT.NOMBRE_COD[c0.cod]||'sin turno').toLowerCase())+') 😄 ¡No hay nada que cambiar, disfrútalo!';
   }
   var A = R.A, intro;
   if(A){
@@ -39410,10 +39503,17 @@ function agtResponderCambio(q, ctx){
   } else {
     h += '<br><br>He encontrado <b>'+buenos.length+'</b> opción(es) que '+(buenos.length===1?'puede':'pueden')+' encajar'+(buenos.length>5?'. Te pongo las 5 mejores':'')+':';
   }
-  h = '<div class="agt-txt">'+h+'</div>';
+  var expl = (q.explica||[]).slice();
+  if(q.pernocta==='no') expl.push('solo ida y vuelta (sin pernocta)'); if(q.pernocta==='si') expl.push('solo pernoctas');
+  if(q.destino) expl.push('que vaya a '+agtEsc(q.destinoTxt || agtNombreEst(q.destino)));
+  if(q.horas.coMax!=null && !(q.explica||[]).length) expl.push('que llegues antes de las '+agtHora(q.horas.coMax)); if(q.horas.ciMin!=null && !(q.explica||[]).length) expl.push('que tomes a partir de las '+agtHora(q.horas.ciMin));
+  if(q.horas.ciMax!=null && !(q.explica||[]).length) expl.push('que tomes antes de las '+agtHora(q.horas.ciMax)); if(q.horas.coMin!=null) expl.push('que llegues después de las '+agtHora(q.horas.coMin));
+  h = '<div class="agt-txt">'+(expl.length ? 'Vale 👌 Busco '+expl.join(', ')+'.<br>' : '')+h
+    + agtExplica('Cómo lo miro: el viaje se cambia entero; nadie puede acabar con dos turnos el mismo día; si quedan menos de 12 h de descanso en base te aviso ⚠️ pero no lo bloqueo.')+'</div>';
+  window._agtUlt = {buenos:buenos, A:A, mostrados:Math.min(5, buenos.length), X:X};
   buenos.slice(0,5).forEach(function(r){ h += agtTarjeta(r, A, ctx); });
   if(!buenos.length) malos2.slice(0,2).forEach(function(r){ h += agtTarjeta(r, A, ctx); });
-  if(buenos.length>5) h += '<div class="agt-txt">+'+(buenos.length-5)+' más. Si quieres, afina: «que llegue antes de las…», «sin pernocta», «pernocta en Valencia»…</div>';
+  if(buenos.length>5) h += '<div class="agt-txt">Tengo <b>'+(buenos.length-5)+'</b> más. Dime «más opciones» o afina: «que acabe pronto», «sin pernocta», «de mañana»…</div>';
   return h;
 }
 function agtDiaDeLaPregunta(q, ctx){ return q.dias[0] || ctx.hoyDia || null; }
@@ -39434,7 +39534,7 @@ function agtResponderTurnos(q, ctx){
   });
   var ks = Object.keys(grupos).sort(function(a,b){ return (grupos[a].v.ci||0)-(grupos[b].v.ci||0); });
   if(!ks.length) return 'El '+ctx.diaTxt(d)+' no hay ningún turno así 😕';
-  var h = '<div class="agt-txt">El <b>'+ctx.diaTxt(d)+'</b> hay <b>'+ks.length+'</b> turno(s) así:</div>';
+  var h = '<div class="agt-txt">El <b>'+ctx.diaTxt(d)+'</b> hay <b>'+ks.length+'</b> turno(s)'+((q.explica||[]).length ? ' en los '+q.explica.join(', ') : (Object.keys(q.horas).length||q.destino||q.pernocta ? ' así' : ''))+':</div>';
   ks.slice(0,12).forEach(function(k){ var g = grupos[k];
     h += '<div class="agt-card ok"><b>'+agtEsc(g.x.nums)+'</b> · '+agtEsc(g.x.horas)+(g.x.tipo?' · '+agtEsc(g.x.tipo):'')+(g.x.ruta?'<div class="agt-ruta">📍 '+agtEsc(g.x.ruta)+'</div>':'')+'<div class="agt-notas">Lo tienen: '+g.ps.map(function(p){ return agtEsc(agtNombreCorto(p.nombre)); }).join(', ')+'</div></div>'; });
   if(ks.length>12) h += '<div class="agt-txt">…y '+(ks.length-12)+' más.</div>';
@@ -39506,6 +39606,170 @@ function agtAyuda(ctx){
 }
 var AGT_SUGERENCIAS = ['Quiero un turno el jueves 12 que llegue antes de las 16', 'Necesito librar el sábado 14, puedo dar el martes 17', 'Que no sea pernocta', '¿Quién libra el viernes 13?', '¿Qué turnos llegan antes de las 15 el 12?', '¿Quién tiene vacaciones la segunda quincena?', '¿Quién libra el finde 6-7 de marzo?'];
 
+/* ── Respuestas nuevas: tu horario, compañeros, explicaciones y cercanía ── */
+function agtNombrePila(){ return (typeof AJ!=='undefined' && AJ.nombrePila) ? String(AJ.nombrePila).trim().split(' ')[0] : ''; }
+function agtExplica(txt){ return '<span class="agt-ex">💡 '+txt+'</span>'; }
+function agtTramos(dias){ // [3,4,5,9] → [[3,5],[9,9]]
+  var out = []; dias.forEach(function(d){ var u = out[out.length-1]; if(u && d===u[1]+1) u[1]=d; else out.push([d,d]); }); return out;
+}
+function agtTramoTxt(r){ return r[0]===r[1] ? 'el '+r[0] : 'del '+r[0]+' al '+r[1]; }
+function agtAusenteRango(p, d, ctx){ // tramo de vacaciones/baja que contiene d
+  var c = p.dias[d]; if(!c || c.tipo!=='ausente') return null;
+  var a = d, b = d; while(a>1 && p.dias[a-1] && p.dias[a-1].cod===c.cod) a--; while(b<ctx.nDias && p.dias[b+1] && p.dias[b+1].cod===c.cod) b++;
+  return [a,b];
+}
+// Cómo está una persona un día, en una frase
+function agtDiaDe(p, d, ctx, yo){
+  var v = p.porDia[d], c = p.dias[d];
+  if(v){
+    var x = agtViajeTxt(v, ctx), esPrimero = v.dias[0]===d;
+    if(v.reserva) return {tipo:'reserva', txt:(yo?'estás':'está')+' de <b>reserva</b>'+(x.horas?' ('+x.horas+')':'')};
+    if(!esPrimero) return {tipo:'vuelta', v:v, txt:(yo?'vuelves':'vuelve')+' de la pernocta'+(v.destino?' de '+agtNombreEst(v.destino):'')+' ('+agtEsc(x.nums)+')'+(v.co!=null?', llegando a las <b>'+agtHora(v.co)+'</b>':'')};
+    var llegada = v.pernocta ? v.coDia1 : v.co;
+    return {tipo:'tren', v:v, txt:(yo?'tienes':'tiene')+' el <b>'+agtEsc(x.nums)+'</b>, '+agtEsc(x.tipo)+(v.destino&&!v.pernocta?' a '+agtNombreEst(v.destino):'')+' 🚆<br>'+(yo?'Tomas':'Toma')+' a las <b>'+(v.ci!=null?agtHora(v.ci):'—')+'</b>'+(llegada!=null?' y '+(yo?'llegas':'llega')+' a las <b>'+agtHora(llegada)+'</b>':'')+(v.pernocta?' (duermes fuera y '+(yo?'vuelves':'vuelve')+' el '+ctx.diaTxt(v.dias[v.dias.length-1])+')':'')+'.'};
+  }
+  if(!c || c.tipo==='nada') return {tipo:'nada', txt:'no '+(yo?'tienes':'tiene')+' nada puesto en el Horario General'};
+  if(c.tipo==='libre') return {tipo:'libre', txt:(yo?'libras':'libra')+' ('+(AGT.NOMBRE_COD[c.cod]||c.cod).toLowerCase()+') 😄'};
+  if(c.tipo==='ausente'){ var r = agtAusenteRango(p, d, ctx); return {tipo:'ausente', txt:(yo?'estás':'está')+' '+AGT.AUSENTE[c.cod]+(c.cod==='FE'||c.cod==='CP'?' 🏖️':'')+(r&&r[0]!==r[1]?' ('+agtTramoTxt(r)+')':'')}; }
+  return {tipo:'otro', txt:(yo?'tienes':'tiene')+' «'+agtEsc(c.cod)+'»'};
+}
+function agtDia1(q, ctx){ return q.dias[0] || (q.finde ? q.finde[0] : null) || ctx.hoyDia || null; }
+function agtR(html, chips){ return {html:html, chips:chips||[]}; }
+
+function agtResponderMiHorario(q, ctx){
+  var d = agtDia1(q, ctx);
+  if(!d) return agtR('¿De qué día? Dime por ejemplo «¿qué tengo el viernes?» 😊');
+  var r = agtDiaDe(ctx.yo, d, ctx, true), h = 'El <b>'+ctx.diaTxt(d)+'</b> '+r.txt;
+  var chips = [];
+  if(r.tipo==='tren' || r.tipo==='vuelta'){ chips.push('¿Con quién voy el '+d+'?'); chips.push('Quiero cambiar el '+d); }
+  if(r.tipo==='ausente') h += '<br>¡A desconectar'+(agtNombrePila()?', '+agtEsc(agtNombrePila()):'')+'! 😎';
+  if(r.tipo==='libre') chips.push('¿Quién más libra el '+d+'?');
+  if(d < ctx.nDias) chips.push('¿Y el '+(d+1)+'?');
+  return agtR(h, chips);
+}
+function agtResponderMisLibres(q, ctx){
+  var yo = ctx.yo, desde = (q.rango ? q.rango[0] : (ctx.hoyDia || 1)), hasta = q.rango ? q.rango[1] : ctx.nDias;
+  if(q.finde && q.findeHG){ desde = q.finde[0]; hasta = Math.min(q.finde[1], ctx.nDias); }
+  var libres = [], vac = [];
+  for(var d=desde; d<=hasta; d++){ var c = yo.dias[d]; if(c && c.tipo==='libre') libres.push(d); if(c && c.tipo==='ausente') vac.push(d); }
+  var cuando = desde===(ctx.hoyDia||1) && hasta===ctx.nDias ? 'lo que queda de '+AGT.MESES[ctx.mes-1] : 'del '+desde+' al '+hasta;
+  if(!libres.length && !vac.length) return agtR('En '+cuando+' no tienes ningún día libre 😓 ¿Buscamos un cambio?', ['Necesito librar el '+desde]);
+  var h = '';
+  if(libres.length){
+    var findes = libres.filter(function(d){ return ctx.diaSem(d)===6 && libres.indexOf(d+1)!==-1; });
+    h += 'En '+cuando+' libras <b>'+libres.length+' día'+(libres.length>1?'s':'')+'</b>: <span class="agt-k">'+libres.map(ctx.diaCorto).join(', ')+'</span> 🙌';
+    if(findes.length) h += '<br>Fin'+(findes.length>1?'es':'')+' de semana entero'+(findes.length>1?'s':'')+': <b>'+findes.map(function(s){ return s+'-'+(s+1); }).join(', ')+'</b> 🎉';
+  }
+  if(vac.length) h += (h?'<br>':'')+'Y estás de vacaciones '+agtTramos(vac).map(agtTramoTxt).join(', ')+' 🏖️';
+  return agtR(h+agtExplica('Lo he contado en el Horario General de '+AGT.MESES[ctx.mes-1]+': DO, DOP y LD cuentan como libres.'), ['¿Qué tengo mañana?','¿Quién libra el finde?']);
+}
+function agtResponderMisVacaciones(q, ctx){
+  var vac = []; for(var d=1; d<=ctx.nDias; d++){ var c = ctx.yo.dias[d]; if(c && (c.cod==='FE'||c.cod==='CP')) vac.push(d); }
+  if(!vac.length) return agtR('En '+AGT.MESES[ctx.mes-1]+' no tienes vacaciones en el Horario General 🙃');
+  return agtR('Tus vacaciones de '+AGT.MESES[ctx.mes-1]+': <b>'+agtTramos(vac).map(agtTramoTxt).join(', ')+'</b> 🏖️ ¡Que las disfrutes'+(agtNombrePila()?', '+agtEsc(agtNombrePila()):'')+'!');
+}
+function agtResponderConQuien(q, ctx){
+  var d = agtDia1(q, ctx), yo = ctx.yo;
+  if(!d) return agtR('¿De qué día? Por ejemplo «¿con quién voy el jueves?»');
+  var c = yo.dias[d];
+  if(!c || c.tipo!=='tren'){ var r = agtDiaDe(yo, d, ctx, true); return agtR('El <b>'+ctx.diaTxt(d)+'</b> '+r.txt+', así que no vas en ningún tren 😉'); }
+  var h = '';
+  c.trenes.forEach(function(tr, i){
+    var con = ctx.personas.filter(function(p){ return p!==yo && p.dias[d] && p.dias[d].tipo==='tren' && p.dias[d].trenes.some(function(x){ return x.num===tr.num; }); });
+    var dh = con.filter(function(p){ return p.dias[d].trenes.some(function(x){ return x.num===tr.num && x.dh==='dh'; }); });
+    var etiqueta = c.trenes.length>1 ? (i===0?' (ida)':(i===1?' (vuelta)':'')) : '';
+    h += '<div class="agt-txt">En el <b>'+agtEsc(tr.num)+'</b>'+etiqueta+(tr.dh==='dh'?' (tú vas de DH)':'')+': '
+      + (con.length ? 'vas con '+con.map(function(p){ return '<span class="agt-n">'+agtEsc(agtNombreCorto(p.nombre))+(dh.indexOf(p)!==-1?' · DH':'')+'</span>'; }).join('')+' 😊' : 'no coincides con nadie de tu base 🤷')+'</div>';
+  });
+  return agtR(h.replace(/<\/div>$/, agtExplica('Lo he mirado en el Horario General: mismo día ('+ctx.diaTxt(d)+') y mismo número de tren que tú.')+'</div>'), ['¿Qué tengo el '+d+'?']);
+}
+function agtResponderQuienTren(q, ctx){
+  var n = q.tren, dias = q.dias.length ? q.dias : null, lista = [];
+  ctx.personas.forEach(function(p){
+    for(var d=1; d<=ctx.nDias; d++){
+      if(dias && dias.indexOf(d)===-1) continue;
+      var c = p.dias[d]; if(c && c.tipo==='tren' && c.trenes.some(function(x){ return x.num===n; })) lista.push({p:p, d:d, dh:c.trenes.some(function(x){ return x.num===n && x.dh==='dh'; })});
+    }
+  });
+  if(!lista.length) return agtR('No encuentro el tren <b>'+agtEsc(n)+'</b>'+(dias?' el '+ctx.diaTxt(dias[0]):' en '+AGT.MESES[ctx.mes-1])+' en el Horario de tu base 🤔 ¿Seguro que es ese número?');
+  if(dias){
+    return agtR('<div class="agt-txt">El <b>'+ctx.diaTxt(dias[0])+'</b> el <b>'+agtEsc(n)+'</b> lo llevan:</div><div class="agt-nombres">'+lista.map(function(x){ return '<span>'+agtEsc(agtNombreCorto(x.p.nombre))+(x.dh?' <i>DH</i>':'')+'</span>'; }).join('')+'</div>');
+  }
+  var porDia = {}; lista.forEach(function(x){ (porDia[x.d]=porDia[x.d]||[]).push(x); });
+  var ks = Object.keys(porDia).map(Number).sort(function(a,b){return a-b;}).filter(function(d){ return !ctx.hoyDia || d>=ctx.hoyDia; });
+  var h = '<div class="agt-txt">El <b>'+agtEsc(n)+'</b> en '+AGT.MESES[ctx.mes-1]+' (desde hoy) lo llevan:</div>';
+  ks.slice(0,8).forEach(function(d){ h += '<div class="agt-txt"><b>'+ctx.diaCorto(d)+'</b>: '+porDia[d].map(function(x){ return agtEsc(agtNombreCorto(x.p.nombre))+(x.dh?' (DH)':''); }).join(', ')+'</div>'; });
+  if(ks.length>8) h += '<div class="agt-txt">…y '+(ks.length-8)+' días más. Dime un día concreto y te digo solo ese.</div>';
+  return agtR(h);
+}
+function agtResponderQuienDestino(q, ctx){
+  var d = agtDia1(q, ctx), dest = q.destino, dests = q.destinos || [dest], nomD = q.destinoTxt || agtNombreEst(dest);
+  var ps = ctx.personas.filter(function(p){ var v = p.porDia[d]; return p!==ctx.yo && v && v.dias[0]===d && dests.some(function(c){ return v.ruta.indexOf(c)!==-1; }); });
+  if(!ps.length) return agtR('El <b>'+ctx.diaTxt(d)+'</b> nadie de tu base va a '+agtEsc(nomD)+' 🤷');
+  var h = '<div class="agt-txt">El <b>'+ctx.diaTxt(d)+'</b> van a <b>'+agtEsc(nomD)+'</b> '+ps.length+' compañeros 🚆</div><div class="agt-nombres">';
+  ps.slice(0,18).forEach(function(p){ var x = agtViajeTxt(p.porDia[d], ctx); h += '<span>'+agtEsc(agtNombreCorto(p.nombre))+' <i>'+agtEsc(x.nums.split(' / ')[0])+(p.porDia[d].pernocta?' · pernocta':'')+'</i></span>'; });
+  if(ps.length>18) h += '<span class="mas">…y '+(ps.length-18)+' más</span>';
+  return agtR(h+'</div>', ['Quiero un turno a '+nomD+' el '+d]);
+}
+function agtResponderQuienCod(q, ctx){
+  var d = agtDia1(q, ctx), cods = q.cods;
+  var ps = ctx.personas.filter(function(p){ return p!==ctx.yo && p.dias[d] && cods.indexOf(p.dias[d].cod)!==-1; });
+  var esHoy = d===ctx.hoyDia && !q.dias.length;
+  var h = (esHoy?'Hoy ('+ctx.diaTxt(d)+')':'El <b>'+ctx.diaTxt(d)+'</b>')+' están '+q.codTxt+' <b>'+ps.length+'</b> compañeros';
+  if(cods[0]==='B') h += ps.length ? '. Ojalá se recuperen pronto 💪' : ' 🙌';
+  return agtR('<div class="agt-txt">'+h+'</div>'+(ps.length?agtListaNombres(ps, 15):''));
+}
+function agtResponderQuienTrabaja(q, ctx){
+  var d = agtDia1(q, ctx), tren = 0, res = 0, fuera = 0;
+  ctx.personas.forEach(function(p){ var v = p.porDia[d]; if(!v) return; if(v.reserva) res++; else if(v.dias[0]!==d) fuera++; else tren++; });
+  return agtR('El <b>'+ctx.diaTxt(d)+'</b> trabajan <b>'+(tren+res+fuera)+'</b> compañeros de tu base: '+tren+' salen ese día, '+fuera+' vuelven de pernocta y '+res+' están de reserva. 🚆<br>Si quieres, afino: «¿quién va a Madrid el '+d+'?» o «¿qué turnos salen antes de las 8 el '+d+'?»', ['¿Qué turnos hay el '+d+'?', '¿Quién libra el '+d+'?']);
+}
+function agtResponderLibresFinde(q, ctx){
+  var s = q.finde[0], dmn = q.finde[1];
+  if(dmn > ctx.nDias) return agtR('Ese finde se pasa a '+AGT.MESES[ctx.mes % 12]+' y ese Horario General aún no lo tengo cargado 🙏');
+  var ps = ctx.personas.filter(function(p){ return p!==ctx.yo && p.dias[s] && p.dias[s].tipo==='libre' && p.dias[dmn] && p.dias[dmn].tipo==='libre'; });
+  var mio = ctx.yo.dias[s] && ctx.yo.dias[s].tipo==='libre' && ctx.yo.dias[dmn] && ctx.yo.dias[dmn].tipo==='libre';
+  return agtR('<div class="agt-txt">El <b>finde '+s+'-'+dmn+'</b> libran entero <b>'+ps.length+'</b> compañeros de tu base 😊'+(mio?' ¡Y tú también! 🎉':'')+agtExplica('Cuento a quien libra el sábado y el domingo (DO, DOP o LD) en el Horario General.')+'</div>'+agtListaNombres(ps, 15));
+}
+function agtResponderGlosario(q){
+  var k = q.termino; if(k==='fe') k = 'cp';
+  return agtR(AGT_GLOSARIO[k] || 'Esa palabra no la tengo en mi diccionario todavía 😅', ['¿Qué es una pernocta?','¿Qué es DH?','¿Qué es UM?'].filter(function(x){ return agtNorm(x).indexOf(k)===-1; }));
+}
+function agtResponderGracias(){
+  var n = agtNombrePila(), r = ['¡A ti'+(n?', '+n:'')+'! 😊 Aquí estoy para lo que necesites.', '¡De nada'+(n?', '+n:'')+'! 🙌 Si necesitas otro cambio, me dices.', '¡Gracias a ti! 😄 Para eso estamos.'];
+  return agtR(agtEsc(r[Math.floor(Math.random()*r.length)]));
+}
+function agtResponderHola(ctx){
+  var T = agtNorm(arguments[1]||''), h = new Date().getHours(), n = agtNombrePila();
+  var s = /buenos dias/.test(T) ? 'Buenos días' : /buenas tardes/.test(T) ? 'Buenas tardes' : /buenas noches/.test(T) ? 'Buenas noches' : (h<14 ? 'Buenos días' : (h<21 ? 'Buenas tardes' : 'Buenas noches'));
+  return agtR(s+(n?', '+agtEsc(n):'')+' 👋 ¿En qué te echo una mano? Puedo buscarte un cambio, decirte qué tienes un día o con quién vas.', agtSugerencias(ctx).slice(0,4));
+}
+function agtResponderPorque(q, ctx){
+  var T = agtNorm(q.texto);
+  var it = AGT_RES.filter(function(x){ var n = agtNorm(agtNombreCorto(x.r.p.nombre)).split(' ')[0]; return n && new RegExp('\\b'+n+'\\b').test(T); })[0];
+  if(it){
+    var nom = agtNombreCorto(it.r.p.nombre);
+    var est = it.r.estado==='ok' ? '✅ le salía que <b>encaja</b>' : it.r.estado==='ojo' ? '⚠️ le salía <b>ojo</b>' : '❌ le salía que <b>chocaría</b>';
+    return agtR('A '+agtEsc(nom)+' '+est+' porque:<br>'+(it.r.notas.length ? it.r.notas.map(function(n){ return '· '+agtEsc(n); }).join('<br>') : '· no choca con nada: los dos podéis hacer el turno del otro.'));
+  }
+  var VACIAS = {por:1,que:1,a:1,le:1,les:1,sale:1,salia:1,salio:1,ojo:1,choca:1,chocaria:1,no:1,puede:1,encaja:1,aviso:1,porque:1,me:1,el:1,la:1,con:1,lo:1,de:1,da:1,dice:1,pone:1,y:1};
+  var nombrado = T.split(' ').filter(function(w){ return w.length>=3 && !VACIAS[w]; })[0];
+  var pre = (AGT_RES.length && nombrado) ? 'No veo a «'+agtEsc(nombrado.charAt(0).toUpperCase()+nombrado.slice(1))+'» entre las opciones que te he enseñado, pero te explico' : 'Te explico';
+  return agtR(pre+' cómo lo miro 🧐<br>✅ <b>Encaja</b>: los dos podéis hacer el viaje del otro sin que nadie acabe con dos turnos el mismo día.<br>⚠️ <b>Ojo</b>: se puede, pero alguien descansaría menos de 12 h en base (o hay algo raro que conviene mirar).<br>❌ <b>Chocaría</b>: alguien ya trabaja ese día, o está de baja o de vacaciones.<br>Si me dices el nombre («¿por qué a Eva le sale ojo?») te lo detallo.');
+}
+function agtResponderAyuda(ctx){
+  return agtR('<div class="agt-txt">Te cuento lo que sé hacer 😊<br>· <b>Cambios</b>: «quiero un turno el 24 de mañana», «necesito librar el sábado, puedo dar el martes», «dame opciones para el 27».<br>· <b>Tu horario</b>: «¿qué tengo el viernes?», «¿a qué hora llego el 18?», «¿cuándo libro este mes?».<br>· <b>Compañeros</b>: «¿con quién voy el jueves?», «¿quién hace el 3062?», «¿quién va a Madrid el 20?», «¿quién libra el finde?», «¿quién está de baja?».<br>· <b>Dudas</b>: «¿qué es DH?», «¿por qué a Eva le sale ojo?».<br>Puedes escribir como hablas, con faltas y todo 😉</div>', agtSugerencias(ctx).slice(0,4));
+}
+function agtResponderNoSe(q, ctx){
+  var d = q.dias[0] || null, chips = [];
+  if(d){ chips = ['¿Qué tengo el '+d+'?', 'Quiero cambiar el '+d, '¿Quién libra el '+d+'?', '¿Qué turnos hay el '+d+'?']; }
+  else if(q.tren){ chips = ['¿Quién hace el '+q.tren+'?']; }
+  else if(q.destino){ chips = ['¿Quién va a '+agtNombreEst(q.destino)+' mañana?']; }
+  if(Object.keys(q.horas).length && !d) chips.push('Turnos así mañana');
+  chips.push('Ayuda: qué puedo preguntarte');
+  return agtR('Uy, esa no la he pillado del todo 🤔 ¿Querías decir…?', chips);
+}
+
 /* ── Pantalla del chat ── */
 var _agtCtx = null, _agtUltima = null;
 function agtAbrir(){
@@ -39558,6 +39822,61 @@ function agtBurbuja(quien, html){
   setTimeout(function(){ b.scrollIntoView({behavior:'smooth', block:'start'}); }, 30);
   return b;
 }
+async function agtResponder(texto, ctx){
+  var q = agtEntender(texto, ctx, _agtUltima);
+  // Afinar la búsqueda anterior: «que no sea pernocta», «antes de las 15», «de mañana»…
+  var soloFiltro = (q.accion==='nose' || q.accion==='cambioSinDia') && !q.dias.length && (q.pernocta || q.destino || q.reserva || Object.keys(q.horas).length);
+  if(soloFiltro && _agtUltima && (_agtUltima.accion==='cambio' || _agtUltima.accion==='librar' || _agtUltima.accion==='turnos')){
+    var p = _agtUltima;
+    q = Object.assign({}, p, {texto:texto, horas: Object.assign({}, p.horas, q.horas), pernocta: q.pernocta || p.pernocta, destino: q.destino || p.destino, reserva: q.reserva || p.reserva, explica: (p.explica||[]).concat(q.explica||[])});
+  }
+  // Sin día dicho: se sigue hablando del día de antes («¿qué tengo el martes?» → «¿con quién voy?»)
+  if(!q.dias.length && !q.finde && !q.rango && _agtUltima && _agtUltima.dias && _agtUltima.dias.length && ['conquien','mihorario','libres','quientrabaja','quiendestino','turnos'].indexOf(q.accion)!==-1) q.dias = [_agtUltima.dias[0]];
+  var A = q.accion, r;
+  if(A==='hola') r = agtResponderHola(ctx, texto);
+  else if(A==='gracias') r = agtResponderGracias();
+  else if(A==='ayuda') r = agtResponderAyuda(ctx);
+  else if(A==='glosario') r = agtResponderGlosario(q);
+  else if(A==='porque') r = agtResponderPorque(q, ctx);
+  else if(A==='mas'){
+    var u = window._agtUlt;
+    if(!u || !u.buenos || u.mostrados>=u.buenos.length) r = agtR('No tengo más opciones para eso 😕 Prueba a cambiar alguna condición o mirar otro día.', _agtUltima&&_agtUltima.dias&&_agtUltima.dias[0] ? ['Mirar el '+(_agtUltima.dias[0]+1)] : []);
+    else { var h = '<div class="agt-txt">Aquí tienes más 👇</div>'; u.buenos.slice(u.mostrados, u.mostrados+5).forEach(function(x){ h += agtTarjeta(x, u.A, ctx); }); u.mostrados += 5; r = agtR(h, u.mostrados<u.buenos.length ? ['Más opciones'] : []); }
+  }
+  else if(A==='nosirve'){
+    var ul = _agtUltima;
+    if(ul && ul.dias && ul.dias[0]){
+      var ch = [];
+      if(ul.horas && ul.horas.coMax!=null) ch.push('Que llegue antes de las '+agtHora(Math.min(ul.horas.coMax+120, 1439)).replace(':00',''));
+      if(ul.pernocta==='no') ch.push('Acepto pernocta'); else if(!ul.pernocta) ch.push('Sin pernocta');
+      if(ul.dias[0] < ctx.nDias) ch.push('Y el '+(ul.dias[0]+1)+'?');
+      ch.push('¿Quién libra el '+ul.dias[0]+'?');
+      r = agtR('Vaya 😕 No pasa nada, podemos probar así:', ch);
+    } else r = agtR('Vaya 😕 Cuéntame qué buscas y lo intento de otra forma.', ['Ayuda: qué puedo preguntarte']);
+  }
+  else if(A==='conquien') r = agtResponderConQuien(q, ctx);
+  else if(A==='quientren') r = agtResponderQuienTren(q, ctx);
+  else if(A==='quiendestino') r = agtResponderQuienDestino(q, ctx);
+  else if(A==='quiencod') r = agtResponderQuienCod(q, ctx);
+  else if(A==='quientrabaja') r = agtResponderQuienTrabaja(q, ctx);
+  else if(A==='mihorario') r = agtResponderMiHorario(q, ctx);
+  else if(A==='mislibres') r = agtResponderMisLibres(q, ctx);
+  else if(A==='misvacaciones') r = agtResponderMisVacaciones(q, ctx);
+  else if(A==='libresfinde') r = agtResponderLibresFinde(q, ctx);
+  else if(A==='libres') r = agtR(agtResponderLibres(q, ctx), q.dias[0] ? ['¿Qué tengo el '+q.dias[0]+'?'] : []);
+  else if(A==='turnos') r = agtR(agtResponderTurnos(q, ctx));
+  else if(A==='vacaciones'){ if(q.rango && !q.quincena && !q.semana) q.dias = [q.rango[0], q.rango[1]]; r = agtR(agtResponderVacaciones(q, ctx)); }
+  else if(A==='findes') r = agtR(await agtResponderFindes(q, ctx));
+  else if((A==='cambio' || A==='librar') && (q.dias.length || q.finde)){
+    if(!q.dias.length) q.dias = [q.finde[0]];
+    if(A==='librar' && q.finde && q.findeHG && !q.ofrece.length){ var s0 = q.finde[0]; if(!ctx.yo.porDia[s0] && ctx.yo.porDia[s0+1]) q.dias = [s0+1]; }
+    r = agtR(agtResponderCambio(q, ctx), window._agtUlt && window._agtUlt.mostrados < (window._agtUlt.buenos||[]).length ? ['Más opciones', 'No me sirve ninguno'] : ['No me sirve ninguno']);
+  }
+  else if(A==='cambioSinDia' || A==='librar') r = agtR('¡Claro! ¿Para qué día? 😊 Dímelo así: «quiero cambiar el viernes 20» o «necesito librar el 27».', agtSugerencias(ctx).slice(0,2));
+  else r = agtResponderNoSe(q, ctx);
+  if(['cambio','librar','turnos','mihorario','conquien','libres','libresfinde','quiendestino','quientrabaja','quiencod'].indexOf(q.accion)!==-1) _agtUltima = q;
+  return r;
+}
 async function agtEnviar(texto){
   var inp = document.getElementById('agt-inp');
   texto = (texto!=null ? texto : inp.value).trim();
@@ -39567,27 +39886,13 @@ async function agtEnviar(texto){
   agtBurbuja('yo', agtEsc(texto));
   if(!ctx || ctx.error || !ctx.yo){ agtBurbuja('ia', 'Primero abre Compañeros para que pueda leer el Horario General 🙏'); return; }
   var pensando = agtBurbuja('ia', '<span class="agt-dots"><i></i><i></i><i></i></span>');
-  var html;
-  try{
-    var q = agtEntender(texto, ctx);
-    // Afinar la búsqueda anterior: «que no sea pernocta», «antes de las 15»…
-    var soloFiltro = (q.accion==='nose' || q.accion==='cambio') && !q.dias.length && (q.pernocta || q.destino || q.reserva || Object.keys(q.horas).length);
-    if(soloFiltro && _agtUltima){
-      var p = _agtUltima;
-      q = Object.assign({}, p, {horas: Object.assign({}, p.horas, q.horas), pernocta: q.pernocta || p.pernocta, destino: q.destino || p.destino, reserva: q.reserva || p.reserva});
-    }
-    if(q.accion==='ayuda') html = agtAyuda(ctx);
-    else if(q.accion==='libres') html = agtResponderLibres(q, ctx);
-    else if(q.accion==='turnos') html = agtResponderTurnos(q, ctx);
-    else if(q.accion==='vacaciones') html = agtResponderVacaciones(q, ctx);
-    else if(q.accion==='findes') html = await agtResponderFindes(q, ctx);
-    else if((q.accion==='cambio' || q.accion==='librar') && q.dias.length){ html = agtResponderCambio(q, ctx); _agtUltima = q; }
-    else html = 'No te he entendido del todo 😅 Dime un <b>día</b> y lo que buscas, por ejemplo: «quiero un turno el jueves 12 que llegue antes de las 16», «necesito librar el sábado 14» o «¿quién libra el viernes?».';
-  }catch(err){
-    console.log('Mi agente:', err);
-    html = 'Uy, algo ha fallado al buscar 😓 Prueba a decírmelo de otra forma.';
-  }
-  setTimeout(function(){ pensando.innerHTML = /^\s*<div/.test(html) ? html : '<div class="agt-txt">'+html+'</div>'; pensando.scrollIntoView({behavior:'smooth', block:'start'}); }, 350);
+  var r;
+  try{ r = await agtResponder(texto, ctx); }
+  catch(err){ console.log('Mi agente:', err); r = agtR('Uy, algo me ha fallado al mirarlo 😓 ¿Me lo dices de otra forma?', ['Ayuda: qué puedo preguntarte']); }
+  await new Promise(function(res){ setTimeout(res, 350); });
+  pensando.innerHTML = /^\s*<div/.test(r.html) ? r.html : '<div class="agt-txt">'+r.html+'</div>';
+  pensando.scrollIntoView({behavior:'smooth', block:'start'});
+  agtChips(r.chips && r.chips.length ? r.chips : agtSugerencias(ctx));
 }
 function agtFilaDe(id){
   var B = (typeof BASES!=='undefined' && BASES.global && BASES.global.data) ? BASES.global.data : (activeBase && activeBase.data) || [];
@@ -39653,7 +39958,7 @@ async function agtAbrirDesdeInicio(){
 }
 window.agtAbrirDesdeInicio = agtAbrirDesdeInicio;
 
-(function(){ try{ var st=document.createElement('style'); st.id='agt-css'; st.textContent="#agt-ov{position:fixed;inset:0;z-index:2147480500;display:none;flex-direction:column;background:#0B1628;color:#F8FAFC;font-family:inherit;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}\n#agt-ov .agt-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1E3350;background:#0D1B2E}\n#agt-ov .agt-hdr div{flex:1;min-width:0}#agt-ov .agt-hdr b{display:block;font-size:16px}#agt-ov .agt-hdr small{font-size:11.5px;color:#94A3B8}\n#agt-ov .agt-hdr button{width:38px;height:38px;border-radius:12px;border:1px solid #1E3350;background:#132236;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-av,#agt-ov .agt-ini{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#2563EB);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}\n#agt-chat{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}\n#agt-ov .agt-msg{max-width:94%;margin-bottom:10px;font-size:13.5px;line-height:1.45}\n#agt-ov .agt-msg.yo{margin-left:auto;max-width:82%;background:#2563EB;padding:9px 13px;border-radius:16px 16px 4px 16px}\n#agt-ov .agt-msg.ia>.agt-txt{background:#132236;border:1px solid #1E3350;padding:9px 13px;border-radius:16px 16px 16px 4px;margin-bottom:8px}\n#agt-ov .agt-card{background:#0F1E33;border:1px solid #1E3350;border-radius:14px;padding:11px;margin-bottom:8px}\n#agt-ov .agt-card.ok{border-color:rgba(22,163,74,.6)}#agt-ov .agt-card.ojo{border-color:rgba(245,158,11,.65)}#agt-ov .agt-card.no{border-color:rgba(239,68,68,.6)}\n#agt-ov .agt-card-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}#agt-ov .agt-card-h b{flex:1}\n#agt-ov .agt-ini{width:30px;height:30px;font-size:11px;font-weight:900;background:#4C1D95;color:#DDD6FE}\n#agt-ov .agt-b{font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap}\n#agt-ov .agt-b.ok{background:#14532D;color:#86EFAC}#agt-ov .agt-b.ojo{background:#78350F;color:#FCD34D}#agt-ov .agt-b.no{background:#7F1D1D;color:#FCA5A5}\n#agt-ov .agt-cajas{display:flex;gap:6px;margin-bottom:8px}#agt-ov .agt-caja{flex:1;min-width:0;background:#132236;border-radius:10px;padding:7px 8px;font-size:12px;line-height:1.35}\n#agt-ov .agt-caja-t{font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.3px}\n#agt-ov .agt-ruta{color:#FCD34D;font-size:12px}#agt-ov .agt-notas{font-size:12.3px;color:#CBD5E1}\n#agt-ov .agt-btns{display:flex;gap:6px;margin-top:9px}#agt-ov .agt-btns button{flex:1;padding:9px 6px;border-radius:10px;border:0;background:#1E293B;color:#F8FAFC;font-weight:800;font-size:12.5px}\n#agt-ov .agt-btns button.ok{background:#16A34A}\n#agt-ov .agt-nombres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}#agt-ov .agt-nombres span{background:#132236;border:1px solid #1E3350;border-radius:9px;padding:4px 8px;font-size:12px}\n#agt-ov .agt-nombres i{color:#7DD3FC;font-style:normal}#agt-ov .agt-nombres .mas{color:#94A3B8}\n#agt-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 12px;border-top:1px solid #1E3350}#agt-chips:empty{display:none}\n#agt-chips button{flex:none;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid #334155;background:#132236;color:#E2E8F0;border-radius:16px;padding:7px 11px;font-size:12px}\n#agt-ov .agt-pie{display:flex;gap:8px;padding:10px 12px;background:#0D1B2E}\n#agt-ov .agt-pie input{flex:1;min-width:0;background:#132236;border:1px solid #1E3350;border-radius:22px;padding:11px 15px;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-pie button{width:46px;height:46px;border-radius:50%;border:0;background:#2563EB;color:#fff;font-size:18px}\n#agt-ov .agt-dots i{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:#94A3B8;animation:agtdot 1s infinite}\n#agt-ov .agt-dots i:nth-child(2){animation-delay:.15s}#agt-ov .agt-dots i:nth-child(3){animation-delay:.3s}\n@keyframes agtdot{0%,80%,100%{opacity:.3}40%{opacity:1}}\n"; document.head.appendChild(st); }catch(e){} })();
+(function(){ try{ var st=document.createElement('style'); st.id='agt-css'; st.textContent="#agt-ov{position:fixed;inset:0;z-index:2147480500;display:none;flex-direction:column;background:#0B1628;color:#F8FAFC;font-family:inherit;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}\n#agt-ov .agt-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1E3350;background:#0D1B2E}\n#agt-ov .agt-hdr div{flex:1;min-width:0}#agt-ov .agt-hdr b{display:block;font-size:16px}#agt-ov .agt-hdr small{font-size:11.5px;color:#94A3B8}\n#agt-ov .agt-hdr button{width:38px;height:38px;border-radius:12px;border:1px solid #1E3350;background:#132236;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-av,#agt-ov .agt-ini{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#2563EB);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}\n#agt-chat{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}\n#agt-ov .agt-msg{max-width:94%;margin-bottom:10px;font-size:13.5px;line-height:1.45}\n#agt-ov .agt-msg.yo{margin-left:auto;max-width:82%;background:#2563EB;padding:9px 13px;border-radius:16px 16px 4px 16px}\n#agt-ov .agt-msg.ia>.agt-txt{background:#132236;border:1px solid #1E3350;padding:9px 13px;border-radius:16px 16px 16px 4px;margin-bottom:8px}\n#agt-ov .agt-card{background:#0F1E33;border:1px solid #1E3350;border-radius:14px;padding:11px;margin-bottom:8px}\n#agt-ov .agt-card.ok{border-color:rgba(22,163,74,.6)}#agt-ov .agt-card.ojo{border-color:rgba(245,158,11,.65)}#agt-ov .agt-card.no{border-color:rgba(239,68,68,.6)}\n#agt-ov .agt-card-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}#agt-ov .agt-card-h b{flex:1}\n#agt-ov .agt-ini{width:30px;height:30px;font-size:11px;font-weight:900;background:#4C1D95;color:#DDD6FE}\n#agt-ov .agt-b{font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap}\n#agt-ov .agt-b.ok{background:#14532D;color:#86EFAC}#agt-ov .agt-b.ojo{background:#78350F;color:#FCD34D}#agt-ov .agt-b.no{background:#7F1D1D;color:#FCA5A5}\n#agt-ov .agt-cajas{display:flex;gap:6px;margin-bottom:8px}#agt-ov .agt-caja{flex:1;min-width:0;background:#132236;border-radius:10px;padding:7px 8px;font-size:12px;line-height:1.35}\n#agt-ov .agt-caja-t{font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.3px}\n#agt-ov .agt-ruta{color:#FCD34D;font-size:12px}#agt-ov .agt-notas{font-size:12.3px;color:#CBD5E1}\n#agt-ov .agt-btns{display:flex;gap:6px;margin-top:9px}#agt-ov .agt-btns button{flex:1;padding:9px 6px;border-radius:10px;border:0;background:#1E293B;color:#F8FAFC;font-weight:800;font-size:12.5px}\n#agt-ov .agt-btns button.ok{background:#16A34A}\n#agt-ov .agt-nombres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}#agt-ov .agt-nombres span{background:#132236;border:1px solid #1E3350;border-radius:9px;padding:4px 8px;font-size:12px}\n#agt-ov .agt-nombres i{color:#7DD3FC;font-style:normal}#agt-ov .agt-nombres .mas{color:#94A3B8}\n#agt-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 12px;border-top:1px solid #1E3350}#agt-chips:empty{display:none}\n#agt-chips button{flex:none;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid #334155;background:#132236;color:#E2E8F0;border-radius:16px;padding:7px 11px;font-size:12px}\n#agt-ov .agt-pie{display:flex;gap:8px;padding:10px 12px;background:#0D1B2E}\n#agt-ov .agt-pie input{flex:1;min-width:0;background:#132236;border:1px solid #1E3350;border-radius:22px;padding:11px 15px;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-pie button{width:46px;height:46px;border-radius:50%;border:0;background:#2563EB;color:#fff;font-size:18px}\n#agt-ov .agt-dots i{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:#94A3B8;animation:agtdot 1s infinite}\n#agt-ov .agt-dots i:nth-child(2){animation-delay:.15s}#agt-ov .agt-dots i:nth-child(3){animation-delay:.3s}\n@keyframes agtdot{0%,80%,100%{opacity:.3}40%{opacity:1}}\n#agt-ov .agt-ex{display:block;margin-top:7px;padding-top:6px;border-top:1px dashed #334155;color:#94A3B8;font-size:11.8px}\n#agt-ov .agt-n{display:inline-block;background:#0F1E33;border:1px solid #1E3350;border-radius:8px;padding:1px 7px;margin:2px 2px 0 0;font-size:12px}\n#agt-ov .agt-k{color:#FCD34D}\n"; document.head.appendChild(st); }catch(e){} })();
 </script>
 </body>
 </html>
