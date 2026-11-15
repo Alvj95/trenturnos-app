@@ -39312,7 +39312,7 @@ function agtEntender(texto, ctx, ultima){
     }
     return out.filter(function(d,i,a){ return d>=1 && d<=ctx.nDias && a.indexOf(d)===i; });
   }
-  if(!mesRef){ q.dias = diasDe(tPedido); q.ofrece = diasDe(tOfrece); }
+  if(!mesRef){ q.dias = diasDe(tPedido); q.ofrece = diasDe(tOfrece); } else q.mesOtro = mesRef;
   if(!q.dias.length && q.ofrece.length && corte<0){ q.dias = q.ofrece; q.ofrece = []; }
   if(!q.dias.length && q.finde && q.findeHG) q.dias = [q.finde[0]];
   var fs = t.match(/\b(\d{1,2})\s*(?:-|y|al)\s*(\d{1,2})\b/); if(fs && / finde /.test(t)){ q.finde = [parseInt(fs[1],10), parseInt(fs[2],10)]; q.findeHG = !mesRef; }
@@ -39344,7 +39344,7 @@ function agtEntender(texto, ctx, ultima){
   else if(/ (no me sirve|no me vale|ninguno|ninguna|no me gusta|no me convence|nada de eso) /.test(T)) q.accion = 'nosirve';
   else if(/^ (mas|mas opciones|otras|otros|ver mas|ensename mas|muestrame mas|siguientes|mas por favor|alguna mas|hay mas) $/.test(T) || / (mas opciones|ver mas|ensename mas|muestrame mas) /.test(T)) q.accion = 'mas';
   else if(/ con quien (voy|viajo|trabajo|estoy|coincido|me toca|salgo|vuelvo|hago) / .test(T)) q.accion = 'conquien';
-  else if(q.tren && !cambio && (quien || / (hace|hacen|lleva|llevan|tiene|tienen|va|van) /.test(T))) q.accion = 'quientren';
+  else if(q.tren && !cambio && !yoW) q.accion = 'quientren'; // un número de tren sin pedir cambio = quién va en ese tren
   else if(/ (vacaciones) /.test(T) && (/ mis vacaciones | tengo vacaciones | estoy de vacaciones | me tocan /.test(T) && !quien)) q.accion = 'misvacaciones';
   else if(/ vacaciones /.test(T)) q.accion = 'vacaciones';
   else if(quien && / de baja /.test(T)) { q.accion = 'quiencod'; q.cods = ['B']; q.codTxt = 'de baja'; }
@@ -39362,6 +39362,7 @@ function agtEntender(texto, ctx, ultima){
   else if(cambio || q.dias.length) q.accion = q.dias.length ? 'cambio' : 'cambioSinDia';
   else q.accion = 'nose';
   // «y el 28?» / «y mañana?» → misma pregunta de antes con otro día
+  if(ultima && q.tren && !q.dias.length && /^ y /.test(T) && ultima.dias && ultima.dias.length){ q.dias = [ultima.dias[0]]; q.accion = 'quientren'; return q; }
   if(ultima && /^ y (el |la |para el |del |al |que tal el |que tal )?/.test(T) && T.length < 34 && (q.dias.length || q.finde) && ['nose','cambio'].indexOf(q.accion)!==-1){
     var base = Object.assign({}, ultima);
     base.dias = q.dias; base.finde = q.finde; base.findeHG = q.findeHG; base.ofrece = []; base.texto = texto; base.explica = [];
@@ -39686,6 +39687,7 @@ function agtResponderConQuien(q, ctx){
   return agtR(h.replace(/<\/div>$/, agtExplica('Lo he mirado en el Horario General: mismo día ('+ctx.diaTxt(d)+') y mismo número de tren que tú.')+'</div>'), ['¿Qué tengo el '+d+'?']);
 }
 function agtResponderQuienTren(q, ctx){
+  if(q.mesOtro) return agtR('Ahora tengo cargado el Horario General de <b>'+AGT.MESES[ctx.mes-1]+'</b>. Para '+AGT.MESES[q.mesOtro-1]+', cambia el mes arriba en Compañeros y vuelve a preguntarme 😉');
   var n = q.tren, dias = q.dias.length ? q.dias : null, lista = [];
   ctx.personas.forEach(function(p){
     for(var d=1; d<=ctx.nDias; d++){
@@ -40144,7 +40146,7 @@ async function agtResponder(texto, ctx){
   }
   else if(A==='cambioSinDia' || A==='librar') r = agtR('¡Claro! ¿Para qué día? 😊 Dímelo así: «quiero cambiar el viernes 20» o «necesito librar el 27».', agtSugerencias(ctx).slice(0,2));
   else r = agtResponderNoSe(q, ctx);
-  if(['cambio','librar','turnos','mihorario','conquien','libres','libresfinde','quiendestino','quientrabaja','quiencod'].indexOf(q.accion)!==-1) _agtUltima = q;
+  if(['cambio','librar','turnos','mihorario','conquien','libres','libresfinde','quiendestino','quientrabaja','quiencod','quientren'].indexOf(q.accion)!==-1) _agtUltima = q;
   return r;
 }
 async function agtEnviar(texto){
