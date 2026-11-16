@@ -40038,7 +40038,7 @@ window.agtCambioAprobar = agtCambioAprobar; window.agtCambioAnular = agtCambioAn
    nombres por códigos ([P1], [YO]…) y se vuelven a poner en el móvil. Si no hay
    conexión, se acaba el cupo o la IA cambia algún dato, se usa la respuesta de
    las reglas tal cual: nunca se queda sin responder. */
-var AGT_IA_URL = ''; // dirección del Worker de Alex, p. ej. https://trenturnos-ia.<cuenta>.workers.dev
+var AGT_IA_URL = 'https://trenturnos-ia.josealvarado0494.workers.dev'; // Worker de Alex (Cloudflare, gratis)
 var AGT_IA_MAX_DIA = 80, AGT_IA_TIEMPO = 9000;
 function agtIaUrl(){ var u = AGT_IA_URL; try{ u = localStorage.getItem('agtIaUrl') || u; }catch(e){} return String(u||'').replace(/\/+$/,''); }
 function agtIaApagada(){ try{ return localStorage.getItem('agtIaOff')==='1'; }catch(e){ return false; } }
