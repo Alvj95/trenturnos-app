@@ -39310,7 +39310,7 @@ function agtEntender(texto, ctx, ultima){
     }
     return out.filter(function(d,i,a){ return d>=1 && d<=ctx.nDias && a.indexOf(d)===i; });
   }
-  if(!mesRef){ q.dias = diasDe(tPedido); q.ofrece = diasDe(tOfrece); }
+  if(!mesRef){ q.dias = diasDe(tPedido); q.ofrece = diasDe(tOfrece); } else q.mesOtro = mesRef;
   if(!q.dias.length && q.ofrece.length && corte<0){ q.dias = q.ofrece; q.ofrece = []; }
   if(!q.dias.length && q.finde && q.findeHG) q.dias = [q.finde[0]];
   var fs = t.match(/\b(\d{1,2})\s*(?:-|y|al)\s*(\d{1,2})\b/); if(fs && / finde /.test(t)){ q.finde = [parseInt(fs[1],10), parseInt(fs[2],10)]; q.findeHG = !mesRef; }
@@ -39342,7 +39342,7 @@ function agtEntender(texto, ctx, ultima){
   else if(/ (no me sirve|no me vale|ninguno|ninguna|no me gusta|no me convence|nada de eso) /.test(T)) q.accion = 'nosirve';
   else if(/^ (mas|mas opciones|otras|otros|ver mas|ensename mas|muestrame mas|siguientes|mas por favor|alguna mas|hay mas) $/.test(T) || / (mas opciones|ver mas|ensename mas|muestrame mas) /.test(T)) q.accion = 'mas';
   else if(/ con quien (voy|viajo|trabajo|estoy|coincido|me toca|salgo|vuelvo|hago) / .test(T)) q.accion = 'conquien';
-  else if(q.tren && !cambio && (quien || / (hace|hacen|lleva|llevan|tiene|tienen|va|van) /.test(T))) q.accion = 'quientren';
+  else if(q.tren && !cambio && !yoW) q.accion = 'quientren'; // un número de tren sin pedir cambio = quién va en ese tren
   else if(/ (vacaciones) /.test(T) && (/ mis vacaciones | tengo vacaciones | estoy de vacaciones | me tocan /.test(T) && !quien)) q.accion = 'misvacaciones';
   else if(/ vacaciones /.test(T)) q.accion = 'vacaciones';
   else if(quien && / de baja /.test(T)) { q.accion = 'quiencod'; q.cods = ['B']; q.codTxt = 'de baja'; }
@@ -39360,6 +39360,7 @@ function agtEntender(texto, ctx, ultima){
   else if(cambio || q.dias.length) q.accion = q.dias.length ? 'cambio' : 'cambioSinDia';
   else q.accion = 'nose';
   // «y el 28?» / «y mañana?» → misma pregunta de antes con otro día
+  if(ultima && q.tren && !q.dias.length && /^ y /.test(T) && ultima.dias && ultima.dias.length){ q.dias = [ultima.dias[0]]; q.accion = 'quientren'; return q; }
   if(ultima && /^ y (el |la |para el |del |al |que tal el |que tal )?/.test(T) && T.length < 34 && (q.dias.length || q.finde) && ['nose','cambio'].indexOf(q.accion)!==-1){
     var base = Object.assign({}, ultima);
     base.dias = q.dias; base.finde = q.finde; base.findeHG = q.findeHG; base.ofrece = []; base.texto = texto; base.explica = [];
@@ -39489,7 +39490,7 @@ function agtResponderCambio(q, ctx){
   var A = R.A, intro;
   if(A){
     var x = agtViajeTxt(A, ctx);
-    intro = 'Tú el <b>'+ctx.diaTxt(A.dias[0])+'</b> tienes el <b>'+agtEsc(x.nums)+'</b>'+(x.tipo?', '+agtEsc(x.tipo):'')+(x.horas?' ('+agtEsc(x.horas)+')':'')+(A.pernocta?' y vuelves el '+ctx.diaTxt(A.dias[A.dias.length-1]):'')+'. ';
+    intro = A.reserva ? 'Tú el <b>'+ctx.diaTxt(A.dias[0])+'</b> estás de <b>reserva</b>'+(x.horas?' ('+agtEsc(x.horas)+')':'')+'. ' : ('Tú el <b>'+ctx.diaTxt(A.dias[0])+'</b> tienes el <b>'+agtEsc(x.nums)+'</b>'+(x.tipo?', '+agtEsc(x.tipo):'')+(x.horas?' ('+agtEsc(x.horas)+')':'')+(A.pernocta?' y vuelves el '+ctx.diaTxt(A.dias[A.dias.length-1]):'')+'. ');
   } else {
     var c1 = yo.dias[X];
     intro = 'El <b>'+ctx.diaTxt(X)+'</b> no tienes turno'+(c1&&c1.cod?' ('+agtEsc(AGT.NOMBRE_COD[c1.cod]||c1.cod)+')':'')+': si haces el de alguien, se lo debes otro día 😉 ';
@@ -39684,6 +39685,7 @@ function agtResponderConQuien(q, ctx){
   return agtR(h.replace(/<\/div>$/, agtExplica('Lo he mirado en el Horario General: mismo día ('+ctx.diaTxt(d)+') y mismo número de tren que tú.')+'</div>'), ['¿Qué tengo el '+d+'?']);
 }
 function agtResponderQuienTren(q, ctx){
+  if(q.mesOtro) return agtR('Ahora tengo cargado el Horario General de <b>'+AGT.MESES[ctx.mes-1]+'</b>. Para '+AGT.MESES[q.mesOtro-1]+', cambia el mes arriba en Compañeros y vuelve a preguntarme 😉');
   var n = q.tren, dias = q.dias.length ? q.dias : null, lista = [];
   ctx.personas.forEach(function(p){
     for(var d=1; d<=ctx.nDias; d++){
@@ -39767,7 +39769,7 @@ function agtResponderNoSe(q, ctx){
   else if(q.destino){ chips = ['¿Quién va a '+agtNombreEst(q.destino)+' mañana?']; }
   if(Object.keys(q.horas).length && !d) chips.push('Turnos así mañana');
   chips.push('Ayuda: qué puedo preguntarte');
-  return agtR('Uy, esa no la he pillado del todo 🤔 ¿Querías decir…?', chips);
+  var res = agtR('Uy, esa no la he pillado del todo 🤔 ¿Querías decir…?', chips); res.noEntendido = true; return res;
 }
 
 /* ── Cambio con personas concretas (también a tres) + correo + calendario ──
@@ -40029,6 +40031,164 @@ function agtPintarCambios(){
 window.agtCorreoCambio = agtCorreoCambio; window.agtCambioAlCalendario = agtCambioAlCalendario; window.agtCorreoCopiar = agtCorreoCopiar; window.agtCorreoEnviar = agtCorreoEnviar; window.agtCorreoWhatsapp = agtCorreoWhatsapp;
 window.agtCambioAprobar = agtCambioAprobar; window.agtCambioAnular = agtCambioAnular; window.agtCambioDeshacer = agtCambioDeshacer; window.agtVerCambioDia = agtVerCambioDia;
 
+/* ── IA gratis (Cloudflare Workers AI) — confirmado por Alex ──
+   La app calcula los datos como siempre; la IA solo (1) entiende frases que las
+   reglas no pillan, reescribiéndolas como una frase que el agente sí entiende, y
+   (2) redacta la respuesta de forma natural. Antes de enviar nada se cambian los
+   nombres por códigos ([P1], [YO]…) y se vuelven a poner en el móvil. Si no hay
+   conexión, se acaba el cupo o la IA cambia algún dato, se usa la respuesta de
+   las reglas tal cual: nunca se queda sin responder. */
+var AGT_IA_URL = 'https://trenturnos-ia.josealvarado0494.workers.dev'; // Worker de Alex (Cloudflare, gratis)
+var AGT_IA_MAX_DIA = 80, AGT_IA_TIEMPO = 9000;
+function agtIaUrl(){ var u = AGT_IA_URL; try{ u = localStorage.getItem('agtIaUrl') || u; }catch(e){} return String(u||'').replace(/\/+$/,''); }
+function agtIaApagada(){ try{ return localStorage.getItem('agtIaOff')==='1'; }catch(e){ return false; } }
+function agtIaActiva(){ return !!agtIaUrl() && !agtIaApagada() && (typeof navigator==='undefined' || navigator.onLine!==false); }
+function agtIaGastar(){
+  var hoy = new Date().toISOString().slice(0,10), u = {f:hoy, n:0};
+  try{ u = JSON.parse(localStorage.getItem('agtIaUso')||'null') || u; }catch(e){}
+  if(u.f!==hoy) u = {f:hoy, n:0};
+  if(u.n >= AGT_IA_MAX_DIA) return false;
+  u.n++; try{ localStorage.setItem('agtIaUso', JSON.stringify(u)); }catch(e){}
+  return true;
+}
+// Palabras que NO se tratan como nombres aunque haya alguien que se apellide así.
+var AGT_NO_NOMBRES = ('de del la las los el y e o u a al en con por para que quien quienes cual como cuando donde turno turnos tren trenes cambio cambiar cambia '
+  +'libra libro libre libres finde semana mes dia dias hoy manana tarde noche hora horas antes despues pronto temprano tarde reserva baja vacaciones descanso pernocta '
+  +'lunes martes miercoles jueves viernes sabado domingo enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre '
+  +'hola gracias crack vale bien mal fatal sueno boda cafe amigo amiga companero companera madrid barcelona sevilla valencia zaragoza alicante malaga granada cordoba '
+  +'bilbao vigo coruna pamplona cartagena figueres girona tarragona lleida huesca murcia cadiz huelva almeria jaen leon burgos santander oviedo gijon '
+  +'mar sol luz paz rosa cruz blanco moreno rubio vega prado rey santos angel pilar nieves flores campo sierra rio monte puerto alto bajo grande nuevo').split(' ');
+function agtAnonimizador(ctx){
+  var codigos = {}, inverso = {}, n = 0;
+  function cod(original){ var k = original.toLowerCase(); if(!codigos[k]){ n++; codigos[k] = '[P'+n+']'; inverso['[P'+n+']'] = original; } return codigos[k]; }
+  var nombresApp = [], palabrasNombre = {}, no = {};
+  AGT_NO_NOMBRES.forEach(function(w){ no[w] = 1; });
+  (ctx.personas||[]).forEach(function(p){
+    if(p===ctx.yo) return;
+    nombresApp.push(agtNombreLargo(p.nombre), agtNombreCorto(p.nombre));
+    agtNorm(String(p.nombre).replace(/,/g,' ')).split(' ').forEach(function(w){ if(w.length>=3 && !no[w]) palabrasNombre[w] = 1; });
+  });
+  nombresApp = nombresApp.filter(function(x,i,a){ return x && a.indexOf(x)===i; }).sort(function(a,b){ return b.length-a.length; });
+  var yoNom = (typeof agtNombrePila==='function' && agtNombrePila()) || '';
+  var yoLargo = ctx.yo ? agtNombreLargo(ctx.yo.nombre) : '';
+  function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  return {
+    // Texto que genera la app (nombres tal cual se muestran)
+    app: function(t){
+      t = String(t||'');
+      if(yoLargo) t = t.split(yoLargo).join('[YO]');
+      nombresApp.forEach(function(nm){ if(t.indexOf(nm)!==-1) t = t.split(nm).join(cod(nm)); });
+      if(yoNom) t = t.replace(new RegExp('\\b'+esc(yoNom)+'\\b','g'), '[YO]');
+      return t.replace(/\b\d{6,8}\b/g, '[MAT]');
+    },
+    // Lo que escribe el usuario (cualquier palabra que sea un nombre o apellido del Horario)
+    usuario: function(t){
+      var partes = String(t||'').split(/(\s+)/), out = [], run = [];
+      function cerrar(){ if(run.length){ var txt = run.join(''); out.push(cod(txt.trim())); run = []; } }
+      partes.forEach(function(pz){
+        if(/^\s+$/.test(pz)){ if(run.length) run.push(pz); else out.push(pz); return; }
+        var limpio = agtNorm(pz).replace(/[^a-z]/g,'');
+        var esYo = yoNom && limpio===agtNorm(yoNom);
+        if(esYo){ cerrar(); out.push(pz.replace(new RegExp(esc(pz.replace(/[^\wÀ-ÿ]/g,'')),'i'),'[YO]')); return; }
+        if(limpio.length>=3 && palabrasNombre[limpio]){ run.push(pz.replace(/[¿?¡!.,;:]+$/,'')); var sobra = pz.match(/[¿?¡!.,;:]+$/); if(sobra){ cerrar(); out.push(sobra[0]); } return; }
+        cerrar(); out.push(pz);
+      });
+      cerrar();
+      return out.join('').replace(/(\[P\d+\])\s+$/,'$1').replace(/\b\d{6,8}\b/g,'[MAT]');
+    },
+    devolver: function(t){
+      return String(t||'').replace(/\[(P\d+)\]/g, function(m){ return inverso[m] || ''; }).replace(/\[YO\]/g, yoNom || 'tú').replace(/\[MAT\]/g, '');
+    }
+  };
+}
+function agtIaContexto(ctx){
+  var h = new Date(), d = h.getDate();
+  var hoyTxt = AGT.DIAS[h.getDay()]+' '+d+' de '+AGT.MESES[h.getMonth()]+' de '+h.getFullYear();
+  var m = new Date(h.getFullYear(), h.getMonth(), d+1);
+  return 'Hoy es '+hoyTxt+'. Mañana es '+AGT.DIAS[m.getDay()]+' '+m.getDate()+'. El Horario General cargado es de '+AGT.MESES[ctx.mes-1]+' de '+ctx.anio+'. Al usuario lo llamas [YO].';
+}
+var _agtIaHist = [];
+async function agtIaLlamar(cuerpo){
+  if(!agtIaActiva() || !agtIaGastar()) return null;
+  var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+  var reloj = setTimeout(function(){ try{ ctrl && ctrl.abort(); }catch(e){} }, AGT_IA_TIEMPO);
+  try{
+    var r = await fetch(agtIaUrl()+'/responder', {method:'POST', headers:{'Content-Type':'application/json','X-TrenTurnos':'1'}, body:JSON.stringify(cuerpo), signal: ctrl ? ctrl.signal : undefined});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+  finally{ clearTimeout(reloj); }
+}
+async function agtIaEntender(texto, ctx){
+  var A = agtAnonimizador(ctx);
+  var j = await agtIaLlamar({modo:'entender', pregunta:A.usuario(texto), contexto:agtIaContexto(ctx), historial:_agtIaHist.slice(-4).join('\n')});
+  if(!j || !j.tipo) return null;
+  if(j.tipo==='consulta' && j.frase) return {tipo:'consulta', frase:A.devolver(j.frase)};
+  if(j.tipo==='charla' && j.respuesta) return {tipo:'charla', respuesta:A.devolver(j.respuesta)};
+  return null;
+}
+// Números que la IA no puede tocar (días, horas, trenes, cantidades).
+function agtIaNumeros(t){ return (String(t).match(/\d{1,2}:\d{2}|\d+/g) || []).filter(function(x,i,a){ return a.indexOf(x)===i; }); }
+async function agtIaRedactar(texto, r, ctx){
+  var caja = document.createElement('div'); caja.innerHTML = r.html;
+  var hijos = [].slice.call(caja.childNodes);
+  var conTexto = hijos.filter(function(n){ return n.nodeType===1 && n.classList.contains('agt-txt'); });
+  var resto = hijos.filter(function(n){ return conTexto.indexOf(n)===-1; });
+  var plano = !conTexto.length && !hijos.some(function(n){ return n.nodeType===1 && /agt-(card|nombres|mail|btns)/.test(n.className||''); });
+  if(plano){ conTexto = [caja]; resto = []; }
+  if(!conTexto.length || caja.querySelector('.agt-mail')) return null;
+  var expl = [];
+  var partes = conTexto.map(function(n){
+    var c = n.cloneNode(true); [].forEach.call(c.querySelectorAll('.agt-ex'), function(e){ expl.push(e.outerHTML); e.remove(); });
+    [].forEach.call(c.querySelectorAll('br'), function(b){ b.replaceWith('\n'); });
+    return c.textContent.trim();
+  }).filter(Boolean);
+  var textoApp = partes.join('\n');
+  if(!textoApp || textoApp.length < 12) return null;
+  var tarjetas = resto.filter(function(n){ return n.nodeType===1 && /agt-card/.test(n.className); }).length;
+  var listas = resto.filter(function(n){ return n.nodeType===1 && /agt-nombres/.test(n.className); }).length;
+  if(tarjetas) textoApp += '\n(Debajo de tu mensaje se muestran '+tarjetas+' tarjeta'+(tarjetas>1?'s':'')+' con las opciones y sus botones.)';
+  if(listas) textoApp += '\n(Debajo se muestra la lista de nombres.)';
+  var A = agtAnonimizador(ctx), anon = A.app(textoApp);
+  var j = await agtIaLlamar({modo:'redactar', pregunta:A.usuario(texto), respuestaApp:anon, contexto:agtIaContexto(ctx)});
+  if(!j || !j.texto) return null;
+  var nuevo = A.devolver(j.texto).replace(/\*\*/g,'').trim();
+  // Seguridad: todos los números de la respuesta de la app tienen que seguir ahí.
+  var antes = agtIaNumeros(partes.join(' ')), despues = ' '+nuevo+' ';
+  var faltan = antes.filter(function(x){ return !new RegExp('(^|[^\\d])'+x.replace(':','\\:')+'([^\\d]|$)').test(despues); });
+  if(faltan.length) return null;
+  _agtIaHist.push('Usuario: '+A.usuario(texto).slice(0,200), 'Agente: '+j.texto.slice(0,300));
+  var html = '<div class="agt-txt">'+agtEsc(nuevo).replace(/\n/g,'<br>')+expl.join('')+' <span class="agt-ia" title="Redactado con IA">✨</span></div>';
+  resto.forEach(function(n){ html += n.nodeType===1 ? n.outerHTML : agtEsc(n.textContent||''); });
+  return html;
+}
+// Envuelve la respuesta de las reglas con la IA (si está disponible).
+async function agtConIa(texto, ctx, r){
+  var T = ' '+agtNorm(texto)+' ';
+  if(/^ (sin ia|quita la ia|apaga la ia|desactiva la ia) $/.test(T)){ try{ localStorage.setItem('agtIaOff','1'); }catch(e){} return agtR('Vale, te contesto sin IA 👍 (escribe «con IA» para volver a activarla).'); }
+  if(/^ (con ia|pon la ia|activa la ia|enciende la ia) $/.test(T)){ try{ localStorage.removeItem('agtIaOff'); }catch(e){} return agtR(agtIaUrl() ? '¡Hecho! ✨ Vuelvo a usar la IA para hablarte más natural.' : 'La IA todavía no está conectada en esta versión 🙏'); }
+  if(!agtIaActiva()) return r;
+  try{
+    if(r.noEntendido){
+      var e = await agtIaEntender(texto, ctx);
+      if(e && e.tipo==='consulta'){
+        var r2 = await agtResponder(e.frase, ctx);
+        if(!r2.noEntendido){ r = r2; r.entendidoComo = e.frase; }
+      } else if(e && e.tipo==='charla'){
+        _agtIaHist.push('Usuario: '+texto.slice(0,200), 'Agente: '+e.respuesta.slice(0,300));
+        return agtR(agtEsc(e.respuesta)+' <span class="agt-ia" title="Respuesta con IA">✨</span>', r.chips);
+      }
+    }
+    if(!r.noEntendido){
+      var h = await agtIaRedactar(texto, r, ctx);
+      if(h) r = Object.assign({}, r, {html:h});
+      if(r.entendidoComo) r.html = r.html.replace(/^(<div class="agt-txt">)?/, function(m){ return m+'<span class="agt-ent">🔎 Entendí: «'+agtEsc(r.entendidoComo)+'»</span><br>'; });
+    }
+  }catch(err){ console.log('Mi agente IA:', err); }
+  return r;
+}
+window.agtIaUrl = agtIaUrl;
+
 /* ── Pantalla del chat ── */
 var _agtCtx = null, _agtUltima = null;
 function agtAbrir(){
@@ -40142,7 +40302,7 @@ async function agtResponder(texto, ctx){
   }
   else if(A==='cambioSinDia' || A==='librar') r = agtR('¡Claro! ¿Para qué día? 😊 Dímelo así: «quiero cambiar el viernes 20» o «necesito librar el 27».', agtSugerencias(ctx).slice(0,2));
   else r = agtResponderNoSe(q, ctx);
-  if(['cambio','librar','turnos','mihorario','conquien','libres','libresfinde','quiendestino','quientrabaja','quiencod'].indexOf(q.accion)!==-1) _agtUltima = q;
+  if(['cambio','librar','turnos','mihorario','conquien','libres','libresfinde','quiendestino','quientrabaja','quiencod','quientren'].indexOf(q.accion)!==-1) _agtUltima = q;
   return r;
 }
 async function agtEnviar(texto){
@@ -40155,7 +40315,7 @@ async function agtEnviar(texto){
   if(!ctx || ctx.error || !ctx.yo){ agtBurbuja('ia', 'Primero abre Compañeros para que pueda leer el Horario General 🙏'); return; }
   var pensando = agtBurbuja('ia', '<span class="agt-dots"><i></i><i></i><i></i></span>');
   var r;
-  try{ r = await agtResponder(texto, ctx); }
+  try{ r = await agtResponder(texto, ctx); r = await agtConIa(texto, ctx, r); }
   catch(err){ console.log('Mi agente:', err); r = agtR('Uy, algo me ha fallado al mirarlo 😓 ¿Me lo dices de otra forma?', ['Ayuda: qué puedo preguntarte']); }
   await new Promise(function(res){ setTimeout(res, 350); });
   pensando.innerHTML = /^\s*<div/.test(r.html) ? r.html : '<div class="agt-txt">'+r.html+'</div>';
@@ -40226,7 +40386,7 @@ async function agtAbrirDesdeInicio(){
 }
 window.agtAbrirDesdeInicio = agtAbrirDesdeInicio;
 
-(function(){ try{ var st=document.createElement('style'); st.id='agt-css'; st.textContent="#agt-ov{position:fixed;inset:0;z-index:2147480500;display:none;flex-direction:column;background:#0B1628;color:#F8FAFC;font-family:inherit;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}\n#agt-ov .agt-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1E3350;background:#0D1B2E}\n#agt-ov .agt-hdr div{flex:1;min-width:0}#agt-ov .agt-hdr b{display:block;font-size:16px}#agt-ov .agt-hdr small{font-size:11.5px;color:#94A3B8}\n#agt-ov .agt-hdr button{width:38px;height:38px;border-radius:12px;border:1px solid #1E3350;background:#132236;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-av,#agt-ov .agt-ini{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#2563EB);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}\n#agt-chat{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}\n#agt-ov .agt-msg{max-width:94%;margin-bottom:10px;font-size:13.5px;line-height:1.45}\n#agt-ov .agt-msg.yo{margin-left:auto;max-width:82%;background:#2563EB;padding:9px 13px;border-radius:16px 16px 4px 16px}\n#agt-ov .agt-msg.ia>.agt-txt{background:#132236;border:1px solid #1E3350;padding:9px 13px;border-radius:16px 16px 16px 4px;margin-bottom:8px}\n#agt-ov .agt-card{background:#0F1E33;border:1px solid #1E3350;border-radius:14px;padding:11px;margin-bottom:8px}\n#agt-ov .agt-card.ok{border-color:rgba(22,163,74,.6)}#agt-ov .agt-card.ojo{border-color:rgba(245,158,11,.65)}#agt-ov .agt-card.no{border-color:rgba(239,68,68,.6)}\n#agt-ov .agt-card-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}#agt-ov .agt-card-h b{flex:1}\n#agt-ov .agt-ini{width:30px;height:30px;font-size:11px;font-weight:900;background:#4C1D95;color:#DDD6FE}\n#agt-ov .agt-b{font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap}\n#agt-ov .agt-b.ok{background:#14532D;color:#86EFAC}#agt-ov .agt-b.ojo{background:#78350F;color:#FCD34D}#agt-ov .agt-b.no{background:#7F1D1D;color:#FCA5A5}\n#agt-ov .agt-cajas{display:flex;gap:6px;margin-bottom:8px}#agt-ov .agt-caja{flex:1;min-width:0;background:#132236;border-radius:10px;padding:7px 8px;font-size:12px;line-height:1.35}\n#agt-ov .agt-caja-t{font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.3px}\n#agt-ov .agt-ruta{color:#FCD34D;font-size:12px}#agt-ov .agt-notas{font-size:12.3px;color:#CBD5E1}\n#agt-ov .agt-btns{display:flex;gap:6px;margin-top:9px}#agt-ov .agt-btns button{flex:1;padding:9px 6px;border-radius:10px;border:0;background:#1E293B;color:#F8FAFC;font-weight:800;font-size:12.5px}\n#agt-ov .agt-btns button.ok{background:#16A34A}\n#agt-ov .agt-nombres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}#agt-ov .agt-nombres span{background:#132236;border:1px solid #1E3350;border-radius:9px;padding:4px 8px;font-size:12px}\n#agt-ov .agt-nombres i{color:#7DD3FC;font-style:normal}#agt-ov .agt-nombres .mas{color:#94A3B8}\n#agt-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 12px;border-top:1px solid #1E3350}#agt-chips:empty{display:none}\n#agt-chips button{flex:none;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid #334155;background:#132236;color:#E2E8F0;border-radius:16px;padding:7px 11px;font-size:12px}\n#agt-ov .agt-pie{display:flex;gap:8px;padding:10px 12px;background:#0D1B2E}\n#agt-ov .agt-pie input{flex:1;min-width:0;background:#132236;border:1px solid #1E3350;border-radius:22px;padding:11px 15px;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-pie button{width:46px;height:46px;border-radius:50%;border:0;background:#2563EB;color:#fff;font-size:18px}\n#agt-ov .agt-dots i{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:#94A3B8;animation:agtdot 1s infinite}\n#agt-ov .agt-dots i:nth-child(2){animation-delay:.15s}#agt-ov .agt-dots i:nth-child(3){animation-delay:.3s}\n@keyframes agtdot{0%,80%,100%{opacity:.3}40%{opacity:1}}\n#agt-ov .agt-ex{display:block;margin-top:7px;padding-top:6px;border-top:1px dashed #334155;color:#94A3B8;font-size:11.8px}\n#agt-ov .agt-n{display:inline-block;background:#0F1E33;border:1px solid #1E3350;border-radius:8px;padding:1px 7px;margin:2px 2px 0 0;font-size:12px}\n#agt-ov .agt-k{color:#FCD34D}\n#agt-ov .agt-rueda{display:flex;flex-direction:column;gap:5px;margin:4px 0 8px}\n#agt-ov .agt-paso{display:flex;align-items:center;gap:8px;background:#132236;border-radius:10px;padding:7px 8px;font-size:12px}\n#agt-ov .agt-paso small{display:block;color:#94A3B8;font-size:11px;margin-top:1px}#agt-ov .agt-paso>div{flex:1;min-width:0}\n#agt-ov .agt-paso .agt-ini{width:28px;height:28px}#agt-ov .agt-ini.tu{background:#1D4ED8;color:#DBEAFE}\n#agt-ov .agt-flecha{text-align:center;color:#7DD3FC;font-size:13px;margin:-3px 0}#agt-ov .agt-ok{font-size:13px}\n#agt-ov .agt-mail{background:#F8FAFC;color:#0F172A;border-radius:12px;padding:12px;font-size:12.5px;line-height:1.5;margin-bottom:8px;user-select:text;-webkit-user-select:text}\n#agt-ov .agt-mail-h{font-size:11.5px;color:#475569;border-bottom:1px solid #E2E8F0;padding-bottom:6px;margin-bottom:8px}\n#agt-ov .agt-btns button.az{background:#2563EB}\n.dc .agt-mk{position:absolute;top:1px;right:2px;font-size:10px;line-height:1;z-index:3;cursor:pointer}\n.dc.agt-pedido{box-shadow:inset 0 0 0 2px rgba(245,158,11,.75)}\n"; document.head.appendChild(st); }catch(e){} })();
+(function(){ try{ var st=document.createElement('style'); st.id='agt-css'; st.textContent="#agt-ov{position:fixed;inset:0;z-index:2147480500;display:none;flex-direction:column;background:#0B1628;color:#F8FAFC;font-family:inherit;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}\n#agt-ov .agt-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1E3350;background:#0D1B2E}\n#agt-ov .agt-hdr div{flex:1;min-width:0}#agt-ov .agt-hdr b{display:block;font-size:16px}#agt-ov .agt-hdr small{font-size:11.5px;color:#94A3B8}\n#agt-ov .agt-hdr button{width:38px;height:38px;border-radius:12px;border:1px solid #1E3350;background:#132236;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-av,#agt-ov .agt-ini{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#2563EB);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}\n#agt-chat{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}\n#agt-ov .agt-msg{max-width:94%;margin-bottom:10px;font-size:13.5px;line-height:1.45}\n#agt-ov .agt-msg.yo{margin-left:auto;max-width:82%;background:#2563EB;padding:9px 13px;border-radius:16px 16px 4px 16px}\n#agt-ov .agt-msg.ia>.agt-txt{background:#132236;border:1px solid #1E3350;padding:9px 13px;border-radius:16px 16px 16px 4px;margin-bottom:8px}\n#agt-ov .agt-card{background:#0F1E33;border:1px solid #1E3350;border-radius:14px;padding:11px;margin-bottom:8px}\n#agt-ov .agt-card.ok{border-color:rgba(22,163,74,.6)}#agt-ov .agt-card.ojo{border-color:rgba(245,158,11,.65)}#agt-ov .agt-card.no{border-color:rgba(239,68,68,.6)}\n#agt-ov .agt-card-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}#agt-ov .agt-card-h b{flex:1}\n#agt-ov .agt-ini{width:30px;height:30px;font-size:11px;font-weight:900;background:#4C1D95;color:#DDD6FE}\n#agt-ov .agt-b{font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap}\n#agt-ov .agt-b.ok{background:#14532D;color:#86EFAC}#agt-ov .agt-b.ojo{background:#78350F;color:#FCD34D}#agt-ov .agt-b.no{background:#7F1D1D;color:#FCA5A5}\n#agt-ov .agt-cajas{display:flex;gap:6px;margin-bottom:8px}#agt-ov .agt-caja{flex:1;min-width:0;background:#132236;border-radius:10px;padding:7px 8px;font-size:12px;line-height:1.35}\n#agt-ov .agt-caja-t{font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.3px}\n#agt-ov .agt-ruta{color:#FCD34D;font-size:12px}#agt-ov .agt-notas{font-size:12.3px;color:#CBD5E1}\n#agt-ov .agt-btns{display:flex;gap:6px;margin-top:9px}#agt-ov .agt-btns button{flex:1;padding:9px 6px;border-radius:10px;border:0;background:#1E293B;color:#F8FAFC;font-weight:800;font-size:12.5px}\n#agt-ov .agt-btns button.ok{background:#16A34A}\n#agt-ov .agt-nombres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}#agt-ov .agt-nombres span{background:#132236;border:1px solid #1E3350;border-radius:9px;padding:4px 8px;font-size:12px}\n#agt-ov .agt-nombres i{color:#7DD3FC;font-style:normal}#agt-ov .agt-nombres .mas{color:#94A3B8}\n#agt-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 12px;border-top:1px solid #1E3350}#agt-chips:empty{display:none}\n#agt-chips button{flex:none;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid #334155;background:#132236;color:#E2E8F0;border-radius:16px;padding:7px 11px;font-size:12px}\n#agt-ov .agt-pie{display:flex;gap:8px;padding:10px 12px;background:#0D1B2E}\n#agt-ov .agt-pie input{flex:1;min-width:0;background:#132236;border:1px solid #1E3350;border-radius:22px;padding:11px 15px;color:#F8FAFC;font-size:16px}\n#agt-ov .agt-pie button{width:46px;height:46px;border-radius:50%;border:0;background:#2563EB;color:#fff;font-size:18px}\n#agt-ov .agt-dots i{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:#94A3B8;animation:agtdot 1s infinite}\n#agt-ov .agt-dots i:nth-child(2){animation-delay:.15s}#agt-ov .agt-dots i:nth-child(3){animation-delay:.3s}\n@keyframes agtdot{0%,80%,100%{opacity:.3}40%{opacity:1}}\n#agt-ov .agt-ex{display:block;margin-top:7px;padding-top:6px;border-top:1px dashed #334155;color:#94A3B8;font-size:11.8px}\n#agt-ov .agt-n{display:inline-block;background:#0F1E33;border:1px solid #1E3350;border-radius:8px;padding:1px 7px;margin:2px 2px 0 0;font-size:12px}\n#agt-ov .agt-k{color:#FCD34D}\n#agt-ov .agt-rueda{display:flex;flex-direction:column;gap:5px;margin:4px 0 8px}\n#agt-ov .agt-paso{display:flex;align-items:center;gap:8px;background:#132236;border-radius:10px;padding:7px 8px;font-size:12px}\n#agt-ov .agt-paso small{display:block;color:#94A3B8;font-size:11px;margin-top:1px}#agt-ov .agt-paso>div{flex:1;min-width:0}\n#agt-ov .agt-paso .agt-ini{width:28px;height:28px}#agt-ov .agt-ini.tu{background:#1D4ED8;color:#DBEAFE}\n#agt-ov .agt-flecha{text-align:center;color:#7DD3FC;font-size:13px;margin:-3px 0}#agt-ov .agt-ok{font-size:13px}\n#agt-ov .agt-mail{background:#F8FAFC;color:#0F172A;border-radius:12px;padding:12px;font-size:12.5px;line-height:1.5;margin-bottom:8px;user-select:text;-webkit-user-select:text}\n#agt-ov .agt-mail-h{font-size:11.5px;color:#475569;border-bottom:1px solid #E2E8F0;padding-bottom:6px;margin-bottom:8px}\n#agt-ov .agt-btns button.az{background:#2563EB}\n.dc .agt-mk{position:absolute;top:1px;right:2px;font-size:10px;line-height:1;z-index:3;cursor:pointer}\n.dc.agt-pedido{box-shadow:inset 0 0 0 2px rgba(245,158,11,.75)}\n#agt-ov .agt-ia{font-size:11px;opacity:.7}\n#agt-ov .agt-ent{font-size:11px;color:#94A3B8}\n"; document.head.appendChild(st); }catch(e){} })();
 </script>
 </body>
 </html>
