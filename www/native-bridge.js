@@ -161,7 +161,15 @@
   // antes de salir fuera de base: suenan aunque la app esté cerrada o el móvil bloqueado.
   // Se reprograman al abrir la app, al salir de ella y al cambiar turnos o ajustes.
   if (LocalNotifications) {
-    var CANAL_AL = 'alarmas', ID_AL = 880000, DIAS_AL = 14, alTimer = null, alInexacta = false, alN = 0;
+    var CANAL_AL = 'alarmas', ID_AL = 880000, DIAS_AL = 14, alTimer = null, alInexacta = false, alN = 0, alSinPermiso = false;
+    // ¿Deja Android programar a la hora exacta? (Android 12+: «Alarmas y recordatorios»; en Android 14+ viene
+    // desactivado). Sin ese permiso Android puede retrasar mucho el aviso con el móvil en reposo.
+    function alExacta() {
+      if (!LocalNotifications.checkExactNotificationSetting) return Promise.resolve(true);
+      return LocalNotifications.checkExactNotificationSetting().then(function (r) {
+        return !r || r.exact_alarm !== 'denied';
+      }).catch(function () { return true; });
+    }
     function alMismaEst(a, b) {
       function n(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
       a = n(a); b = n(b);
@@ -206,10 +214,26 @@
       var el = document.getElementById('alarm-nativa');
       if (!el) { el = document.createElement('div'); el.id = 'alarm-nativa'; el.style.cssText = 'font-size:11.5px;line-height:1.45;margin-top:10px;color:var(--tx2)'; body.appendChild(el); }
       var on = window.AJ && AJ.alarmas && AJ.alarmas.activas;
+      var caja = 'display:block;margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.45);color:var(--tx);font-size:12.5px;line-height:1.45';
+      var btn = 'display:inline-block;margin-top:8px;padding:8px 12px;border-radius:10px;border:0;background:#F59E0B;color:#1C1917;font-weight:900;font-size:13px;cursor:pointer';
       el.innerHTML = !on ? '' : (window.__alarmasNativas
         ? '📱 <b style="color:var(--green2)">' + alN + ' alarma' + (alN === 1 ? '' : 's') + ' programada' + (alN === 1 ? '' : 's') + '</b> en el móvil para los próximos ' + DIAS_AL + ' días: suenan aunque la app esté cerrada.'
-        : '⚠️ Sin permiso de notificaciones: las alarmas solo suenan con la app abierta.') +
-        (window.__alarmasNativas && alInexacta ? '<br><span style="color:var(--nar3)">⚠️ Android puede retrasarlas unos minutos.</span> <a href="#" onclick="window.__alarmaPermisoExacto();return false" style="color:var(--acc3);font-weight:800">Permitir hora exacta</a>' : '');
+        : '<span style="' + caja + '">⚠️ <b>Las notificaciones de TrenTurnos están desactivadas.</b> Sin ellas no llega el aviso de fichar.<br><button style="' + btn + '" onclick="window.__alarmaPermisoNotif()">Activar notificaciones</button></span>') +
+        (window.__alarmasNativas && alInexacta ? '<span style="' + caja + '">⚠️ <b>Falta el permiso «Alarmas y recordatorios».</b> Sin él, Android puede retrasar mucho el aviso de fichar (o que llegue cuando ya no sirve) con el móvil en reposo.<br><button style="' + btn + '" onclick="window.__alarmaPermisoExacto()">Permitir hora exacta</button></span>' : '');
+    }
+    window.__alarmaPermisoNotif = function () {
+      LocalNotifications.requestPermissions().then(function (p) {
+        alProgramar();
+      }).catch(function () {});
+    };
+    // Al activar las alarmas sin el permiso de hora exacta, se explica y se lleva al ajuste de Android.
+    function alAvisarPermiso() {
+      if (!(window.AJ && AJ.alarmas && AJ.alarmas.activas) || !alInexacta || alSinPermiso) return;
+      alSinPermiso = true;
+      var txt = 'Para que el aviso de fichar llegue a su hora, Android necesita el permiso «Alarmas y recordatorios». ¿Lo activamos ahora?';
+      var pedir = function (ok) { if (ok) window.__alarmaPermisoExacto(); };
+      if (typeof window.ttConfirm === 'function') window.ttConfirm(txt).then(pedir).catch(function () {});
+      else pedir(window.confirm(txt));
     }
     window.__alarmaPermisoExacto = function () {
       if (LocalNotifications.changeExactNotificationSetting) LocalNotifications.changeExactNotificationSetting().then(function () { alProgramar(); }).catch(function () {});
@@ -251,8 +275,15 @@
             return n;
           }) });
         }).then(function (r) {
-          window.__alarmasNativas = true; alN = lista.length; alInexacta = !!(r && r.warning);
-          alPintarEstado();
+          window.__alarmasNativas = true; alN = lista.length;
+          return alExacta().then(function (ex) {
+            alInexacta = !ex || !!(r && r.warning); alPintarEstado();
+            // Con las alarmas ya activadas: se avisa al abrir la app, como mucho una vez cada 3 días.
+            if (alInexacta && lista.length) {
+              var ult = 0; try { ult = +localStorage.getItem('ttAlPermAviso') || 0; } catch (e) {}
+              if (Date.now() - ult > 3 * 86400000) { try { localStorage.setItem('ttAlPermAviso', String(Date.now())); } catch (e) {} setTimeout(alAvisarPermiso, 1500); }
+            }
+          });
         });
       }).catch(function () { window.__alarmasNativas = false; alPintarEstado(); });
     }
@@ -292,7 +323,9 @@
       ['saveTV', 'toggleAlarmas', 'toggleAlarmFichar', 'toggleAlarmSalida', 'toggleAlarmSalidaFichaje', 'toggleAlarmAbrirFichaje'].forEach(function (f) {
         var orig = window[f];
         if (typeof orig !== 'function') return;
-        window[f] = function () { var r = orig.apply(this, arguments); alPronto(); return r; };
+        window[f] = function () { var r = orig.apply(this, arguments); alPronto();
+          if (f === 'toggleAlarmas') { alSinPermiso = false; setTimeout(function () { alExacta().then(function (ex) { if (!ex) { alInexacta = true; alAvisarPermiso(); } }); }, 1600); }
+          return r; };
       });
       // Probar: además del sonido, una notificación de prueba a los 10 s (bloquea el móvil y espera).
       var test = window.alarmaTest;
