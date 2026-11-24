@@ -227,6 +227,14 @@ public final class FichajeSalida {
         } catch (Exception ex) { log(ex); }
     }
 
+    /** Vuelve a programar las notificaciones locales guardadas (alarma de fichar la entrada). */
+    static void restaurarAvisos(Context c) {
+        try {
+            new com.capacitorjs.plugins.localnotifications.LocalNotificationRestoreReceiver()
+                .onReceive(c, new Intent(Intent.ACTION_BOOT_COMPLETED));
+        } catch (Throwable t) { android.util.Log.w("TrenTurnos", "restaurar avisos", t); }
+    }
+
     /** Recibe las alarmas (mirar / sonar) y el reinicio del móvil. */
     public static class Receptor extends BroadcastReceiver {
         @Override public void onReceive(Context ctx, Intent i) {
@@ -238,7 +246,13 @@ public final class FichajeSalida {
                 try {
                     if (ACC_MIRAR.equals(a)) mirar(c, id);
                     else if (ACC_SONAR.equals(a)) sonar(c, id);
-                    else if (Intent.ACTION_BOOT_COMPLETED.equals(a) || "android.intent.action.MY_PACKAGE_REPLACED".equals(a)) reprogramarTodo(c);
+                    else if (Intent.ACTION_BOOT_COMPLETED.equals(a) || "android.intent.action.MY_PACKAGE_REPLACED".equals(a)) {
+                        reprogramarTodo(c);
+                        // Al actualizar la app, Android borra TODAS sus alarmas. Las de fichar la entrada
+                        // (notificaciones locales de Capacitor) solo se recuperaban al reiniciar el móvil
+                        // o al abrir la app: aquí se recuperan también tras cada actualización.
+                        if ("android.intent.action.MY_PACKAGE_REPLACED".equals(a)) restaurarAvisos(c);
+                    }
                 } catch (Exception e) { log(e); }
                 finally { try { pr.finish(); } catch (Exception ignored) {} }
             }).start();
