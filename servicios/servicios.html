@@ -4190,6 +4190,378 @@ try{ if(parent!==window){ svModo(parent.__svDesdeCal);
   var pa=parent.__svPendienteAbrir; parent.__svPendienteAbrir=null; if(pa) svAbrirCompartido(pa); } }catch(e){}
 pintarBotonCompartir();
 comprobarRecibidos();
+
+/* ═══ Secuencia operativa con el diseño nuevo ═══
+   Confirmado por Alex con la maqueta «la 2 con el ¿Qué le toca? de la 3»:
+   · ⏱ Ahora: tarjeta naranja con la parada, la hora ya corregida con el retraso
+     (la del horario tachada), cuánto falta y de dónde sale el retraso; las tareas
+     en cuadros que se tocan para marcarlas hechas; deslizar = ver otras paradas.
+   · 🗺️ Viaje: todo el viaje de un vistazo, con las horas corregidas.
+   · 🎫 ¿Qué le toca?: sube/baja con botones y la respuesta en una tarjeta.
+   Solo cambia cómo se ve: la lógica (automático, retraso de Renfe, bar móvil,
+   avisos, ajustes) es la misma de antes. */
+var SQ2={ver:null};
+function sq2Hechos(){ try{ return JSON.parse(localStorage.getItem(CLAVE+'_sq2h')||'{}')||{}; }catch(e){ return {}; } }
+function sq2HechosPon(o){ try{ localStorage.setItem(CLAVE+'_sq2h', JSON.stringify(o)); }catch(e){} }
+function sq2Id(Q){ return (typeof sqaClave==='function'?sqaClave(Q):Q.tren)+'|'+(typeof sqaHoy==='function'?sqaHoy():''); }
+function sq2Toggle(k,i){ var Q=sqActual(); if(!Q) return; var t=sq2Hechos(), id=sq2Id(Q); t[id]=t[id]||{}; var c=k+'_'+i; if(t[id][c]) delete t[id][c]; else t[id][c]=1;
+  var ks=Object.keys(t); if(ks.length>20) ks.slice(0,ks.length-20).forEach(function(x){ delete t[x]; }); sq2HechosPon(t);
+  try{ if(navigator.vibrate) navigator.vibrate(25); }catch(e){} pintarSecuencia(); }
+function sq2Ico(tx){ var s=String(tx).toLowerCase();
+  var L=[[/toma de servicio/,'🪪'],[/mensaje|emisión|megafon/,'🔊'],[/acogida|despedida de clientes/,'👋'],[/equipaje/,'🧳'],[/wc|consumibles/,'🚻'],[/residuo/,'♻️'],[/carta/,'📜'],[/toallita/,'🧻'],[/recogida (de )?prestaci/,'🧺'],[/supervisi/,'👀'],[/canal/,'📺'],[/preparaci/,'🧑‍🍳'],[/revisi|soportes/,'🔎'],[/cafeter/,'☕'],[/presentaci/,'🤝'],[/dotaci/,'📦'],[/funcionalidad/,'🛠️'],[/centro operativo|deje/,'🏁']];
+  for(var i=0;i<L.length;i++) if(L[i][0].test(s)) return L[i][1]; return '•'; }
+function sq2Quien(tx){ var m=String(tx).match(/\(([^)]*)\)/); if(!m) return ''; var q=m[1];
+  q=q.replace(/pax destino /i,'a los que van a ').replace(/pax subidos en /i,'a los que suben en ').replace(/pax (de )?/i,'pasajeros ').replace(/^a todos$/i,'a todos');
+  return q; }
+function sq2Titulo(tx){ return String(tx).replace(/\s*\([^)]*\)\s*\*?/g,' ').replace(/\s+/g,' ').trim(); }
+function sq2Ret(Q){ var A=sqaG(), st=sqaEst(A,Q), r=A.on?sqaRetraso(A,st):{min:0,de:'off'}; return {A:A, st:st, r:r}; }
+function sq2HoraBl(Q,i,r){ var bl=Q.bloques[i]; if(!bl) return ''; var c=sqaHora(sqaHoraBloque(Q,i,r.min||0)); return (r.min&&bl.est!==null)?c+' <s>'+bl.h+'</s>':bl.h; }
+function sq2Falta(Q,i,r){ if(!Q.bloques[i]) return null; var f=Math.round(sqaHoraBloque(Q,i,r.min||0)-sqaMinAhora()); if(f<-720) f+=1440; return f; }
+function sq2Min(f){ return f>=60?Math.floor(f/60)+' h '+(f%60)+' min':f+' min'; }
+function sq2Vivo(Q,R){ var r=R.r, A=R.A, st=R.st, ret=r.min>0?'+'+r.min+' min':r.min<0?(-r.min)+' min adelantado':'en hora';
+  if(!A.on) return '<i class="pt g"></i>🤖 Automático apagado · la cambias tú';
+  if(st.espera!=null) return '<i class="pt a"></i>⏳ Esperando a llegar a '+limpio(sqaNombre(Q.bloques[st.espera]))+' · al llegar, toca «Ya hemos llegado»';
+  if(r.de==='renfe') return '<i class="pt"></i>📡 Renfe en directo · <b>'+ret+'</b>';
+  if(r.de==='ultimo') return '<i class="pt g"></i>📡 Sin cobertura · último dato de Renfe hace '+Math.max(1,Math.round((Date.now()-r.t)/60000))+' min: <b>'+ret+'</b>';
+  if(r.de==='mano') return '<i class="pt a"></i>✍️ Puesto a mano · <b>'+ret+'</b>';
+  return '<i class="pt g"></i>🕐 Horario de la ficha (sin datos de retraso)'; }
+function sq2Ajustes(Q){ var d=document.createElement('div'); try{ d.innerHTML=sqaCaja(Q); }catch(e){ return ''; } var a=d.querySelector('.sqa-aj'); return a?a.outerHTML:''; }
+function sq2Tabs(){ return '<div class="sq2-tabs">'+[['ahora','⏱','Ahora'],['paradas','🗺️','Viaje'],['toca','🎫','¿Qué le toca?']].map(function(t){
+  return '<button class="'+(SQ.tab===t[0]?'on':'')+'" onclick="SQ.tab=\''+t[0]+'\';SQ2.ver=null;pintarSecuencia()"><span>'+t[1]+'</span>'+t[2]+'</button>'; }).join('')+'</div>'; }
+function sq2Ahora(Q){
+  var R=sq2Ret(Q), r=R.r, kNow=sqBloqueAhora(Q), k=SQ2.ver==null?kNow:Math.max(0,Math.min(Q.bloques.length-1,SQ2.ver)), bl=Q.bloques[k], sig=Q.bloques[k+1];
+  var et=k!==kNow?(k<kNow?'YA PASÓ · ':'MÁS ADELANTE · '):'AHORA · ';
+  et+=bl.est===null?'ANTES DE SALIR':bl.est===0?'SALIENDO DE':'PARADA EN';
+  var nom=bl.est===null?bl.t:bl.est===0?bl.t.replace('Salida de ',''):sqaNombre(bl);
+  var f=sig?sq2Falta(Q,k+1,r):null, cuenta='';
+  if(k===kNow&&sig&&f!=null&&f>0) cuenta='⏱ '+(r.de==='ultimo'?'unos ':'')+sq2Min(f)+' para '+limpio(sqaNombre(sig));
+  else if(k===kNow&&!sig) cuenta='🏁 Final del recorrido';
+  var h='<div class="sq2-card'+(k!==kNow?' otra':'')+'" id="sq2-card"><small>'+et+'</small><div class="t">'+limpio(nom)+' <span>'+sq2HoraBl(Q,k,r)+'</span></div>'+
+    (cuenta?'<div class="ch"><span>'+cuenta+'</span></div>':'')+(k===kNow?'<div class="vivo">'+sq2Vivo(Q,R)+'</div>':'<button class="volver" onclick="SQ2.ver=null;pintarSecuencia()">↩ Volver a ahora</button>')+'</div>';
+  h+=sqBMhtml(Q);
+  // Cuadros
+  var hechos=(sq2Hechos()[sq2Id(Q)])||{}, ops=sqOps(bl).map(function(o,i){ return {o:o,i:i}; });
+  var big=ops.filter(function(x){ return sqDestaca(x.o); }), small=ops.filter(function(x){ return !sqDestaca(x.o); });
+  var nH=ops.filter(function(x){ return hechos[k+'_'+x.i]; }).length;
+  h+='<div class="sq2-q">Qué toca '+(k===kNow?'ahora':'aquí')+' <small>'+nH+'/'+ops.length+' hecho'+(ops.length!==1?'s':'')+'</small></div><div class="sq2-tiles">';
+  big.forEach(function(x){ var o=x.o, t=o[3]?SQ_TIPO[o[3]]:SQ_TIPO.BM, hz=hechos[k+'_'+x.i], q=sq2Quien(o[0]);
+    h+='<button class="sq2-ti big'+(hz?' ok':'')+'" style="--c:'+t.c+'" onclick="sq2Toggle('+k+','+x.i+')"><span class="e">'+t.e+'</span><b>'+limpio(t.n)+'</b><small>'+limpio(q||sq2Titulo(o[0]))+'</small><i class="cod">'+limpio(o[1]+' · '+o[2])+'</i></button>'; });
+  small.forEach(function(x){ var o=x.o, hz=hechos[k+'_'+x.i], q=sq2Quien(o[0]);
+    h+='<button class="sq2-ti'+(hz?' ok':'')+'" onclick="sq2Toggle('+k+','+x.i+')"><span class="e">'+sq2Ico(o[0])+'</span><b>'+limpio(sq2Titulo(o[0]))+'</b>'+(q?'<small>'+limpio(q)+'</small>':'')+'<i class="cod">'+limpio(o[1]+' · '+o[2])+'</i></button>'; });
+  if(!ops.length) h+='<div class="sq2-vacio">Nada para ti en este momento 🙂</div>';
+  h+='</div>';
+  if(sig) h+='<div class="sq2-next">Después: <b>'+limpio(sqaNombre(sig))+' '+sq2HoraBl(Q,k+1,r)+'</b>'+(sqaToca(sig)?' · '+limpio(sqaToca(sig)):'')+'</div>';
+  // Puntos + flechas
+  h+='<div class="sq2-nav"><button onclick="SQ2.ver='+(k-1)+';pintarSecuencia()" '+(k>0?'':'disabled')+'>‹</button><div class="dots">'+Q.bloques.map(function(b,i){ return '<i class="'+(i<kNow?'p':'')+(i===kNow?' a':'')+(i===k?' v':'')+'" onclick="SQ2.ver='+i+';pintarSecuencia()"></i>'; }).join('')+'</div><button onclick="SQ2.ver='+(k+1)+';pintarSecuencia()" '+(sig?'':'disabled')+'>›</button></div>';
+  // Acciones (las de siempre)
+  if(k===kNow){
+    if(!cargado&&sig){ var esp=R.st.espera!=null; h+='<button class="sx-gbtn sx-az sx-lleg" onclick="sqSiguiente(1)"><span>🚉</span><div>'+(esp?'Ya hemos llegado a '+limpio(sqaNombre(Q.bloques[R.st.espera])):limpio(sqPaso(sig)))+'<small>'+(esp?'Toca al llegar · la app saca el retraso':'Toca al llegar · pasa a lo siguiente')+'</small></div></button>'; }
+    h+='<div class="sqa-fila"><button onclick="sqaPideHora()">⏱️ Poner la hora de llegada</button><button onclick="SQ.aj=!SQ.aj;pintarSecuencia()">⚙️ Ajustes</button></div>';
+    var kA=R.A.on?sqaKAuto(Q,r.min):k; if(R.A.on&&k!==kA&&R.st.espera==null&&!(cargado&&Q.bloques[kA].est===null)) h+='<button class="sx-mas" onclick="sqaVolver()">🤖 La has cambiado tú · volver a automático</button>';
+    if(SQ.aj) h+=sq2Ajustes(Q);
+    if(!cargado&&k>0) h+='<button class="sx-mas" onclick="sqSiguiente(-1)">‹ Volver a lo anterior</button>';
+  }
+  return h;
+}
+function sq2Viaje(Q){
+  var R=sq2Ret(Q), r=R.r, kNow=sqBloqueAhora(Q), h='<div class="sq2-h2">Todo el viaje de un vistazo</div>';
+  h+='<div class="sx-tog"><button class="'+(!SQ.todo?'on':'')+'" onclick="SQ.todo=false;pintarSecuencia()">Lo mío (TA)</button><button class="'+(SQ.todo?'on':'')+'" onclick="SQ.todo=true;pintarSecuencia()">Todo (TA + TCF)</button></div>';
+  Q.bloques.forEach(function(bl,i){ var t=sqOps(bl).filter(sqDestaca).map(function(o){ var x=o[3]?SQ_TIPO[o[3]]:SQ_TIPO.BM; return x.e+' '+x.n.toLowerCase(); }).filter(function(x,j,a){ return a.indexOf(x)===j; }).join(' · ');
+    var n=sqOps(bl).length, last=i===Q.bloques.length-1;
+    h+='<button class="sq2-row'+(i<kNow?' p':'')+(i===kNow?' a':'')+'" onclick="SQ2.ver='+i+';SQ.tab=\'ahora\';pintarSecuencia()"><b class="hr">'+sq2HoraBl(Q,i,r).replace(' <s>','<br><s>')+'</b><div><b>'+limpio(bl.est===null?bl.t:sqaNombre(bl))+'</b><small>'+(t?limpio(t):n+' tarea'+(n!==1?'s':''))+'</small></div><span>'+(i<kNow?'✅':i===kNow?'👉':last?'🏁':'')+'</span></button>'; });
+  if(r.min) h+='<div class="sq2-nota">📡 Horas con el retraso ('+(r.min>0?'+':'')+r.min+' min) · tachada la del horario</div>';
+  h+='<div class="sq2-h2" style="margin-top:14px">ℹ️ Este tren</div><div class="sq-chips">'+Q.lleva.map(function(x){ return '<span class="'+(x[2]?'':'no')+'">'+x[0]+' '+x[1]+'</span>'; }).join('')+'</div>'+
+    '<div class="sq-chips"><span>'+Q.trip+'</span><span>'+Q.megafonia+'</span></div><div class="sq2-nota">'+limpio(Q.dias)+' · '+limpio(Q.rev)+'</div>'+Q.notas.map(function(x){ return '<div class="sq-mas">'+limpio(x)+'</div>'; }).join('');
+  return h; }
+function sq2Toca(Q){
+  if(!Q.pir) return '<div class="sq2-vacio">Esta ficha no trae la tabla de qué le toca a cada pasajero.</div>';
+  var n=Q.paradas.length, s=SQ.s, b=SQ.b==null||SQ.b<=s?n-1:SQ.b, su='', ba='', i;
+  for(i=0;i<n-1;i++) su+='<button class="'+(i===s?'s':'')+'" onclick="SQ.s='+i+';if(SQ.b!=null&&SQ.b<='+i+')SQ.b=null;pintarSecuencia()">'+limpio(sqCorto(Q,i))+'</button>';
+  for(i=1;i<n;i++) ba+='<button class="'+(i===b?'b':'')+(i<=s?' x':'')+'"'+(i<=s?' disabled':' onclick="SQ.b='+i+';pintarSecuencia()"')+'>'+limpio(sqCorto(Q,i))+'</button>';
+  var L=sqLeToca(Q,s,b), items=(L&&L.items)||[];
+  var h='<div class="sq2-h2">¿Qué le toca a este pasajero?</div><div class="sq2-sel"><div class="l">🟢 Sube en</div><div class="g">'+su+'</div><div class="l">🔴 Baja en</div><div class="g">'+ba+'</div></div>';
+  h+='<div class="sq2-ans"><div class="tt">'+limpio(sqCorto(Q,s))+' → '+limpio(sqCorto(Q,b))+' le toca:</div>'+
+    (items.length?items.map(function(it){ var t=SQ_TIPO[it.r]; return '<div class="l"><span>'+t.e+'</span><div><b>'+limpio(t.n)+'</b><small>'+limpio(sqCuando(it))+'</small></div></div>'; }).join(''):'<div class="l"><span>🙂</span><div><b>Nada de restauración</b><small>en este tramo</small></div></div>')+'</div>';
+  h+='<button class="sx-mas" onclick="SQ2.pir=!SQ2.pir;pintarSecuencia()">'+(SQ2.pir?'Ocultar':'Ver')+' la hoja entera</button>';
+  if(SQ2.pir) h+=sqPiramide(Q)+'<div class="sq-ley">'+sqCodigos(Q).map(function(c){ return '<span style="background:'+SQ_COD[c].c+'">'+c+' = '+SQ_COD[c].txt.replace(/[^\wÀ-ÿ +]/g,'').trim()+'</span>'; }).join('')+'</div>';
+  return h; }
+pintarSecuencia=function(){
+  var Q=sqActual(); if(!Q) return cerrar();
+  if(SQ.tab==='toca'&&!Q.pir) SQ.tab='ahora';
+  var h='<div class="sh-handle"></div><div class="sx-hoja sq sq2">'+
+    '<div class="sq2-hd">'+(cargado?'':'<button class="sq-camb" onclick="sqElegir()">🔁 Cambiar</button>')+'<b>'+limpio(Q.tipo+' '+Q.tren)+' · '+limpio(Q.ruta)+'</b><small>'+limpio(Q.serie)+' · '+Q.paradas[0][1]+' → '+Q.paradas[Q.paradas.length-1][1]+(SQ.todo?' · todo (TA + TCF)':' · lo tuyo (TA)')+'</small></div>';
+  h+=SQ.tab==='ahora'?sq2Ahora(Q):SQ.tab==='toca'?sq2Toca(Q):sq2Viaje(Q);
+  h+='<button class="sx-cerrar" onclick="cerrar()">Cerrar</button><div style="height:64px"></div>'+sq2Tabs()+'</div>';
+  sxPon(h,'sq-'+SQ.tab+(SQ2.ver==null?'':'-v'));
+  var c=document.getElementById('sq2-card'); if(c){ var x0=null;
+    c.addEventListener('touchstart',function(e){ x0=e.touches[0].clientX; },{passive:true});
+    c.addEventListener('touchend',function(e){ if(x0==null) return; var dx=e.changedTouches[0].clientX-x0; x0=null; if(Math.abs(dx)<50) return;
+      var k=SQ2.ver==null?sqBloqueAhora(Q):SQ2.ver; SQ2.ver=Math.max(0,Math.min(Q.bloques.length-1,k+(dx<0?1:-1))); if(SQ2.ver===sqBloqueAhora(Q)) SQ2.ver=null; pintarSecuencia(); },{passive:true}); }
+};
+(function(){ var s=document.createElement('style'); s.textContent=
+ '.sq2 .sq2-hd{padding:2px 2px 10px}.sq2 .sq2-hd b{display:block;font-size:17px;font-weight:900;padding-right:90px}.sq2 .sq2-hd small{display:block;color:#94A3B8;font-size:12px;margin-top:2px}'+
+ '.sq2-card{border-radius:20px;padding:14px 15px;background:linear-gradient(135deg,#F59E0B,#EA580C);color:#1C1917;margin-bottom:10px;touch-action:pan-y}.sq2-card.otra{background:linear-gradient(135deg,#334155,#1E293B);color:#F8FAFC}'+
+ '.sq2-card small{font-weight:900;font-size:11px;opacity:.8;letter-spacing:.3px}.sq2-card .t{font-size:24px;font-weight:900;line-height:1.15;margin:3px 0 6px}.sq2-card .t span{white-space:nowrap}.sq2-card .t s{font-size:14px;opacity:.6;margin-left:4px}'+
+ '.sq2-card .ch span{display:inline-block;background:rgba(0,0,0,.16);border-radius:10px;padding:4px 10px;font-weight:800;font-size:12.5px}'+
+ '.sq2-card .vivo{margin-top:8px;background:rgba(0,0,0,.2);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:700;line-height:1.4}'+
+ '.sq2-card .pt{display:inline-block;width:8px;height:8px;border-radius:50%;background:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,.35);margin-right:6px;vertical-align:1px}.sq2-card .pt.g{background:#78716C;box-shadow:none}.sq2-card .pt.a{background:#FDE68A;box-shadow:none}'+
+ '.sq2-card .volver{margin-top:6px;border:0;border-radius:10px;padding:7px 12px;font-weight:900;background:#F59E0B;color:#1C1917;font-size:13px}'+
+ '.sq2-q{display:flex;align-items:baseline;justify-content:space-between;font-weight:900;font-size:16px;margin:12px 2px 8px}.sq2-q small{font-size:12px;color:#86EFAC}'+
+ '.sq2-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sq2-ti{position:relative;text-align:left;border-radius:16px;padding:10px 11px 18px;background:#132236;border:1px solid #1E3350;color:#F8FAFC;font-family:inherit}'+
+ '.sq2-ti .e{display:block;font-size:22px;line-height:1.1}.sq2-ti b{display:block;font-size:13.5px;margin-top:4px;line-height:1.25}.sq2-ti small{display:block;font-size:11.5px;color:#94A3B8;margin-top:2px;line-height:1.3}'+
+ '.sq2-ti .cod{position:absolute;left:11px;bottom:4px;font-style:normal;font-size:9.5px;color:#475569}'+
+ '.sq2-ti.big{grid-column:span 2;border:2px solid var(--c);background:#141018}.sq2-ti.big b{font-size:15.5px}.sq2-ti.big small{color:#CBD5E1;font-size:12.5px}'+
+ '.sq2-ti.ok{background:#052E16;border-color:#16A34A}.sq2-ti.ok:after{content:"✓";position:absolute;top:8px;right:11px;color:#4ADE80;font-weight:900;font-size:16px}.sq2-ti.ok b{color:#BBF7D0}'+
+ '.sq2-next{margin:10px 0 4px;border:1px dashed #334155;border-radius:14px;padding:9px 11px;font-size:12.5px;color:#94A3B8}.sq2-next b{color:#F8FAFC}.sq2-next s,.sq2-row s{opacity:.55}'+
+ '.sq2-nav{display:flex;align-items:center;gap:8px;margin:8px 0}.sq2-nav button{width:36px;height:36px;border-radius:12px;border:1px solid #1E3350;background:#132236;color:#F8FAFC;font-size:18px;font-weight:900}.sq2-nav button:disabled{opacity:.3}'+
+ '.sq2-nav .dots{flex:1;display:flex;justify-content:center;gap:5px;flex-wrap:wrap}.sq2-nav .dots i{width:8px;height:8px;border-radius:50%;background:#334155;cursor:pointer}.sq2-nav .dots i.p{background:#16A34A}.sq2-nav .dots i.a{background:#F59E0B}.sq2-nav .dots i.v{width:20px;border-radius:5px}'+
+ '.sq2-h2{font-size:18px;font-weight:900;margin:2px 2px 10px}.sq2-row{width:100%;display:flex;gap:10px;align-items:center;text-align:left;border-radius:14px;padding:9px 11px;margin-bottom:6px;background:#0F1E33;border:1px solid #1E3350;color:#F8FAFC;font-family:inherit}'+
+ '.sq2-row .hr{width:46px;font-size:12px;color:#94A3B8;line-height:1.2}.sq2-row div{flex:1}.sq2-row div b{display:block;font-size:14px}.sq2-row small{display:block;font-size:12px;color:#94A3B8}.sq2-row.a{background:#1C1917;border-color:#F59E0B}.sq2-row.p{opacity:.75}'+
+ '.sq2-nota{font-size:11.5px;color:#64748B;text-align:center;margin:6px 0}.sq2-vacio{grid-column:span 2;color:#94A3B8;font-size:13px;padding:10px}'+
+ '.sq2-sel{background:#132236;border-radius:16px;padding:12px}.sq2-sel .l{font-size:12.5px;color:#94A3B8;margin:4px 0 6px}.sq2-sel .g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}'+
+ '.sq2-sel button{border-radius:11px;padding:9px 4px;font-size:12.5px;font-weight:800;background:#0F1E33;border:1px solid #1E3350;color:#F8FAFC;font-family:inherit}.sq2-sel button.s{background:#16A34A;border-color:#16A34A}.sq2-sel button.b{background:#DC2626;border-color:#DC2626}.sq2-sel button.x{opacity:.3}'+
+ '.sq2-ans{margin-top:12px;border-radius:16px;padding:12px;background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(234,88,12,.12));border:1px solid #F59E0B}.sq2-ans .tt{font-weight:900;font-size:14px;margin-bottom:4px}'+
+ '.sq2-ans .l{display:flex;gap:10px;align-items:center;padding:6px 0}.sq2-ans .l span{font-size:22px}.sq2-ans .l b{font-size:14.5px}.sq2-ans .l small{display:block;color:#CBD5E1;font-size:12.5px}'+
+ '.sq2-tabs{position:sticky;bottom:-22px;z-index:5;display:flex;background:#0B1220;border-top:1px solid #1E3350;margin:0 -18px -22px;padding:7px 0 calc(9px + env(safe-area-inset-bottom))}'+
+ '.sq2-tabs button{flex:1;background:none;border:0;color:#64748B;font-weight:800;font-size:11px;font-family:inherit}.sq2-tabs button span{display:block;font-size:18px}.sq2-tabs button.on{color:#FCD34D}';
+ document.head.appendChild(s); })();
+</script>
+<script>
+/* ═══ Mapa por servicios ═══
+   · Con varios servicios (desayuno → aperitivo → almuerzo → merienda → cena), solo se ve
+     normal el que toca; los siguientes salen apagados con ⏳ «aún no toca».
+   · El que toca cambia al siguiente en cuanto pase lo primero de estas dos cosas:
+     llegar a la estación donde sube la mayoría del siguiente, o terminar el actual.
+     Con un toque en la pestaña se elige a mano (vale hasta la próxima parada).
+   · «Llegamos a…» ya no apaga el mapa: los que se han bajado salen sombreados
+     con «⬇ CAMP» y los que suben en esa parada llevan la pegatina NEW. */
+var SX2_ORDEN=['des','ape','alm','mer','cen'];
+function sx2Svs(){
+  var hay={}; LISTA.forEach(function(r){ hay[r.k]=1; });
+  if(MANUAL&&MANUAL.svs&&MANUAL.svs.length) return MANUAL.svs.filter(function(k){ return hay[k]; });
+  return SX2_ORDEN.filter(function(k){ return hay[k]; });
+}
+function sx2Activo(){ return cargado&&!(MANUAL&&MANUAL.editando)&&MOVIENDO===null&&sx2Svs().length>0; }
+function sx2Cur(){ var P=sxParadas(); return P.length?Math.min(sxParadaIdx(),P.length-1):0; }
+function sx2Est(){ return sxParadas()[sx2Cur()]; }
+// Estación donde empieza un servicio: donde sube la mayoría de sus pasajeros.
+function sx2Inicio(k){ var n={}; LISTA.forEach(function(r){ if(r.k===k&&r.origen) n[r.origen]=(n[r.origen]||0)+1; });
+  var e=Object.keys(n).sort(function(a,b){ return n[b]-n[a]||rangoEst(a)-rangoEst(b); })[0]; return e; }
+function sx2Quedan(k){ var c=sx2Cur(); return LISTA.filter(function(r){ return r.k===k&&!servidos[r.sid]&&subio[r.sid]!=='no'&&rangoEst(r.destino)>c; }); }
+function sx2Auto(){
+  var S=sx2Svs(), c=sx2Cur();
+  for(var i=0;i<S.length-1;i++){
+    var sig=sx2Inicio(S[i+1]);
+    if(sx2Quedan(S[i]).length&&c<rangoEst(sig)) return S[i];
+  }
+  return S[S.length-1];
+}
+function sx2Forz(){ try{ var d=JSON.parse(localStorage.getItem(CLAVE+'_sx2')||'null'); if(d&&d.c===CARGADO_EN&&d.i===sx2Cur()&&sx2Svs().indexOf(d.k)>-1) return d.k; }catch(e){} return null; }
+function sx2Toca(){ return sx2Forz()||sx2Auto(); }
+function sx2Elegir(k){
+  try{ if(k===sx2Auto()) localStorage.removeItem(CLAVE+'_sx2'); else localStorage.setItem(CLAVE+'_sx2', JSON.stringify({c:CARGADO_EN, i:sx2Cur(), k:k})); }catch(e){}
+  pintarMapa();
+}
+function sx2Num(i){ return ['1.º','2.º','3.º','4.º','5.º'][i]||''; }
+
+/* Pestañas de servicio, arriba del mapa */
+function sx2Pestanas(){
+  var S=sx2Svs(); if(S.length<2) return '';
+  var t=sx2Toca(), it=S.indexOf(t), forz=sx2Forz();
+  return '<div class="sx2-chips">'+S.map(function(k,i){
+    var l=LISTA.filter(function(r){ return r.k===k&&subio[r.sid]!=='no'; }), s=l.filter(function(r){ return servidos[r.sid]; }).length, m=COMIDAS[k];
+    var cls=k===t?'on':i>it?'off':'prev', sub=k===t?sx2Num(i)+' servicio · ahora':i>it?'desde '+limpio(estCorto(sx2Inicio(k)))+' · aún no toca':'quedan '+sx2Quedan(k).length;
+    return '<button class="'+cls+'"'+(k===t?' style="background:'+m.c+'"':'')+' onclick="sx2Elegir(\''+k+'\')"><span class="ic">'+m.e+'</span><span class="tx"><b>'+limpio(m.n)+'</b><small>'+sub+'</small></span><em>'+(i>it?'🔒':s+'/'+l.length)+'</em></button>';
+  }).join('')+'</div>'+(forz?'<div class="sx2-forz">Elegido a mano · <button onclick="sx2Elegir(\''+sx2Auto()+'\')">volver a automático</button></div>':'');
+}
+/* Aviso de la parada en la que estamos */
+function sx2Parada(){
+  var c=sx2Cur(); if(!c) return '';
+  var e=sx2Est(), ba=0, su=0;
+  LISTA.forEach(function(r){ if(subio[r.sid]==='no') return; if(r.destino===e) ba++; if(r.origen===e) su++; });
+  return '<div class="sx2-arr">🚉 <div><b>'+limpio(estCorto(e))+'</b><span>Se bajan '+ba+' · Suben '+su+'</span></div></div>';
+}
+
+/* Asientos */
+function sx2Asientos(){
+  var w=document.getElementById('wagon'); if(!w) return;
+  if(estFiltro.est) return; // con un filtro de estación puesto a mano, se ve como siempre
+  var t=sx2Toca(), S=sx2Svs(), it=S.indexOf(t), c=sx2Cur(), e=sx2Est();
+  w.querySelectorAll('.seat').forEach(function(b){
+    var m=(b.getAttribute('onclick')||'').match(/'([^']+)'/); if(!m) return;
+    var sv=ASIENTOS[m[1]]||[]; if(!sv.length) return;
+    function bajo(r){ return c>0&&rangoEst(r.destino)<=c; }
+    function falta(r){ return rangoEst(r.origen)>c; }
+    var abordo=sv.filter(function(r){ return !bajo(r)&&!falta(r); });
+    var r=abordo.filter(function(x){ return x.k===t; })[0]||sv.filter(function(x){ return x.k===t&&falta(x); })[0]||abordo[0]||sv.filter(falta)[0]||sv[sv.length-1];
+    var vivo=subio[r.sid]!=='no', hecho=servidos[r.sid];
+    b.classList.remove('dim','sx2-wait','sx2-bajo','sx2-new');
+    // El color, el icono y el menú, los del pasajero que cuenta ahora en ese asiento
+    if(vivo&&!hecho&&!/\bsx-ok\b/.test(b.className)) b.style.background=COMIDAS[r.k].c;
+    var ei=b.querySelector('.e'); if(ei) ei.textContent=COMIDAS[r.k].e;
+    var ml=b.querySelector('.ml'), me=menuElegido(r); if(ml&&me){ ml.textContent=me.t; ml.className='ml'+(me.esp?' esp':''); }
+    var ks=S.indexOf(r.k);
+    if(bajo(r)){ b.classList.add('sx2-bajo'); b.insertAdjacentHTML('beforeend','<span class="sx2-dn">⬇ '+sigla(r.destino)+'</span>'); }
+    else if(falta(r)){ b.classList.add('sx2-wait'); b.insertAdjacentHTML('beforeend','<span class="sx2-dn up">⬆ '+sigla(r.origen)+'</span>'); }
+    else if(ks>-1&&ks!==it){ b.classList.add('sx2-wait'); if(ks>it) b.insertAdjacentHTML('beforeend','<span class="sx2-z">⏳</span>'); }
+    else if(c>0&&r.origen===e&&vivo){ b.classList.add('sx2-new'); b.insertAdjacentHTML('beforeend','<span class="sx2-nw">NEW</span>'); }
+    else if(SX.falta&&(hecho||!vivo)) b.classList.add('dim');
+  });
+}
+
+/* Enganches */
+var _sx2Pm=pintarMapa, _sx2Abriendo=false;
+pintarMapa=function(){
+  var on=sx2Activo();
+  if(on&&filtro&&sx2Svs().indexOf(filtro)>-1){ var f=filtro; filtro=null; if(!_sx2Abriendo&&sx2Svs().length>1&&f!==sx2Toca()){ try{ localStorage.setItem(CLAVE+'_sx2', JSON.stringify({c:CARGADO_EN, i:sx2Cur(), k:f})); }catch(e){} } }
+  document.body.classList.toggle('sx2', on);
+  _sx2Pm();
+  if(!on) return;
+  var sm=document.getElementById('sx-mapa'); if(sm) sm.insertAdjacentHTML('afterbegin', sx2Pestanas()+sx2Parada());
+  sx2Asientos();
+};
+var _sx2Dos=sxMapaDos; sxMapaDos=function(){ return sx2Activo()?'':_sx2Dos(); };
+var _sx2Abrir=abrirMapa; abrirMapa=function(){ _sx2Abriendo=true; try{ _sx2Abrir(); }finally{ _sx2Abriendo=false; } if(sx2Activo()){ filtro=null; pintarMapa(); } };
+sxVerSv=function(k){ SX.falta=true; estFiltro={modo:'sube', est:null}; cerrar(); abrirMapa(); sx2Elegir(k); };
+var _sx2Lleg=sxLlegamos;
+sxLlegamos=function(){
+  if(!cargado||!sx2Svs().length) return _sx2Lleg();
+  var P=sxParadas(), i=sxParadaIdx()+1; if(i>=P.length) return;
+  var antes=sx2Toca();
+  try{ localStorage.setItem(CLAVE+'_parada', JSON.stringify({c:CARGADO_EN, i:i})); localStorage.removeItem(CLAVE+'_sx2'); }catch(e){}
+  estFiltro={modo:'sube', est:null}; SX.falta=false; abrirMapa();
+  var ahora=sx2Toca(), ba=0, su=0;
+  LISTA.forEach(function(r){ if(subio[r.sid]==='no') return; if(r.destino===P[i]) ba++; if(r.origen===P[i]) su++; });
+  toast('🚉 '+estCorto(P[i])+': se bajan '+ba+' · suben '+su+(ahora!==antes?' · empieza el '+COMIDAS[ahora].n.toLowerCase():''));
+};
+// La ficha del asiento abre primero el servicio que toca
+var _sx2Ahora=sxAhora;
+sxAhora=function(sv){
+  if(sv.length>1&&sx2Activo()&&!filtro){ var t=sx2Toca(), c=sx2Cur();
+    var l=sv.filter(function(r){ return r.k===t&&!(c>0&&rangoEst(r.destino)<=c); }); if(l.length) return l; }
+  return _sx2Ahora(sv);
+};
+(function(){ var s=document.createElement('style'); s.textContent=
+ '.sx2-chips{display:flex;gap:8px;margin-bottom:10px}'+
+ '.sx2-chips button{flex:1;min-width:0;display:flex;align-items:center;gap:7px;border-radius:16px;padding:10px;border:0;font-family:inherit;text-align:left;color:#F8FAFC;cursor:pointer}'+
+ '.sx2-chips .ic{font-size:22px}.sx2-chips .tx{min-width:0}.sx2-chips b{display:block;font-size:15px;font-weight:900}.sx2-chips small{display:block;font-size:10.5px;font-weight:700;opacity:.85;line-height:1.2}'+
+ '.sx2-chips em{margin-left:auto;font-style:normal;font-size:13px;font-weight:900}'+
+ '.sx2-chips .on{color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 4px 14px rgba(0,0,0,.4)}'+
+ '.sx2-chips .off{background:#132236;border:1.5px dashed #475569;opacity:.6}'+
+ '.sx2-chips .prev{background:#132236;border:1px solid #1E3350;opacity:.75}'+
+ '.sx2-forz{font-size:12px;color:#FCD34D;margin:-4px 0 10px;font-weight:700}.sx2-forz button{background:none;border:0;color:#93C5FD;font:inherit;text-decoration:underline;padding:0}'+
+ '.sx2-arr{display:flex;align-items:center;gap:10px;background:#132236;border-left:5px solid #16A34A;border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:22px}'+
+ '.sx2-arr b{display:block;font-size:16px}.sx2-arr span{display:block;font-size:13px;color:#94A3B8;font-weight:700}'+
+ 'body.sx2 #p-mapa .seat.sx2-wait{background:#1E3350!important;border:1.5px dashed #64748B!important;color:#94A3B8!important;opacity:.6;box-shadow:none}'+
+ 'body.sx2 #p-mapa .seat.sx2-wait .ml{background:#334155;color:#CBD5E1}'+
+ 'body.sx2 #p-mapa .seat.sx2-bajo{background:#334155!important;color:#64748B!important;opacity:.45;box-shadow:none;border-color:transparent}'+
+ 'body.sx2 #p-mapa .seat.sx2-bajo .ml{text-decoration:line-through;background:#475569;color:#CBD5E1}body.sx2 #p-mapa .seat.sx2-bajo .sx-t{display:none}'+
+ '.seat .sx2-dn{position:absolute;bottom:-8px;right:-4px;background:#475569;color:#F1F5F9;border-radius:7px;font-size:8.5px;font-weight:900;padding:1px 5px;line-height:13px;z-index:3;white-space:nowrap}'+
+ '.seat .sx2-dn.up{background:#1E40AF}'+
+ '.seat .sx2-z{position:absolute;top:-7px;right:-5px;font-size:12px;z-index:3}'+
+ '.seat .sx2-nw{position:absolute;top:-9px;left:-7px;background:#4ADE80;color:#052e16;font-size:9.5px;font-weight:900;border-radius:7px;padding:1px 5px;letter-spacing:.3px;box-shadow:0 1px 4px rgba(0,0,0,.45);transform:rotate(-8deg);z-index:4;line-height:1.3}'+
+ 'body.sx2 #p-mapa .seat.sx2-new .e{display:none}';
+ document.head.appendChild(s); })();
+</script>
+<script>
+/* ═══ Inicio nuevo ═══
+   Tarjetas: la principal en naranja y las demás oscuras con su icono de color y ›.
+   Sin «Más opciones»: el estilo de temporada vuelve arriba (🎨) y «Borrar y empezar otro»
+   va dentro de la tarjeta del servicio. «Último servicio» reabre el que se borró (hasta 2 días). */
+function in1Ultimo(){ try{ var d=JSON.parse(localStorage.getItem(CLAVE+'_ultimo')||'null'); if(d&&d.lista&&(d.lista.length||d.manual)&&!caducado(d)) return d; }catch(e){} return null; }
+function in1Reabrir(){ var d=in1Ultimo(); if(!d) return; try{ localStorage.setItem(CLAVE, JSON.stringify(d)); }catch(e){ return; } location.reload(); }
+var _in1Borrar=borrarServicio;
+borrarServicio=function(){ try{ var d=localStorage.getItem(CLAVE); if(d) localStorage.setItem(CLAVE+'_ultimo', d); }catch(e){} return _in1Borrar(); };
+function in1Cuando(t){ var d=new Date(t), h=new Date(); h.setHours(0,0,0,0); var x=new Date(d); x.setHours(0,0,0,0);
+  var n=Math.round((h-x)/86400000); return n<=0?'hoy':n===1?'ayer':'hace '+n+' días'; }
+function in1Ruta(l){ var o={}, d={}; l.forEach(function(r){ if(r.origen) o[r.origen]=(o[r.origen]||0)+1; if(r.destino) d[r.destino]=(d[r.destino]||0)+1; });
+  var a=Object.keys(o).sort(function(x,y){ return o[y]-o[x]; })[0], b=Object.keys(d).sort(function(x,y){ return d[y]-d[x]; })[0];
+  return a&&b?sigla(estNombre(a))+' → '+sigla(estNombre(b)):''; }
+var _in1Ini=sxInicio;
+sxInicio=function(){
+  SX.mas=false;
+  _in1Ini();
+  var el=document.getElementById('sx-inicio'); if(!el) return;
+  el.classList.add('in1');
+  var m=el.querySelector('.sx-mas'); if(m) m.remove();
+  el.querySelectorAll('.sx-gbtn').forEach(function(b){ if(!b.querySelector('.in1-ch')) b.insertAdjacentHTML('beforeend','<i class="in1-ch">›</i>'); });
+  if(!cargado){
+    var u=in1Ultimo(), vie=document.getElementById('in1-ult'); if(vie) vie.remove();
+    if(u) el.insertAdjacentHTML('beforeend','<div id="in1-ult"><div class="in1-lt">ÚLTIMO SERVICIO</div><button onclick="in1Reabrir()"><b>'+limpio(u.tipo||'')+' '+limpio(u.num||'')+(in1Ruta(u.lista)?' · '+in1Ruta(u.lista):'')+'</b><span>'+in1Cuando(u.cargadoEn)+' · reabrir ›</span></button></div>');
+    return;
+  }
+  // Con servicio: la tarjeta del tren lleva los servicios y «Borrar y empezar otro»
+  var t=el.querySelector('.sx-tren');
+  if(t){
+    var S=typeof sx2Svs==='function'?sx2Svs():[], toca=S.length?sx2Toca():null;
+    if(S.length>1&&!t.querySelector('.sx-mini2')) t.insertAdjacentHTML('beforeend','<div class="sx-mini2">'+S.map(function(k){
+      var l=LISTA.filter(function(r){ return r.k===k&&subio[r.sid]!=='no'; }), s=l.filter(function(r){ return servidos[r.sid]; }).length;
+      return '<div style="background:'+COMIDAS[k].c+(k===toca?'':';opacity:.55')+'">'+COMIDAS[k].e+' '+limpio(COMIDAS[k].n)+'<b>'+s+'/'+l.length+'</b></div>'; }).join('')+'</div>');
+    if(!t.querySelector('.in1-del')) t.insertAdjacentHTML('beforeend','<button class="in1-del" onclick="borrarServicio()">🗑️ Borrar este servicio y empezar otro</button>');
+    var or=el.querySelector('.sx-or');
+    if(or&&toca&&S.length>1&&!or.querySelector('small')) or.querySelector('div').insertAdjacentHTML('beforeend','<small>Toca el '+limpio(COMIDAS[toca].n).toLowerCase()+'</small>');
+  }
+  // Orden: asientos → llegamos → secuencia
+  var sq=document.getElementById('sq-ini'), last=el.querySelector('.sx-az')||el.querySelector('.sx-or');
+  if(sq&&last&&last.nextSibling!==sq) last.parentNode.insertBefore(sq, last.nextSibling);
+};
+// Sin «Más opciones» en el inicio, el botón de borrar del modo antiguo ya no hace falta
+(function(){ var s=document.createElement('style'); s.textContent=
+ '#tema-btn.on{display:flex!important}'+
+ '#p-tren.mo-solo>#mo-borrar{display:none!important}'+
+ '#sx-inicio.in1 .sx-gbtn{position:relative;background:#132236;border:1px solid #1E3350;color:#F8FAFC;border-radius:20px;padding:15px 40px 15px 14px;font-size:19px;gap:13px;box-shadow:none}'+
+ '#sx-inicio.in1 .sx-gbtn>span:first-child{width:52px;height:52px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;background:#1E3350}'+
+ '#sx-inicio.in1 .sx-gbtn small{display:block;font-size:13px;font-weight:700;color:#94A3B8;margin-top:2px}'+
+ '#sx-inicio.in1 .sx-gbtn .in1-ch{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-style:normal;font-size:26px;color:#475569;font-weight:400}'+
+ '#sx-inicio.in1 .sx-or{background:linear-gradient(135deg,#F59E0B,#EA580C)!important;border:0;color:#1C1917!important;box-shadow:0 6px 18px rgba(234,88,12,.3)}'+
+ '#sx-inicio.in1 .sx-or small{color:#1C1917;opacity:.75}#sx-inicio.in1 .sx-or>span:first-child{background:rgba(255,255,255,.3)}#sx-inicio.in1 .sx-or .in1-ch{color:#1C1917}'+
+ '#sx-inicio.in1 .sx-gr>span:first-child{background:#14532D}'+
+ '#sx-inicio.in1 .sq-mo{background:#132236!important;border:1px solid #1E3350!important;color:#F8FAFC!important}#sx-inicio.in1 .sq-mo>span:first-child{background:#3B1F7A}#sx-inicio.in1 .sq-mo small{color:#94A3B8!important}'+
+ '#sx-inicio.in1 .sx-az{background:#1E3A8A!important;border:0;color:#fff}#sx-inicio.in1 .sx-az>span:first-child{background:rgba(255,255,255,.12)}#sx-inicio.in1 .sx-az small{color:#BFDBFE}#sx-inicio.in1 .sx-az .in1-ch{color:#93C5FD}'+
+ '#sx-inicio.in1 .sx-tren{background:#132236;border:1px solid #1E3350;border-radius:20px}'+
+ '#sx-inicio.in1 .sx-bar i{background:linear-gradient(90deg,#F59E0B,#EA580C)}'+
+ '#sx-inicio.in1 .sx-mini2{display:flex;gap:6px;margin-top:10px}#sx-inicio.in1 .sx-mini2>div{flex:1;border-radius:10px;padding:7px 9px;font-size:12.5px;font-weight:800;color:#fff;display:flex;justify-content:space-between;gap:4px}'+
+ '.in1-del{display:block;width:100%;margin-top:12px;border:0;border-top:1px solid #1E3350;background:none;padding:12px 0 0;color:#FCA5A5;font:800 14px Inter,sans-serif;cursor:pointer}'+
+ '#in1-ult{margin-top:16px}.in1-lt{font-size:11.5px;color:#64748B;font-weight:900;letter-spacing:1px;margin-bottom:8px}'+
+ '#in1-ult button{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;background:#0B1729;border:1.5px dashed #334155;border-radius:16px;padding:13px 14px;color:#F8FAFC;font:inherit;cursor:pointer;text-align:left}'+
+ '#in1-ult b{font-size:15px}#in1-ult span{font-size:13px;color:#94A3B8;font-weight:700;white-space:nowrap}';
+ document.head.appendChild(s); })();
+setTimeout(function(){ if(document.getElementById('p-tren').classList.contains('on')) sxInicio(); }, 150);
+</script>
+<script>
+/* ═══ Asientos sin «Más opciones» ═══
+   La serie, el plano y el ciclo van en una línea pequeña bajo el título del coche,
+   con «cambiar ›» (abre la hoja de siempre). Los filtros, el embarque repetido y la
+   leyenda ya no salen. Los asientos sin menú elegido ponen «SIN ELEC.». */
+var _as3Pm=pintarMapa;
+pintarMapa=function(){
+  SX.mas=false;
+  _as3Pm();
+  var mb=document.getElementById('sx-mapa-mas'); if(mb) mb.style.display='none';
+  var w=document.getElementById('wagon'), pi=document.getElementById('plano-info'); if(!w) return;
+  var tt=w.querySelector('.wtit');
+  if(tt&&pi&&!w.querySelector('.as3-plano')){
+    var h=pi.innerHTML.replace(/<button[^>]*>[\s\S]*?<\/button>/,'').replace('Plano oficial de Renfe','Plano oficial');
+    tt.insertAdjacentHTML('afterend','<button class="as3-plano" onclick="abrirSerie()"><span>'+h+'</span><b>cambiar ›</b></button>');
+  }
+  var toca=typeof sx2Svs==='function'&&sx2Svs().length?sx2Toca():null;
+  w.querySelectorAll('.seat.has').forEach(function(b){
+    if(b.querySelector('.ml')) return;
+    var m=(b.getAttribute('onclick')||'').match(/'([^']+)'/); if(!m) return;
+    var sv=(ASIENTOS[m[1]]||[]); if(!sv.length) return;
+    var r=sv.filter(function(x){ return x.k===toca; })[0]||sv.filter(pasaEst)[0]||sv[0];
+    var t=sinAcento(r.menu||'').trim();
+    var tx=!t||/SIN ELEC|SIN PREFER|SIN POSIB/.test(t)?'SIN ELEC.':t.slice(0,10);
+    b.insertAdjacentHTML('beforeend','<span class="ml se">'+limpio(tx)+'</span>');
+  });
+};
+(function(){ var s=document.createElement('style'); s.textContent=
+ '#sx-mapa-mas{display:none!important}'+
+ '.as3-plano{display:flex;align-items:center;gap:8px;width:100%;background:#0B1729;border:1px solid #1E3350;border-radius:12px;padding:8px 10px;margin:0 0 12px;color:#CBD5E1;font:700 12.5px Inter,sans-serif;text-align:left;cursor:pointer}'+
+ '.as3-plano span{flex:1;min-width:0}.as3-plano span b{color:#F8FAFC}.as3-plano .of{color:#4ADE80;margin:0 2px}.as3-plano .ap{color:#FCD34D;margin:0 2px}'+
+ '.as3-plano>b{color:#F59E0B;font-weight:900;white-space:nowrap}'+
+ '#p-mapa .seat .ml.se{background:#CBD5E1;color:#334155}';
+ document.head.appendChild(s); })();
 </script>
 </body>
 </html>
