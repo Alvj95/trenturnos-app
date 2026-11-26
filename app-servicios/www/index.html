@@ -61,6 +61,68 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;backgrou
 </style>
 </head>
 <body>
+<!-- PANTALLA G:INICIO — pantalla de arranque «campana» (Servicios). Una vez por visita; tocar la salta.
+     Fuera de Navidad sale igual, sin nieve ni gorro. -->
+<style>
+#g-capa{position:absolute;inset:0;overflow:hidden;z-index:6;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#g-capa .g-fondo{position:absolute;inset:0}
+#g-st{position:relative;width:360px;height:640px;flex:none;transform-origin:center;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#F8FAFC}
+#g-st .g-sn{position:absolute;top:-16px;font-style:normal;color:#fff;animation:gCae linear infinite}
+@keyframes gCae{to{transform:translate(24px,700px)}}
+#g-st .g-cal{position:absolute;left:105px;top:118px;width:150px;background:#F8FAFC;border-radius:18px;overflow:visible;box-shadow:0 18px 44px rgba(0,0,0,.55);text-align:center;color:#0F172A;animation:gDrop 1s cubic-bezier(.2,.9,.3,1.25) .15s both}
+#g-st .g-cal .h{padding:9px 6px;border-radius:18px 18px 0 0;background:#DC2626;color:#fff;font-weight:900;font-size:14px;letter-spacing:1.2px}
+#g-st .g-cal .d{font-size:68px;font-weight:900;line-height:1.05;padding-top:6px;letter-spacing:-2px}
+#g-st .g-cal .w{font-size:12.5px;font-weight:800;color:#64748B;padding-bottom:4px;letter-spacing:.5px}
+#g-st .g-cal .t{margin:6px 10px 12px;border-radius:10px;padding:7px 4px;font-size:12.5px;font-weight:900;color:#fff;background:#1D4ED8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#g-st .g-hat{position:absolute;width:58px;top:-34px;right:-26px;transform:rotate(24deg);filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));animation:gGorro 1.8s ease-in-out infinite alternate}
+#g-st .g-hat svg{display:block;width:100%}
+@keyframes gGorro{from{transform:rotate(16deg)}to{transform:rotate(30deg)}}
+@keyframes gDrop{from{opacity:0;transform:translateY(-320px) rotate(-10deg)}to{opacity:1;transform:none}}
+#g-st .g-cl{position:absolute;left:95px;top:150px;width:170px;height:130px}
+#g-st .g-cl img{position:absolute;bottom:12px;left:50%;width:78px;margin-left:-39px;border-radius:18px;animation:gPop .7s cubic-bezier(.2,.9,.3,1.4) 1.25s both}
+@keyframes gPop{from{transform:scale(.75)}to{transform:scale(1.15)}}
+#g-st .g-plate{position:absolute;bottom:0;left:0;right:0;height:16px;border-radius:50%;background:linear-gradient(#E2E8F0,#94A3B8)}
+#g-st .g-dome{position:absolute;bottom:10px;left:18px;right:18px;height:94px;border-radius:72px 72px 6px 6px;background:linear-gradient(135deg,#F8FAFC,#CBD5E1 60%,#94A3B8);transform-origin:right bottom;box-shadow:0 10px 22px rgba(0,0,0,.45);animation:gTapa 1.3s ease-in-out .45s both}
+#g-st .g-dome i{position:absolute;top:-11px;left:50%;width:18px;height:13px;margin-left:-9px;border-radius:9px 9px 3px 3px;background:#94A3B8}
+@keyframes gTapa{from{transform:none}to{transform:rotate(-38deg) translate(52px,-90px)}}
+#g-st .g-cl .g-hat{top:auto;bottom:86px;right:auto;left:92px;width:46px;z-index:2;opacity:0;animation:gAparece .4s ease-out 1.5s forwards,gGorro 1.8s ease-in-out 1.9s infinite alternate}
+@keyframes gAparece{to{opacity:1}}
+#g-st .g-nm{position:absolute;left:0;right:0;top:372px;text-align:center;font-weight:900;font-size:36px;letter-spacing:-.6px;animation:gSube .8s ease-out .5s both}
+#g-st .g-nm b{color:#F59E0B;font-weight:900}
+#g-st .g-sub{position:absolute;left:0;right:0;top:420px;text-align:center;font-weight:700;font-size:15px;color:#CBD5E1;animation:gSube .8s ease-out .8s both}
+@keyframes gSube{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){#g-st *,#g-st{animation:none!important}#g-st .g-dome{transform:rotate(-38deg) translate(52px,-90px)}#g-st .g-cl .g-hat{opacity:1}}
+
+#g-splash{position:fixed;inset:0;z-index:99999;background:radial-gradient(ellipse at 50% 38%,#7C2D12 0%,#0F1E33 55%,#07111F 100%);transition:opacity .45s ease}
+#g-splash.fuera{opacity:0}
+</style>
+<script>
+(function(){
+  try{
+    if(sessionStorage.getItem('gSplashVisto')) return;
+    sessionStorage.setItem('gSplashVisto','1');
+
+  function gNav(){ var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    var a=window.NAV_DESDE||'12-01', b=window.NAV_HASTA||'01-06'; return md>=a || md<=b; }
+  function gNieve(n){ var h=''; for(var i=0;i<n;i++){ h+='<i class="g-sn" style="left:'+(Math.random()*100).toFixed(1)+'%;font-size:'+[8,9,11,13,15][i%5]+'px;opacity:'+[.4,.6,.8,1][i%4]+
+      ';animation-duration:'+(4+Math.random()*4).toFixed(1)+'s;animation-delay:-'+(Math.random()*8).toFixed(1)+'s">'+['❄','•','•','✦'][i%4]+'</i>'; } return h; }
+  function gEscala(st){ var e=Math.min(innerWidth/360, innerHeight/640); if(e>0) st.style.transform='scale('+e+')'; }
+
+    var nav=gNav(), hat=nav?'<span class="g-hat"><svg viewBox="0 0 60 52"><path d="M8 40 C14 14 30 4 46 8 C52 10 56 18 54 28 L48 22 C40 18 30 26 26 40 Z" fill="#DC2626"/><rect x="2" y="36" width="34" height="11" rx="5.5" fill="#F8FAFC"/><circle cx="53" cy="29" r="6" fill="#F8FAFC"/></svg></span>':'';
+    var d=document.createElement('div'); d.id='g-splash'; d.setAttribute('aria-hidden','true');
+    d.innerHTML='<div id="g-capa"><div id="g-st">'+(nav?gNieve(46):'')+
+      '<div class="g-cl"><img src="icono-arranque.png" alt="">'+hat+'<div class="g-plate"></div><div class="g-dome"><i></i></div></div>'+
+      '<div class="g-nm">Servicios <b>a bordo</b></div><div class="g-sub">'+(nav?'🎄 Se sirve la Navidad':'Todo listo para servir')+'</div></div></div>';
+    function poner(){ if(!document.body) return setTimeout(poner, 10); document.body.appendChild(d); gEscala(document.getElementById('g-st'));
+      var reducir=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      var quitado=false; function quitar(){ if(quitado) return; quitado=true; d.classList.add('fuera'); setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 500); }
+      d.addEventListener('pointerdown', quitar);
+      setTimeout(quitar, reducir?900:2800); }
+    poner();
+  }catch(e){ try{ var x=document.getElementById('g-splash'); if(x) x.remove(); }catch(_){} }
+})();
+</script>
+<!-- PANTALLA G:FIN -->
 
 <div id="entrada">
   <div class="en-caja">
