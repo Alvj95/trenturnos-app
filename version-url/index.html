@@ -37943,7 +37943,9 @@ function ahoraMin(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); }
 // ARREGLO — también los trenes de continuidad (t.continuidad tras la ida y t.continuidadVuelta tras la
 // vuelta): antes solo se miraban el tren de ida y el de vuelta. Orden del día: ida → continuidad →
 // vuelta → continuidad de la vuelta. Sin repetir el mismo número.
-function mtHoy(){ var t=(typeof TV!=='undefined'&&TV[hoyK()])||null, l=[]; if(!t) return l;
+function mtHoy(){ return mtDelDia(hoyK()); }
+// ARREGLO — los trenes de un día cualquiera (para «Mi tren» también hacen falta los de ayer).
+function mtDelDia(k){ var t=(typeof TV!=='undefined'&&TV[k])||null, l=[]; if(!t) return l;
   function cont(arr){ (arr||[]).forEach(function(c){ if(c&&c.tren) l.push({n:num(c.tren), sal:c.salida||'', lle:c.llegada||'', hS:c.horaInicio||'', hL:c.horaFin||'', cont:true}); }); }
   if(t.numTren) l.push({n:num(t.numTren), sal:t.sal||AJ.base||'', lle:t.lle||'', hS:t.hF||'', hL:t.hL||''});
   cont(t.continuidad);
@@ -38054,8 +38056,24 @@ window.mtTarjeta=mtTarjeta;
 
 // ── Pantalla ──
 function ov(){ var o=document.getElementById('mt-ov'); if(!o){ o=document.createElement('div'); o.id='mt-ov'; document.body.appendChild(o); } return o; }
-window.mtAbrir=function(n){ MT.n=n?num(n):''; MT.vista=n?'tren':'buscar'; ov().classList.add('on'); pinta(); mtCargaLive(pinta); if(n) mtCargaDet(n,pinta);
-  clearInterval(MT.timer); MT.timer=setInterval(function(){ if(!ov().classList.contains('on')) return clearInterval(MT.timer); MT.liveT=0; mtCargaLive(pinta); if(MT.vista==='tren'&&MT.n){ MT.det[MT.n]&&(MT.det[MT.n].t=0); mtCargaDet(MT.n,pinta); } },30000); if(n) mtReciente(n); };
+// ARREGLO — «Mi tren» abre directamente TU tren de hoy (antes salía el buscador y, si hoy no había
+// número de tren, solo los últimos que se miraron). Con varios trenes, el que toca por la hora: el que va
+// en marcha o el que sale en menos de una hora; si aún no toca ninguno, el primero. De madrugada, el de ayer que aún no ha llegado.
+function mtElegido(){
+  var y=ahoraMin(), d=new Date(), ay=new Date(d.getFullYear(), d.getMonth(), d.getDate()-1);
+  function lim(x){ var s=aMin(x.hS), l=aMin(x.hL); if(l!=null&&s!=null&&l<s) l+=1440; return {s:s, l:l}; }
+  var ayer=mtDelDia(key(ay.getFullYear(), ay.getMonth()+1, ay.getDate()));
+  for(var i=0;i<ayer.length;i++){ var a=lim(ayer[i]); if(a.l!=null&&a.l>=1440&&y<a.l-1440) return ayer[i].n; }
+  var hoy=mtHoy(); if(!hoy.length) return '';
+  // El calendario no siempre guarda la llegada de cada tren (en ida y vuelta, la hora final es la del turno):
+  // se coge el último tren que ya ha salido o sale en menos de una hora; si aún no toca ninguno, el primero.
+  var elegido=hoy[0].n;
+  for(var j=0;j<hoy.length;j++){ var b=lim(hoy[j]); if(b.s!=null&&y>=b.s-60) elegido=hoy[j].n; }
+  return elegido;
+}
+window.mtElegido=mtElegido;
+window.mtAbrir=function(n){ var auto=false; if(!n){ n=mtElegido(); auto=!!n; } MT.auto=auto; MT.n=n?num(n):''; MT.vista=n?'tren':'buscar'; ov().classList.add('on'); pinta(); mtCargaLive(pinta); if(n) mtCargaDet(n,pinta);
+  clearInterval(MT.timer); MT.timer=setInterval(function(){ if(!ov().classList.contains('on')) return clearInterval(MT.timer); MT.liveT=0; mtCargaLive(pinta); if(MT.vista==='tren'&&MT.n){ MT.det[MT.n]&&(MT.det[MT.n].t=0); mtCargaDet(MT.n,pinta); } },30000); if(n&&!auto) mtReciente(n); };
 window.mtCerrar=function(){ ov().classList.remove('on'); clearInterval(MT.timer); quitaMapa(); mtTarjeta(); };
 window.mtBusca=function(v){ var n=num(v), c=document.getElementById('mt-res'); if(!c) return; if(n.length<3){ c.innerHTML=''; return; }
   var I=mtInfo(n), vv=mtVivo(n);
@@ -38066,7 +38084,7 @@ window.pinta=pinta; function pinta(){
   if(MT.vista==='buscar'){
     var hoy=mtHoy(), rec=(mtG().rec||[]).filter(function(x){ return !hoy.some(function(y){ return y.n===x; }); });
     h+='<div class="mt-tit">¿Qué tren buscas?</div><form class="mt-busca" onsubmit="event.preventDefault();MT_ir();return false"><input id="mt-num" class="mt-inp" inputmode="numeric" enterkeyhint="search" placeholder="Nº de tren" oninput="mtBusca(this.value)"><button type="submit">Buscar</button></form><div id="mt-res"></div>'+
-      (hoy.length?'<div class="mt-lbl">MIS TRENES DE HOY</div>'+hoy.map(function(x){ return filaTren(x.n); }).join(''):'')+
+      (hoy.length?'<div class="mt-lbl">MIS TRENES DE HOY</div>'+hoy.map(function(x){ return filaTren(x.n); }).join(''):'<div class="mt-aviso">📅 <b>Hoy no tienes tren en tu calendario.</b> Escribe el número del tren que quieras ver.</div>')+
       (rec.length?'<div class="mt-lbl">ÚLTIMOS QUE MIRASTE</div>'+rec.map(filaTren).join(''):'')+estado();
     o.innerHTML=h+'</div>'; quitaMapa(); var i=document.getElementById('mt-num'); if(i&&MT.q){ i.value=MT.q; mtBusca(MT.q); } return;
   }
@@ -38107,8 +38125,8 @@ function mtSigIdx(P,v,d){ if(!P.length) return -1; var cs=v&&String(v.codEstSig|
   for(var i=0;i<P.length;i++) if(cs&&String(P[i].cod).replace(/^0+/,'')===cs) return i;
   if(!v) return -1; var y=ahoraMin(); for(i=0;i<P.length;i++){ var m=aMin(P[i].llega||P[i].sale); if(m!=null&&m+(d||0)>y) return i; } return P.length-1; }
 window.MT_ir=function(){ var i=document.getElementById('mt-num'), n=num(i&&i.value); if(n.length<2){ if(typeof toast==='function') toast('Escribe el número del tren'); return; } if(i) i.blur(); mtAbrir(n); };
-window.MT_otro=function(){ MT.vista='buscar'; MT.hoja=false; MT.q=''; pinta(); var i=document.getElementById('mt-num'); if(i){ i.focus(); } };
-window.MT_volver=function(){ MT.vista='buscar'; MT.hoja=false; pinta(); };
+window.MT_otro=function(){ MT.auto=false; MT.vista='buscar'; MT.hoja=false; MT.q=''; pinta(); var i=document.getElementById('mt-num'); if(i){ i.focus(); } };
+window.MT_volver=function(){ if(MT.auto){ MT.hoja=false; return mtCerrar(); } MT.vista='buscar'; MT.hoja=false; pinta(); }; // abierto directo en tu tren: «Volver» cierra
 function estado(){ return '<div class="mt-mini">'+(MT.live?'📡 Directo de Renfe: '+Object.keys(MT.live).length+' trenes circulando ahora':MT.liveErr?'📡 Directo de Renfe: '+esc(MT.liveErr):'📡 Conectando con Renfe…')+'</div>'; }
 // Hoja del retraso a mano: «¿A qué hora salís de…?» / «¿A qué hora llegáis a…?»
 window.mtHoja=function(){ var I=mtInfo(MT.n); MT.hoja=true; MT.ref=MT.ref||'s'; MT.hh=ahoraMin(); if(!I.hS&&!I.hL) MT.ref='p'; pinta(); };
