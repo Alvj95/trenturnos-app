@@ -38074,7 +38074,19 @@ function mtElegido(){
   return elegido;
 }
 window.mtElegido=mtElegido;
-window.mtAbrir=function(n){ var auto=false; if(!n){ n=mtElegido(); auto=!!n; } MT.auto=auto; MT.n=n?num(n):''; MT.vista=n?'tren':'buscar'; ov().classList.add('on'); pinta(); mtCargaLive(pinta); if(n) mtCargaDet(n,pinta);
+(function(){ var s=document.createElement('style'); s.textContent='#mt-ov .mt-sig{display:flex;align-items:center;gap:10px;width:100%;margin:12px 0 4px;padding:12px 14px;border-radius:14px;border:1px solid rgba(245,158,11,.55);background:rgba(245,158,11,.12);color:inherit;font:inherit;text-align:left;cursor:pointer}#mt-ov .mt-sig span{flex:1;font-weight:700}#mt-ov .mt-sig b{color:#F59E0B}#mt-ov .mt-sig small{display:block;font-size:12px;opacity:.75;font-weight:600}#mt-ov .mt-sig i{font-style:normal;font-size:22px;opacity:.6}'; document.head.appendChild(s); })();
+// NUEVO — Ida y vuelta el mismo día: el calendario no guarda a qué hora llega el tren de ida. Se mira en
+// Renfe (paradas y horas del tren, más su retraso): si ya ha llegado, se pasa solo a tu siguiente tren.
+// Sin datos de Renfe se queda como está (regla de la hora en mtElegido).
+function mtSiguiente(n){ var hoy=mtHoy(); for(var i=0;i<hoy.length-1;i++) if(hoy[i].n===num(n)) return hoy[i+1]; return null; }
+function mtLlegoYa(n){ var D=mtDet(n), P=(D&&D.paradas)||[]; if(!P.length) return false;
+  var ult=P[P.length-1], fin=aMin(ult.llega||ult.sale), ini=aMin(P[0].sale||P[0].llega); if(fin==null) return false;
+  if(ini!=null&&fin<ini) fin+=1440; var r=mtRetraso(n), y=ahoraMin(); if(ini!=null&&y<ini-120) y+=1440;
+  return y>fin+(r?Math.max(0,r.m):0); }
+function mtComprobarLlegada(n, vueltas){ if(!MT.auto||MT.n!==num(n)||!mtSiguiente(n)||vueltas>4) return;
+  mtCargaDet(n,function(){ if(!MT.auto||MT.n!==num(n)) return; if(!mtLlegoYa(n)) return;
+    var s=mtSiguiente(n); MT.n=s.n; MT.hoja=false; pinta(); mtCargaDet(s.n,pinta); mtComprobarLlegada(s.n,(vueltas||0)+1); }); }
+window.mtAbrir=function(n, propio){ var auto=!!propio; if(!n){ n=mtElegido(); auto=!!n; } MT.auto=auto; MT.n=n?num(n):''; MT.vista=n?'tren':'buscar'; ov().classList.add('on'); pinta(); mtCargaLive(pinta); if(n) mtCargaDet(n,pinta); if(n&&auto) mtComprobarLlegada(n,0);
   clearInterval(MT.timer); MT.timer=setInterval(function(){ if(!ov().classList.contains('on')) return clearInterval(MT.timer); MT.liveT=0; mtCargaLive(pinta); if(MT.vista==='tren'&&MT.n){ MT.det[MT.n]&&(MT.det[MT.n].t=0); mtCargaDet(MT.n,pinta); } },30000); if(n&&!auto) mtReciente(n); };
 window.mtCerrar=function(){ ov().classList.remove('on'); clearInterval(MT.timer); quitaMapa(); mtTarjeta(); };
 window.mtBusca=function(v){ var n=num(v), c=document.getElementById('mt-res'); if(!c) return; if(n.length<3){ c.innerHTML=''; return; }
@@ -38110,6 +38122,7 @@ window.pinta=pinta; function pinta(){
         (i===0&&si===0&&falta?'<div class="mt-trn"><i>🚆</i><span>'+esc(falta)+'</span></div>':''); }).join('')+'</div>';
   }
   if(v&&v.mat) h+='<div class="mt-mini">Composición '+esc(v.mat)+'</div>';
+  var sg=mtSiguiente(n); if(sg) h+='<button class="mt-sig" onclick="mtAbrir(\''+sg.n+'\',1)">➡️ <span>Tu siguiente tren: <b>'+esc(sg.n)+'</b>'+(sg.hS?' · '+esc(sg.hS):'')+(sg.sal?'<small>'+esc(sg.sal)+(sg.lle?' → '+esc(sg.lle):'')+'</small>':'')+'</span><i>›</i></button>';
   h+=estado();
   var viejo=document.getElementById('mt-mapa'); if(viejo) viejo.parentNode.removeChild(viejo);
   o.innerHTML=h+'</div>'+(MT.hoja?hojaHTML():'');
