@@ -39095,15 +39095,21 @@ function rtDeje(v){ var base=v.en_base?20:15, k=v.fecha, t=TV[k]||null;
   if(t.cargadoDesdePdf||t.dejeIncluido||o.cargadoDesdePdf||o.dejeIncluido) return {d:0,por:'pdf'};
   return {d:base,por:'mano'}; }
 function rtPop(v,min){ var D=rtDeje(v), deje=D.d, r=min!=null?min:v.ret_llegada, tot=r+deje, ida=v.tramo!==2, k=v.fecha, t=TV[k], fd=k.split('-');
+  // Hora de fin del turno antes del retraso (la del calendario; si no hay, la llegada del tren en los puestos a mano)
+  var finA=(t&&(v.tramo===2?(t.hL2||t.hL):t.hL))||(D.por==='mano'?v.llega:'')||''; finA=/^\d{1,2}:\d{2}/.test(finA)?finA.slice(0,5):'';
   var htdlDin=v.cuenta&&v.tipo==='htdl'&&t&&(t.tipo==='trabajado'||(t.tipo==='vuelta-pernocta'&&TV[t.origenPernocta]&&TV[t.origenPernocta].tipo==='trabajado'));
   var eur=htdlDin&&AJ.vh?Math.round(tot/60*AJ.vh*100)/100:null;
   var razon=v.cuenta?'':(v.tipo==='cambio'?'':(v.tipo==='htdl'&&ida?'En un HTDL de ida y vuelta, la ida no es el último tramo: <b>queda apuntada pero no suma</b> horas ni dinero. Lo que vale es la vuelta.':'HTDL por días: el retraso <b>solo queda apuntado</b>, no suma dinero.'));
   var h='<div class="rt-pop"><div class="rt-h"><div class="rt-i">'+(ida?'🚆':'🏠')+'</div><div><b>'+(ida?'Ida':'Vuelta')+' · '+v.tren+' llegó'+(v.destino?' a '+limpioV(v.destino):'')+'</b><span>'+(+fd[2])+' '+MESES_C[+fd[1]-1]+' · '+(v.tipo==='cambio'?'🔁 cambio con '+limpioV(v.cambio_con||''):v.tipo==='htdl'?'HTDL':'Jornada grafiada')+' · 📡 Renfe en directo</span></div></div>'+
-    '<div class="rt-tab"><div><span>Llegada prevista → real</span><b>'+(v.llega||'')+' → '+rtHmas(v.llega,r)+'</b></div><div><span>Retraso de llegada</span><b>+'+r+' min</b></div><div class="f"><span>'+(D.por==='ida'?'Deje (ida de un ida y vuelta)':D.por==='pdf'?'Deje (ya va en tu horario)':'Deje '+(v.en_base?'en base':'fuera de base'))+'</span><b>'+(deje?'+'+deje+' min':'no se suma')+'</b></div><div class="tot"><span>Retraso que se anota</span><b>+'+tot+' min</b></div></div>'+
+    '<div class="rt-tab"><div><span>Llegada del tren</span><b>'+(v.llega||'')+' → '+rtHmas(v.llega,r)+' <small>(+'+r+' min)</small></b></div>'+
+      (D.por==='ida'?'<div class="f"><span>Deje</span><b class="a">no hay en la ida <small>la vuelta termina el turno</small></b></div>'
+       :D.por==='pdf'?'<div class="f ok"><span>Deje '+(v.en_base?'en base':'fuera de base')+'</span><b>'+(v.en_base?20:15)+' min ✅ <small>ya iba en tu horario</small></b></div>'
+       :'<div class="f"><span>Deje '+(v.en_base?'en base':'fuera de base')+'</span><b>+'+deje+' min <small>se suma</small></b></div>')+
+      (finA&&D.por!=='ida'?'<div class="fin"><span>Fin de tu turno</span><b><s>'+finA+'</s> → '+rtHmas(finA,tot)+'</b></div>':'')+'</div>'+
     '<span class="rt-regla '+(v.cuenta?'c':'a')+'">'+(v.cuenta?'✅ CUENTA PARA HORAS Y DINERO':'📝 SOLO SE ANOTA')+'</span>'+
-    '<div class="rt-big">Se anota <b>+'+tot+' min en la '+(ida?'Ida':'Vuelta')+' ('+v.tren+')</b>:<br>'+(D.por==='ida'?r+' min de retraso de llegada. En un ida y vuelta del mismo día, la ida no lleva deje.'
-      :D.por==='pdf'?r+' min de retraso de llegada. El deje ya está en la hora de tu horario individual.'
-      :r+' min de retraso de llegada + '+deje+' min de deje '+(v.en_base?'en base':'fuera de base')+' (turno puesto a mano).')+'</div>'+
+    '<div class="rt-big">Se anota <b>+'+tot+' min en la '+(ida?'Ida':'Vuelta')+' ('+v.tren+')</b>:<br>'+(D.por==='ida'?'llegaste '+r+' min tarde. En un ida y vuelta del mismo día la ida no lleva deje: el deje va al final de la vuelta.'
+      :D.por==='pdf'?'llegaste '+r+' min tarde y el deje de '+(v.en_base?20:15)+' min lo haces desde la llegada real, así que <b>terminas '+r+' min más tarde</b>.'
+      :r+' min de retraso de llegada + '+deje+' min de deje '+(v.en_base?'en base':'fuera de base')+'. Este turno lo pusiste a mano con la hora de llegada del tren, por eso <b>el deje se suma aquí</b>.')+'</div>'+
     (eur!=null?'<div class="rt-din">💶 HTDL por dinero: es el último tramo (de la toma al deje), así que cuenta.<br><b>+'+tot+' min × '+String(AJ.vh).replace('.',',')+' €/h = +'+eur.toFixed(2).replace('.',',')+' €</b></div>':'')+
     (razon?'<div class="rt-no">'+razon+'</div>':'')+(!t&&v.tipo!=='cambio'?'<div class="rt-no">⚠️ Ese día no tienes ningún turno en el calendario: no hay dónde anotarlo.</div>':'')+
     '<button class="rt-b '+(v.cuenta?'si':'gr')+'" onclick="rtAplicar('+r+')">'+(v.cuenta?'✓ Añadir +'+tot+' min a la '+(ida?'Ida':'Vuelta'):'📝 Anotar +'+tot+' min en la '+(ida?'Ida':'Vuelta'))+'</button>'+
@@ -39152,7 +39158,7 @@ function rtAjTog(k){ var a=rtG(); a[k]=!a[k]; AJ.vig=a; try{ localStorage.setIte
   '.rt-pop{width:100%;max-width:480px;margin:0 10px calc(12px + env(safe-area-inset-bottom));background:var(--s1,#0D1B2E);border:1px solid var(--div,#1E3350);border-radius:22px;padding:16px;color:var(--tx,#F8FAFC);max-height:92vh;overflow-y:auto}'+
   '.rt-h{display:flex;gap:10px;align-items:center}.rt-i{flex:none;width:44px;height:44px;border-radius:12px;background:#7C2D12;display:flex;align-items:center;justify-content:center;font-size:22px}.rt-h b{display:block;font-size:17px}.rt-h span{display:block;font-size:12px;color:var(--tx2,#94A3B8)}'+
   '.rt-tab{margin-top:12px;border:1px solid var(--div,#1E3350);border-radius:14px;overflow:hidden}.rt-tab div{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;border-top:1px solid var(--div,#1E3350);color:var(--tx2,#94A3B8)}.rt-tab div:first-child{border-top:0}.rt-tab b{color:var(--tx,#fff)}'+
-  '.rt-tab .f{background:var(--s2,#132236)}.rt-tab .f b{color:#FCD34D}.rt-tab .tot{background:#3B0D0D}.rt-tab .tot b{color:#FCA5A5;font-size:17px}'+
+  '.rt-tab .f{background:var(--s2,#132236)}.rt-tab .f b{color:#FCD34D}.rt-tab .ok b{color:#86EFAC}.rt-tab b.a{color:#94A3B8}.rt-tab small{font-size:11px;color:#94A3B8;font-weight:600;margin-left:4px}.rt-tab .fin{background:rgba(30,58,138,.25)}.rt-tab .fin b{font-size:16px}.rt-tab .fin s{color:#94A3B8;font-weight:600;margin-right:4px}.rt-tab .tot{background:#3B0D0D}.rt-tab .tot b{color:#FCA5A5;font-size:17px}'+
   '.rt-regla{display:inline-block;margin-top:10px;font-size:11px;font-weight:900;letter-spacing:.6px;border-radius:7px;padding:3px 8px}.rt-regla.c{background:#14532D;color:#86EFAC}.rt-regla.a{background:#334155;color:#CBD5E1}'+
   '.rt-big{margin-top:10px;background:#2A1C05;border:1.5px solid #F59E0B;border-radius:14px;padding:10px 12px;font-size:13px;color:#FDE68A;line-height:1.45}.rt-big b{color:#fff}'+
   '.rt-din{margin-top:8px;background:#052e1a;border:1px solid #16A34A;border-radius:12px;padding:9px 12px;font-size:12.5px;color:#86EFAC;line-height:1.45}.rt-din b{color:#fff}'+
